@@ -140,5 +140,5 @@ vite.config.ts.timestamp-*
 
 Extracted/**
 output/**
-nhl*.bin
+# nhl*.bin
 nhl*.md
