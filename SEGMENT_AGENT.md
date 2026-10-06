@@ -10,7 +10,7 @@ This file is the queue and the history. Do not rewrite it as a whole file. Edit 
 
 - Listing: `lst/nhl94.bin.lst` in this repo. Open that file. Do not disassemble `lst/nhl94.bin`. Do not write a disassembler.
 - The listing was exported from IDA as an LST in ASM68K / MRI mode. It has no address column. A `loc_`, `sub_`, or `unk_` name is the address. A named routine is at the instruction before the next address-bearing label. Confirm the org against `lst/nhl94.bin` before the first verify.
-- Style source: the matching file in https://github.com/abdulahmad/NHLPA93Genesis. Use that repo, not NHL92Genesis. 93 is the closer source.
+- Style source: the matching file in https://github.com/abdulahmad/NHLPA93Genesis. 93 is the closer source.
 - Reference ROM: `lst/nhl94.bin`. This is the ROM the listing was generated from. Bytes and branch displacements come from it. Do not substitute another ROM.
 - `src/hockey94.asm` is the include order. Do not reorder it.
 - Stub includes live in `src/stubinc` (`ports.inc`, `equals.inc`, `ram_addrs.inc`).

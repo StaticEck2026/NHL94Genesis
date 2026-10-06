@@ -13,7 +13,7 @@ Search it for the start label named in SEGMENT_AGENT.md. The listing has no addr
 
 Do not disassemble lst/nhl94.bin. Do not write a disassembler. Do not edit hockey94.asm. Do not delete an asm file. Edit the segment file in place. Do not rewrite SEGMENT_AGENT.md as a whole file. Edit the current-segment line, the matched row, and the history in place.
 
-Follow the rules already in SEGMENT_AGENT.md. The reference ROM is lst/nhl94.bin. Style source is the matching file in https://github.com/abdulahmad/NHLPA93Genesis. Do not use NHL92Genesis.
+Follow the rules already in SEGMENT_AGENT.md. The reference ROM is lst/nhl94.bin. Style source is the matching file in https://github.com/abdulahmad/NHLPA93Genesis.
 
 1. Write or reuse src/<file>_stub.asm at the confirmed org. Include src/stubinc/ports.inc, equals.inc, ram_addrs.inc, and src/<file>.asm.
 2. Point package.json build:seg and verify:seg at that file and org. Add seg:<file>: buildseg.bat, then fixopcodes.js on "output\<file> .lst" and output\<file>.bin, then verifySegment.js <file> <org> lst/nhl94.bin. The assembler listing name has a space before .lst.
