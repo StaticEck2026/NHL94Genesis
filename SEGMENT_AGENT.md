@@ -15,6 +15,24 @@ This file is the queue and the history. Do not rewrite it as a whole file. Edit 
 - `src/hockey94.asm` is the include order. Do not reorder it.
 - Stub includes live in `src/stubinc` (`ports.inc`, `equals.inc`, `ram_addrs.inc`).
 
+
+## Teams
+
+NHLPA 93 has 24 teams. NHL 94 has 26. Do not copy a 93 team count, team index, or palette slot into `teamdata94`.
+
+Added in 94:
+
+- Anaheim Mighty Ducks
+- Florida Panthers
+
+Replaced in 94:
+
+- Minnesota North Stars is Dallas Stars. `North Stars` and `Minnesota` are not in `lst/nhl94.bin`.
+
+Still present from 93: Ottawa Senators, Tampa Bay Lightning, San Jose Sharks, Quebec Nordiques, Winnipeg Jets, Hartford Whalers. All Stars East and All Stars West remain.
+
+94 also changed the conferences. 93 is Wales and Campbell. 94 is Eastern (Atlantic, Northeast) and Western (Central, Pacific). A 93 division or playoff-tree index is not a 94 index.
+
 ## Build
 
 `buildseg.bat <name>` assembles `src/<name>_stub.asm`. The stub is `org` at the confirmed start, includes `src/stubinc`, and includes `src/<name>.asm`.
