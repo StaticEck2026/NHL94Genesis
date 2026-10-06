@@ -6,7 +6,7 @@ The listing is `lst/nhl94.bin.lst`. The ROM it was generated from is `lst/nhl94.
 
 The listing is an IDA LST in ASM68K / MRI mode. It has no address column. `loc_` / `sub_` names are the address.
 
-Style source for a segment is the matching file in [NHLPA93Genesis](https://github.com/abdulahmad/NHLPA93Genesis), then [NHL92Genesis](https://github.com/abdulahmad/NHL92Genesis).
+Style source for a segment is the matching file in [NHLPA93Genesis](https://github.com/abdulahmad/NHLPA93Genesis).
 
 ## Segment queue
 
