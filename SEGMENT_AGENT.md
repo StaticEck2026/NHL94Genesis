@@ -4,13 +4,12 @@ This file is the rule set for one segment at a time. Do not rewrite it as a whol
 
 ## Sources
 
-- Listing: `lst/nhl94.bin.lst` in this repo. Open that file. Do not disassemble `nhl94retail.bin`. Do not write a disassembler.
+- Listing: `lst/nhl94.bin.lst` in this repo. Open that file. Do not disassemble `lst/nhl94.bin`. Do not write a disassembler.
 - The listing was exported from IDA as an LST in ASM68K / MRI mode. It has no address column. A `loc_`, `sub_`, or `unk_` name is the address. A named routine is at the instruction before the next address-bearing label. Confirm the org against `lst/nhl94.bin` before the first verify.
 - Style source, in order: the matching file in `NHLPA93Genesis`, then `NHL92Genesis`. 93 names win when the body is the same routine.
 - Reference ROM: `lst/nhl94.bin`. This is the ROM the listing was generated from. Bytes and branch displacements come from it. Do not substitute another ROM.
 - `src/hockey94.asm` is the queue. Do not reorder it.
-- `src/teamdata94.asm`, `src/ram94.asm`, and `src/main94.asm` are existing drafts. Do not edit them from a segment pass.
-- Stub includes live in `src/stubinc` (`ports.inc`, `equals.inc`, `ram_addrs.inc`), copied from `lst/src`.
+- Stub includes live in `src/stubinc` (`ports.inc`, `equals.inc`, `ram_addrs.inc`).
 
 ## Build
 
@@ -34,16 +33,20 @@ A MATCH of 0 bytes is a failure. The byte count must be the confirmed range.
 
 ## Queue
 
-No segment is started. The first pass is `hockey94_01` (`VBjsr`, `Begin`). Confirm its org from `nhl94retail.bin` before writing instructions. `attract94.asm` is the 94-only attract and options path (`EASportsScreen`, `HiScoreScreen`, `LoadDefMenuOptions`). `sram94.asm` starts at `InitSaveRAM`, not the 93 `BackupRAM_WriteControl` name.
+No segment is matched. The first pass is `main94` (`org 0`, vectors, header, `Start`, `SegaInit`). It is an existing draft, not a verified segment. Confirm its end against `lst/nhl94.bin` before writing instructions. The next file is `teamdata94`, also an existing draft and not matched. `Ram94` has no ROM bytes. `hockey94_01` starts at `VBjsr`.
 
 ## ROM map
 
-Ranges below are provisional. The next address-bearing label is an upper bound, not the start.
+Ranges below are provisional. Nothing is matched.
 
-| File | Start label | Listing note |
+| File | Start | Listing note |
 |---|---|---|
-| hockey94_01 | VBjsr | line 29709, next loc_76E8. SPAList ends near unk_73A0 |
-| attract94 | EASportsScreen | called from Begin |
+| main94 | org 0 | vectors, header, Start, SegaInit. First pass |
+| teamdata94 | after main94 | existing draft, not matched |
+| frames94 | SPAList | no file yet. SPAList ends near unk_73A0 |
+| ram94 | | equates only, no ROM bytes |
+| hockey94_01 | VBjsr | line 29709, next loc_76E8 |
+| attract94 | EASportsScreen | 94 only |
 | hockey94_02 | ReplayMode | before doinput, if present |
 | logic94_1 | doinput | line 35886, before loc_B470 |
 | logic94_2 | assbench | |
@@ -68,4 +71,4 @@ Ranges below are provisional. The next address-bearing label is an upper bound, 
 | sram94 | InitSaveRAM | |
 | sound94 | AllSndOff | 68k driver, then incbin |
 | graphics94 | | incbin from extractAssets94.js |
-| checksum94 | ValidationRoutine | existing file |
+| checksum94 | ValidationRoutine | existing draft, not matched |

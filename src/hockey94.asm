@@ -1,11 +1,11 @@
 ;
 ;	NHL 94 segment queue. Ranges are not confirmed yet.
 ;	The IDA listing has no address column. loc_ / sub_ / unk_ names are the address.
-;	The first segment pass confirms each start against nhl94retail.bin.
+;	The first segment pass is main94. Confirm each start against lst/nhl94.bin.
 ;	Do not reorder these includes.
 ;
-	include	Main94.Asm		;vectors, header, Reset. Existing file.
-	include	TeamData94.Asm		;existing 92-style draft, not a segment yet
+	include	Main94.Asm		;org 0. First pass. Not matched.
+	include	TeamData94.Asm		;after main94. Existing draft, not matched.
 	include	Ram94.Asm		;equates only
 
 	include	hockey94_01.asm		;VBjsr, Begin. Listing line 29709. Next loc_76E8. SPAList ends near unk_73A0.
@@ -16,7 +16,7 @@
 	include	logic94_3.asm
 	include	logic94_4.asm		;checkob
 	include	logic94_5.asm		;ChkOffsides
-	include	middle94_1.asm		;remap. middle94.asm stays the 92 draft and is not this file.
+	include	middle94_1.asm		;remap
 	include	middle94_2.asm		;dobitmap
 	include	penalty94_1.asm		;AddPenalty
 	include	penalty94_2.asm
