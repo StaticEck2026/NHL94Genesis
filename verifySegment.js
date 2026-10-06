@@ -1,4 +1,4 @@
-// Overlay one assembled and fixopcodes-patched segment onto nhl94retail.bin.
+// Overlay one assembled and fixopcodes-patched segment onto lst/nhl94.bin.
 // Usage: node verifySegment.js <segment> <org> <reference.bin> [<first> <last>]
 const fs = require('fs');
 const path = require('path');

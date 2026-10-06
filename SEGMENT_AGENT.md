@@ -5,11 +5,11 @@ This file is the rule set for one segment at a time. Do not rewrite it as a whol
 ## Sources
 
 - Listing: `lst/nhl94.bin.lst` in this repo. Open that file. Do not disassemble `nhl94retail.bin`. Do not write a disassembler.
-- The listing was exported from IDA as an LST in ASM68K / MRI mode. It has no address column. A `loc_`, `sub_`, or `unk_` name is the address. A named routine is at the instruction before the next address-bearing label. Confirm the org against `nhl94retail.bin` before the first verify.
+- The listing was exported from IDA as an LST in ASM68K / MRI mode. It has no address column. A `loc_`, `sub_`, or `unk_` name is the address. A named routine is at the instruction before the next address-bearing label. Confirm the org against `lst/nhl94.bin` before the first verify.
 - Style source, in order: the matching file in `NHLPA93Genesis`, then `NHL92Genesis`. 93 names win when the body is the same routine.
-- Retail ROM: `nhl94retail.bin` in this folder. It is not in git. Bytes and branch displacements come from it.
-- `src/hockey94.asm` is the queue. Do not reorder it. `src/hockey94_draft.asm` is the old commented 92 dump. Do not transcribe from it.
-- `src/middle94.asm`, `src/teamdata94.asm`, `src/ram94.asm`, and `src/main94.asm` are existing drafts. Do not edit them from a segment pass.
+- Reference ROM: `lst/nhl94.bin`. This is the ROM the listing was generated from. Bytes and branch displacements come from it. Do not substitute another ROM.
+- `src/hockey94.asm` is the queue. Do not reorder it.
+- `src/teamdata94.asm`, `src/ram94.asm`, and `src/main94.asm` are existing drafts. Do not edit them from a segment pass.
 - Stub includes live in `src/stubinc` (`ports.inc`, `equals.inc`, `ram_addrs.inc`), copied from `lst/src`.
 
 ## Build
