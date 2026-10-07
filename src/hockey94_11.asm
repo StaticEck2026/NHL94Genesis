@@ -1,11 +1,11 @@
 ;	NHL 94 (retail) segment $18CFC-$1A04F
 ;	Data only, as 93 hockey93_11: the 92 crowd frame table (updatecrowdf .cd0), the player logic assignment table asstab, PenaltyList,
-;	the 94 penalty shot table (unk_1913A), bfasciicon, linelist (IDA FaceOffsprites), PlayerPositionText, PerLabels, sizetab, sublist,
+;	the 94 penalty shot table (PenShotPenalties), bfasciicon, linelist (IDA FaceOffsprites), PlayerPositionText, PerLabels, sizetab, sublist,
 ;	priolist, the playoff tree layout (PlayoffTreeSetup), the attribute column lists, and the menu item lists for the pause,
 ;	intermission and line editor exit menus. sram94 (InitSaveRAM) starts at $1A050.
 ;	Transcribed from lst/nhl94.bin.lst lines 56543-61321 (IDA dc.b / dc.w / dc.l). Global names are the IDA names, or the 93 name where
-;	IDA has an auto name or no label (IDA name in an ;IDA: comment). IDA labels the code reads inside a table stay (unk_1940E,
-;	dword_19420, unk_19570, dword_19582). IDA read two attribute column longs as offsets (unk_2000A, unk_8000A); they are dc.w pairs.
+;	IDA has an auto name or no label (IDA name in an ;IDA: comment). IDA labels the code reads inside a table stay (PAttribOverall,
+;	PAttribOverallMask, GAttribOverall, GAttribOverallMask). IDA read two attribute column longs as offsets (unk_2000A, unk_8000A); they are dc.w pairs.
 ;	Code addresses in the tables are the routines in the earlier segments (asstab, the menu handlers); handlers in the stats code
 ;	and the high ROM that no matched segment owns have IDA-style names (sub_xxxx, no IDA label), with the 93 name in the comment.
 ;	Menu item lists (as 93): two print2 control Strings, then per item a String and the handler address (dc.l). Item 0 leaves the menu,
@@ -64,7 +64,7 @@ asstab	;jump table of all the player logic assignments. 92 / 93 asstab; 94 adds 
 	dc.l	assonetimer	;$23 94 only (high ROM)
 
 PenaltyList	;92 Penaltylist, 93 numbers. Penalty number = word offset into this table; 94 adds 8 entries ($2E-$3C: the penalty shot
-	;versions of 7 penalties, minutes byte $FF, and a second Face Off). Used by AddPenalty, SetPA2, sub_187B8 (hockey94_10), ...
+	;versions of 7 penalties, minutes byte $FF, and a second Face Off). Used by AddPenalty, SetPA2, PenaltyShotBox (hockey94_10), ...
 	dc.w	$0000
 	dc.w	.eop-PenaltyList	;$2 period over
 	dc.w	.eog-PenaltyList	;$4 game over
@@ -190,13 +190,13 @@ PenaltyList	;92 Penaltylist, 93 numbers. Penalty number = word offset into this 
 	String	'Fight Instigator'
 	dc.w	$0004,$0d01,$0e01,$0d01,$0e01,$0d01,$0e01,$0d01,$0e01,-$0101
 
-unk_1913A	;IDA name. 94 only: the penalty shot penalty number for penalty number d0 (word offset), -1 none. Used by PenShotChk
+PenShotPenalties	;IDA: unk_1913A. 94 only: the penalty shot penalty number for penalty number d0 (word offset), -1 none. Used by PenShotChk
 	;(penalty94_1)
 	dc.w	-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,$38,$3C
 	dc.w	$36,$3A,$2E,$30,$34,-1,-1,-1,-1,-1,-1,-1
 
 bfasciicon	;IDA: unk_1916A. equates to find each char definition for bigfont.map. 92 bfasciicon, 93 values. Indexed by ascii
-	;- $20 in sub_11E8E (middle94_2, called from printbig)
+	;- $20 in PrintBigChar (middle94_2, called from printbig)
 ;	 -  -!  "  #  $  %  &  -'  (  )  *  +  ,  -  -.  /
 	dc.b	-76,-73,00,00,00,00,00,-71,00,00,00,00,00,00,-72,00
 ;	 0   1  2  3  4  5  6  7  8  9   :  ;  <  =  >  ?
@@ -207,7 +207,7 @@ bfasciicon	;IDA: unk_1916A. equates to find each char definition for bigfont.map
 	dc.b	29,31,33,35,37,39,41,43,45,47,49
 	dc.b	$FF			;pad (93 $F0)
 
-FaceOffsprites	String	'Sc1'	;IDA name (93 linelist). text list for line choices. Used by SetLCmode2 and puckfaceoff2
+linelist	String	'Sc1'	;IDA: FaceOffsprites (93 linelist). text list for line choices. Used by SetLCmode2 and puckfaceoff2
 	String	'Sc2'
 	String	'Chk'
 	String	'PP1'
@@ -227,7 +227,7 @@ PerLabels	String	'1',$12	;IDA: unk_191E4 (93 name). text list for periods; 94 ' 
 	String	'OT'
 	String	' F'
 
-unk_191F8	String	'1',$12	;IDA name. 94 only: the same with a blank last entry. Used by PrintScores1
+PenShotPenalties2	String	'1',$12	;IDA: unk_191F8. 94 only: the same with a blank last entry. Used by PrintScores1
 	String	'2',$13
 	String	'3',$14
 	String	'OT'
@@ -331,12 +331,12 @@ PlayoffTreeSetup	;IDA: unk_1928E (93 name). Playoff tree layout by gamelevel. 92
 
 PAttribColumns	;IDA name (93 PAttribColumns). Skater attribute columns for PrintAttribHeader / the player list. String header,
 	;then a long for getNameandAttrib: high word = mask of rating nibbles to average, low word = attribjmp offset (0 status, 2 energy,
-	;4 handed, 6 weight, 8 fighting, $A rating). A negative word ends the list. 94 has no Fighting column. unk_1940E / dword_19420 (the
-	;Overall entry) are read by sub_FC850, sub_FA8AC and hockey94_07
+	;4 handed, 6 weight, 8 fighting, $A rating). A negative word ends the list. 94 has no Fighting column. PAttribOverall / PAttribOverallMask (the
+	;Overall entry) are read by PrintShooterList, PrintOverallRating and hockey94_07
 	String	'     Status    ]'
 	dc.w	$0000,$0		;status
-unk_1940E	String	'[   Overall    ]'
-dword_19420	dc.w	$1fba,$a
+PAttribOverall	String	'[   Overall    ]'	;IDA: unk_1940E
+PAttribOverallMask	dc.w	$1fba,$a	;IDA: dword_19420
 	String	'[   Energy     ]'
 	dc.w	$0000,$2		;energy
 	String	'[   Agility    ]'
@@ -367,12 +367,12 @@ dword_19420	dc.w	$1fba,$a
 	dc.w	$0080,$a
 	dc.w	-1
 
-GAttribColumns	;IDA name (93 GAttribColumns). Goalie attribute columns, same format as PAttribColumns. unk_19570 /
-	;dword_19582 (the Overall entry) are read by sub_FC850, sub_FA8AC and hockey94_07
+GAttribColumns	;IDA name (93 GAttribColumns). Goalie attribute columns, same format as PAttribColumns. GAttribOverall /
+	;GAttribOverallMask (the Overall entry) are read by PrintShooterList, PrintOverallRating and hockey94_07
 	String	'     Status    ]'
 	dc.w	$0000,$0		;status
-unk_19570	String	'[   Overall    ]'
-dword_19582	dc.w	$130f,$a
+GAttribOverall	String	'[   Overall    ]'	;IDA: unk_19570
+GAttribOverallMask	dc.w	$130f,$a	;IDA: dword_19582
 	String	'[   Agility    ]'
 	dc.w	$1000,$a
 	String	'[    Speed     ]'
@@ -395,7 +395,7 @@ dword_19582	dc.w	$130f,$a
 	dc.w	$2000,$6		;weight
 	dc.w	-1
 
-unk_19664	;IDA name. 94 only: pause menu item list (PauseMode; hockey94_01)
+PauseMenuItems	;IDA: unk_19664. 94 only: pause menu item list (PauseMode; hockey94_01)
 	String	$FE,5
 	String	$FE,4
 	String	'   Resume Game    '
@@ -405,11 +405,11 @@ unk_19664	;IDA name. 94 only: pause menu item list (PauseMode; hockey94_01)
 	String	'   Team Roster    '
 	dc.l	TeamRosterScreen	;93 TeamRosterScreen
 	String	'   Player Cards   '
-	dc.l	sub_FA07E	;94 only
+	dc.l	PlayerCards	;94 only
 	String	'  Record Holders  '
-	dc.l	sub_FBC14	;94 only
+	dc.l	RecordHoldersScreen	;94 only
 	String	'x Manual Goalie   '
-	dc.l	sub_FE1D8	;94 only
+	dc.l	ManualGoalieMenu	;94 only
 	String	$FF
 
 PauseText	;IDA: unk_19700 (93 name). Pause menu item list (PauseMode, hockey94_01)
@@ -440,13 +440,13 @@ PauseText	;IDA: unk_19700 (93 name). Pause menu item list (PauseMode, hockey94_0
 	String	'     Timeout      '
 	dc.l	TimeoutMenu	;93 TimeoutMenu
 	String	'   Player Cards   '
-	dc.l	sub_FA07E	;94 only
+	dc.l	PlayerCards	;94 only
 	String	'  Record Holders  '
-	dc.l	sub_FBC14	;94 only
+	dc.l	RecordHoldersScreen	;94 only
 	String	'   Period Stats   '
-	dc.l	sub_FD90C	;94 only
+	dc.l	PeriodStatsScreen	;94 only
 	String	'x Manual Goalie   '
-	dc.l	sub_FE1D8	;94 only
+	dc.l	ManualGoalieMenu	;94 only
 	String	$FF
 
 PauseText2	;IDA: unk_1988C (93 name). Pause menu item list without Timeout (PauseMode)
@@ -475,28 +475,28 @@ PauseText2	;IDA: unk_1988C (93 name). Pause menu item list without Timeout (Paus
 	String	'   Crowd Meter    '
 	dc.l	CrowdMeterScreen	;93 CrowdMeterScreen
 	String	'   Player Cards   '
-	dc.l	sub_FA07E	;94 only
+	dc.l	PlayerCards	;94 only
 	String	'  Record Holders  '
-	dc.l	sub_FBC14	;94 only
+	dc.l	RecordHoldersScreen	;94 only
 	String	'   Period Stats   '
-	dc.l	sub_FD90C	;94 only
+	dc.l	PeriodStatsScreen	;94 only
 	String	'x Manual Goalie   '
-	dc.l	sub_FE1D8	;94 only
+	dc.l	ManualGoalieMenu	;94 only
 	String	$FF
 
-unk_19A00	;IDA name. 94 only: Intermission menu in Shootout (word_FFC2FA bit 0; penalty94_2)
+ShootoutIntermissionMenu	;IDA: unk_19A00. 94 only: Intermission menu in Shootout (word_FFC2FA bit 0; penalty94_2)
 	String	$FE,5
 	String	$FE,4
 	String	'  Start Shootout  '
 	dc.l	rtss2
 	String	'  Shootout SetUp  '
-	dc.l	sub_FC620	;94 only
+	dc.l	ShootoutShooters	;94 only
 	String	'   Team Roster    '
 	dc.l	TeamRosterScreen	;93 TeamRosterScreen
 	String	'   Player Cards   '
-	dc.l	sub_FA07E	;94 only
+	dc.l	PlayerCards	;94 only
 	String	'  Record Holders  '
-	dc.l	sub_FBC14	;94 only
+	dc.l	RecordHoldersScreen	;94 only
 	String	$FF
 
 StartGameText	;no IDA label (93 name). Intermission menu for gsp 0 (penalty94_2 .sslist)
@@ -513,9 +513,9 @@ StartGameText	;no IDA label (93 name). Intermission menu for gsp 0 (penalty94_2 
 	String	'   Other Scores   '
 	dc.l	ShowScores	;93 ShowScores
 	String	'   Player Cards   '
-	dc.l	sub_FA07E	;94 only
+	dc.l	PlayerCards	;94 only
 	String	'  Record Holders  '
-	dc.l	sub_FBC14	;94 only
+	dc.l	RecordHoldersScreen	;94 only
 	String	$FF
 
 StartGameTextPO	;no IDA label (93 name). Intermission menu for gsp 0 in the playoffs (penalty94_2 .sslist)
@@ -534,9 +534,9 @@ StartGameTextPO	;no IDA label (93 name). Intermission menu for gsp 0 in the play
 	String	'   Other Scores   '
 	dc.l	ShowScores	;93 ShowScores
 	String	'   Player Cards   '
-	dc.l	sub_FA07E	;94 only
+	dc.l	PlayerCards	;94 only
 	String	'  Record Holders  '
-	dc.l	sub_FBC14	;94 only
+	dc.l	RecordHoldersScreen	;94 only
 	String	$FF
 
 IntermissionText	;no IDA label (93 name). Intermission menu for gsp 1-3 (penalty94_2 .sslist)
@@ -563,13 +563,13 @@ IntermissionText	;no IDA label (93 name). Intermission menu for gsp 1-3 (penalty
 	String	'    Edit Lines    '
 	dc.l	LineEditor	;93 LineEditor
 	String	'   Player Cards   '
-	dc.l	sub_FA07E	;94 only
+	dc.l	PlayerCards	;94 only
 	String	'  Record Holders  '
-	dc.l	sub_FBC14	;94 only
+	dc.l	RecordHoldersScreen	;94 only
 	String	'   Period Stats   '
-	dc.l	sub_FD90C	;94 only
+	dc.l	PeriodStatsScreen	;94 only
 	String	'x Manual Goalie   '
-	dc.l	sub_FE1D8	;94 only
+	dc.l	ManualGoalieMenu	;94 only
 	String	$FF
 
 ExitGameText	;no IDA label (93 name). Intermission menu for gsp 4 (penalty94_2 .sslist)
@@ -592,11 +592,11 @@ ExitGameText	;no IDA label (93 name). Intermission menu for gsp 4 (penalty94_2 .
 	String	'   Crowd Meter    '
 	dc.l	CrowdMeterScreen	;93 CrowdMeterScreen
 	String	'   Player Cards   '
-	dc.l	sub_FA07E	;94 only
+	dc.l	PlayerCards	;94 only
 	String	'  Record Holders  '
-	dc.l	sub_FBC14	;94 only
+	dc.l	RecordHoldersScreen	;94 only
 	String	'   Period Stats   '
-	dc.l	sub_FD90C	;94 only
+	dc.l	PeriodStatsScreen	;94 only
 	String	$FF
 
 ExitGameTextPO	;no IDA label (93 name). Intermission menu for gsp 4 in the playoffs (penalty94_2 .sslist)
@@ -619,11 +619,11 @@ ExitGameTextPO	;no IDA label (93 name). Intermission menu for gsp 4 in the playo
 	String	'   Crowd Meter    '
 	dc.l	CrowdMeterScreen	;93 CrowdMeterScreen
 	String	'   Player Cards   '
-	dc.l	sub_FA07E	;94 only
+	dc.l	PlayerCards	;94 only
 	String	'  Record Holders  '
-	dc.l	sub_FBC14	;94 only
+	dc.l	RecordHoldersScreen	;94 only
 	String	'   Period Stats   '
-	dc.l	sub_FD90C	;94 only
+	dc.l	PeriodStatsScreen	;94 only
 	String	$FF
 
 AttributeScreenText	;IDA: unk_19F88 (93 name). Line editor exit menu (the line editor at $882E)

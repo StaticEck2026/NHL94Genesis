@@ -3,20 +3,20 @@
 ;	DoDMA_clearCallbackPointer, DecompressGraphics, DecompressBytecode, jump_table, the Opcode_* handlers,
 ;	FlushOutputBuffer), xyVmMap, eraser, Framer, printz2 / print2 and the control codes, printz / print,
 ;	FormatAndPrintTime, PeriodLabelTable, PushTime, PushNumber, PushNumberWidth, appendz / appstring, printbigz /
-;	printbig, the 94 sub_11E8E / sub_11EDA, AddSmallFont, AddFramer, AddTeamBlock. AddPenalty (penalty94_1) follows
+;	printbig, the 94 PrintBigChar / PutBigTile, AddSmallFont, AddFramer, AddTeamBlock. AddPenalty (penalty94_1) follows
 ;	at $11F2C.
 ;	Transcribed from lst/nhl94.bin.lst lines 44878-45933. Global names are the 93 names where 93 has the routine
 ;	(IDA name in an ;IDA: comment); printz2 / print2 keep the IDA names that the earlier segments call (93
 ;	printsmallz / printsmall). The decompressor handlers and four control codes have no IDA label; the labels are
 ;	placed at the addresses in jump_table and ControlCodeJumpTable. Local labels are the IDA local names (_x -> .x)
-;	or the IDA address (loc_116A8 -> .116A8).
+;	or the 93 local where the code matches, else in the 93 style (.x exit, .loop, numbered), with the IDA label in an ;IDA: comment.
 ;	EA's compiler emits cmp #imm,Dn as CMP (Bxxx), SNASM emits CMPI (0Cxx). The source has the real cmp /
 ;	cmpi; fixopcodes.js patches the cmp encoding after assembly.
 
 dobitmap
 	move.w	(printy).w,-(sp)
 	move.w	(disflags).w,-(sp)
-	bset	#2,(disflags).w	;#dfng
+	bset	#dfng,(disflags).w	;#dfng
 	movem.l	d0-d3/d5-d6/a0-a3,-(sp)
 	move.w	d1,d6
 	movea.w	#(palfadenew-M68K_RAM),a3
@@ -55,9 +55,9 @@ dobitmap
 	addq.w	#1,d6
 	dbf	d2,.loop2
 	btst	#0,(word_FFC2F8).w
-	bne.w	.1171E
+	bne.w	.0
 	bsr.w	DoDMA_clearCallbackPointer
-.1171E
+.0	;IDA: loc_1171E
 	movem.l	(sp)+,d0-d3/d5-d6/a0-a3
 	move.w	(sp)+,(disflags).w
 	move.w	(sp)+,(printy).w
@@ -75,20 +75,20 @@ DecompressGraphics	;IDA: sub_1173C (93 name). a2 = graphics data, d4 = start cha
 	move.w	d4,d1
 	asl.w	#5,d1
 	move.w	(a0)+,d0
-	beq.w	.11774
-	bmi.w	.1176A
+	beq.w	.done
+	bmi.w	.packed
 	add.w	d0,d4
 	asl.w	#4,d0
-	pea	(.11774).l
+	pea	(.done).l
 	tst.l	(dword_FFCF32).w
 	beq.w	DoDMApro
 	movea.l	(dword_FFCF32).w,a1
 	bra.w	remap
-.1176A
+.packed	;IDA: loc_1176A
 	andi.w	#$7FFF,d0
 	add.w	d0,d4
 	bsr.w	DecompressBytecode
-.11774
+.done	;IDA: loc_11774
 	movem.l	(sp)+,d0-d1/a0-a6
 	rts
 DecompressBytecode	;IDA: sub_1177A (93 name). Unpack a0 into the 256 byte ring buffer at ThreeStars (93 DispAttribCtr)
@@ -101,14 +101,14 @@ DecompressBytecode	;IDA: sub_1177A (93 name). Unpack a0 into the 256 byte ring b
 	move.w	d1,d3
 	clr.w	d1
 	clr.w	d2
-.1179C
+.loop	;IDA: loc_1179C
 	move.b	(a0)+,d0
 	andi.w	#$F0,d0
 	lsr.w	#3,d0
 	lea	jump_table(pc),a2
 	move.w	0(a2,d0.w),d0
 	jsr	0(a2,d0.w)
-	bra.s	.1179C
+	bra.s	.loop
 jump_table	;IDA: unk_117B2 (93 name). DecompressBytecode handler offsets, one per opcode high nibble
 	dc.w	Opcode_CopyLiteral-jump_table	;0
 	dc.w	Opcode_CopyLiteral-jump_table	;1
@@ -129,37 +129,37 @@ jump_table	;IDA: unk_117B2 (93 name). DecompressBytecode handler offsets, one pe
 Opcode_CopyLiteral	;93: opcodes 0-1, copy (low 5 bits)+1 bytes from the data
 	move.b	-1(a0),d0
 	andi.w	#$1F,d0
-.117DA
+.loop	;IDA: loc_117DA
 	move.b	(a0)+,0(a1,d1.w)
 	addq.b	#1,d1
-	bne.w	.117E8
+	bne.w	.next
 	bsr.w	FlushOutputBuffer
-.117E8
-	dbf	d0,.117DA
+.next	;IDA: loc_117E8
+	dbf	d0,.loop
 	rts
 Opcode_ClearBytes	;93: opcode 2, write (low 4 bits)+1 zero bytes
 	move.b	-1(a0),d0
 	andi.w	#$F,d0
-.117F6
+.loop	;IDA: loc_117F6
 	clr.b	0(a1,d1.w)
 	addq.b	#1,d1
-	bne.w	.11804
+	bne.w	.next
 	bsr.w	FlushOutputBuffer
-.11804
-	dbf	d0,.117F6
+.next	;IDA: loc_11804
+	dbf	d0,.loop
 	rts
 Opcode_Fillbytes	;93: opcode 3, write the next data byte (low 4 bits)+3 times
 	move.b	-1(a0),d0
 	andi.w	#$F,d0
 	addq.w	#2,d0
 	move.b	(a0)+,d2
-.11816
+.loop	;IDA: loc_11816
 	move.b	d2,0(a1,d1.w)
 	addq.b	#1,d1
-	bne.w	.11824
+	bne.w	.next
 	bsr.w	FlushOutputBuffer
-.11824
-	dbf	d0,.11816
+.next	;IDA: loc_11824
+	dbf	d0,.loop
 	rts
 Opcode_CopyBackwardShort	;93: opcodes 4-7, copy from back in the output buffer
 	move.b	-1(a0),d0
@@ -172,14 +172,14 @@ Opcode_CopyBackwardShort	;93: opcodes 4-7, copy from back in the output buffer
 CopyBackwardRun	;IDA: loc_11840. 93: shared copy loop, d0 = count-1, d2 = distance back
 	neg.b	d2
 	add.b	d1,d2
-.11844
+.loop	;IDA: loc_11844
 	move.b	0(a1,d2.w),0(a1,d1.w)
 	addq.b	#1,d2
 	addq.b	#1,d1
-	bne.w	.11856
+	bne.w	.next
 	bsr.w	FlushOutputBuffer
-.11856
-	dbf	d0,.11844
+.next	;IDA: loc_11856
+	dbf	d0,.loop
 	rts
 Opcode_CopyBackwardMedium	;93: opcode 8
 	move.b	-1(a0),d0
@@ -231,14 +231,14 @@ Opcode_CopyBackwardReverseShort	;93: opcodes C-D, copy backwards through the sou
 CopyBackwardReverseRun	;IDA: loc_118CE. 93: shared reverse copy loop
 	neg.b	d2
 	add.b	d1,d2
-.118D2
+.loop	;IDA: loc_118D2
 	move.b	0(a1,d2.w),0(a1,d1.w)
 	subq.b	#1,d2
 	addq.b	#1,d1
-	bne.w	.118E4
+	bne.w	.next
 	bsr.w	FlushOutputBuffer
-.118E4
-	dbf	d0,.118D2
+.next	;IDA: loc_118E4
+	dbf	d0,.loop
 	rts
 Opcode_CopyBackwardReverseMedium	;93: opcode E. Distance 0 is the end code
 	move.b	-1(a0),d0
@@ -247,9 +247,9 @@ Opcode_CopyBackwardReverseMedium	;93: opcode E. Distance 0 is the end code
 	move.b	(a0)+,d2
 	bne.s	CopyBackwardReverseRun
 	tst.w	d1
-	beq.w	.11902
+	beq.w	.fin
 	bsr.w	FlushOutputBuffer
-.11902
+.fin	;IDA: loc_11902
 	addq.w	#4,sp
 	movem.l	(sp)+,d0-d3/a0-a2
 	rts
@@ -267,22 +267,22 @@ Opcode_CopyBackwardReverseLong	;93: opcode F
 FlushOutputBuffer	;IDA: sub_11924 (93 name). Write the full ring buffer to vram
 	movem.l	d0-d1/a0-a1,-(sp)
 	move.w	d1,d0
-	bne.w	.11932
+	bne.w	.size
 	move.w	#$100,d0
-.11932
+.size	;IDA: loc_11932
 	lsr.w	#1,d0
 	move.w	d3,d1
 	add.w	d0,d3
 	add.w	d0,d3
 	movea.l	a1,a0
 	tst.l	(a4)
-	beq.w	.1194A
+	beq.w	.dma
 	movea.l	(a4),a1
 	jsr	(a5)
-	bra.w	.1194C
-.1194A
+	bra.w	.done
+.dma	;IDA: loc_1194A
 	jsr	(a6)
-.1194C
+.done	;IDA: loc_1194C
 	movem.l	(sp)+,d0-d1/a0-a1
 	rts
 ; use print x/y/m to set vram address
@@ -307,7 +307,7 @@ xyVmMap
 eraser
 	movem.l	d0-d2/a0,-(sp)
 	move.w	(disflags).w,-(sp)
-	bset	#2,(disflags).w	;#dfng
+	bset	#dfng,(disflags).w	;#dfng
 	movem.w	d0-d1,-(sp)
 .1
 	bsr.s	xyVmMap
@@ -330,7 +330,7 @@ eraser
 Framer
 	movem.l	d0-d4/a0-a1,-(sp)
 	move.w	(disflags).w,-(sp)
-	bset	#2,(disflags).w	;#dfng
+	bset	#dfng,(disflags).w	;#dfng
 	movem.w	d0-d1,-(sp)
 	move.w	(printa).w,d2
 	add.w	(framercset).w,d2
@@ -358,9 +358,9 @@ Framer
 	addq.w	#2,d4
 	move.w	4(sp),d0
 	subq.w	#3,d0
-.11A1A
+.tblp	;IDA: loc_11A1A
 	bsr.w	.setter
-	dbf	d0,.11A1A
+	dbf	d0,.tblp
 	addq.w	#2,d4
 	bsr.w	.setter
 	addq.w	#2,d4
@@ -394,7 +394,7 @@ print2	;IDA name (93 printsmall)
 	move.w	(disflags).w,-(sp)
 	bset	#2,(disflags).w
 	movem.l	d0-d3/a0/a2-a3,-(sp)
-	movea.w	#(word_FFB012-M68K_RAM),a3
+	movea.w	#(smallfontchars-M68K_RAM),a3
 	btst	#3,(word_FFC2F8).w
 	beq.w	.start
 	movea.w	#(word_FFBF52-M68K_RAM),a3
@@ -407,32 +407,32 @@ print2	;IDA name (93 printsmall)
 .0
 	move.b	(a1)+,d0
 	ext.w	d0
-	bgt.w	.11A94
+	bgt.w	.2
 	neg.w	d0
 	asl.w	#2,d0
 	movea.l	#ControlCodeJumpTable,a2
 	movea.l	0(a2,d0.w),a2
 	jsr	(a2)
 	bra.w	.1
-.11A94
+.2	;IDA: loc_11A94
 	cmp.b	#$40,d0
-	bne.w	.11AA4
+	bne.w	.3
 	move.w	#$7FF,d0
-	bra.w	.11AD4
-.11AA4
+	bra.w	.5
+.3	;IDA: loc_11AA4
 	cmp.b	#$5E,d0
-	beq.w	.11AEA
+	beq.w	.6
 	asl.w	#1,d0
-	movea.l	#unk_AAC52,a2
+	movea.l	#SmallFontMap,a2
 	btst	#3,(word_FFC2F8).w
-	beq.w	.11AC4
-	movea.l	#unk_BE26A,a2
-.11AC4
+	beq.w	.4
+	movea.l	#PrintFont2Map,a2
+.4	;IDA: loc_11AC4
 	adda.l	4(a2),a2
 	move.w	4(a2,d0.w),d0
 	move.w	(word_FFB030).w,d1
 	add.w	0(a3,d1.w),d0
-.11AD4
+.5	;IDA: loc_11AD4
 	add.w	d2,d0
 	move.w	d0,(a0)
 	addq.w	#1,(printx).w
@@ -441,7 +441,7 @@ print2	;IDA name (93 printsmall)
 	movem.l	(sp)+,d0-d3/a0/a2-a3
 	move.w	(sp)+,(disflags).w
 	rts
-.11AEA
+.6	;IDA: loc_11AEA
 	addq.w	#1,(printx).w
 	bsr.w	xyVmMap
 	bra.s	.1
@@ -527,7 +527,7 @@ printz
 ; yy = y coord to print at
 print
 	move.w	(disflags).w,-(sp)
-	bset	#2,(disflags).w
+	bset	#dfng,(disflags).w
 	movem.l	d0-d3/a0/a2,-(sp)
 	bsr.w	xyVmMap
 	move.w	(printa).w,d2
@@ -565,21 +565,21 @@ print
 	bra.w	.p
 .noblank
 	cmp.b	#$5E,d0
-	beq.w	.11C68
+	beq.w	.skip
 	asl.w	#1,d0
-	movea.l	#unk_AAC52,a2
+	movea.l	#SmallFontMap,a2
 	btst	#3,(word_FFC2F8).w
-	beq.w	.11C34
-	movea.l	#unk_BE26A,a2
-.11C34
+	beq.w	.2
+	movea.l	#PrintFont2Map,a2
+.2	;IDA: loc_11C34
 	adda.l	4(a2),a2
 	move.w	4(a2,d0.w),d0
 	btst	#3,(word_FFC2F8).w
-	beq.w	.11C4E
+	beq.w	.3
 	add.w	(word_FFBF52).w,d0
 	bra.w	.p
-.11C4E
-	add.w	(word_FFB012).w,d0
+.3	;IDA: loc_11C4E
+	add.w	(smallfontchars).w,d0
 .p
 	add.w	d2,d0	;for alternate palettes
 	move.w	d0,(a0)
@@ -589,7 +589,7 @@ print
 	movem.l	(sp)+,d0-d3/a0/a2
 	move.w	(sp)+,(disflags).w
 	rts
-.11C68
+.skip	;IDA: loc_11C68
 	addq.w	#1,(printx).w
 	bsr.w	xyVmMap
 	bra.s	.1
@@ -615,7 +615,7 @@ PeriodLabelTable	;IDA: unk_11C92 (93 name). String list for FormatAndPrintTime: 
 	dc.b	'OT'
 ; convert d0 into string format of min:sec
 PushTime
-	movea.w	#(unk_FFBFC2-M68K_RAM),a1
+	movea.w	#(mesarea+30-M68K_RAM),a1
 	move.l	d0,-(sp)
 	move.l	a1,-(sp)
 	ext.l	d0
@@ -639,26 +639,26 @@ PushTime
 	swap	d0
 	move.b	#$20,-(a1)
 	tst.w	d0
-	beq.w	.11CEE
+	beq.w	.noz
 	addi.w	#$30,d0
 	move.b	d0,(a1)
-.11CEE
+.noz	;IDA: loc_11CEE
 	move.l	(sp)+,d0
 	sub.l	a1,d0
 	addq.w	#2,d0
 	btst	#0,d0
-	beq.w	.11D00
+	beq.w	.1
 	clr.b	-(a1)
 	addq.w	#1,d0
-.11D00
+.1	;IDA: loc_11D00
 	move.w	d0,-(a1)
 	move.l	(sp)+,d0
 	rts
 PushNumber
-	movea.w	#(unk_FFC010-M68K_RAM),a1
+	movea.w	#(PushNumberBuf-M68K_RAM),a1
 	move.l	d0,-(sp)
 	move.l	a1,-(sp)
-.11D0E
+.0	;IDA: loc_11D0E
 	ext.l	d0
 	divu.w	#$A,d0
 	swap	d0
@@ -666,28 +666,28 @@ PushNumber
 	move.b	d0,-(a1)
 	swap	d0
 	tst.w	d0
-	bne.s	.11D0E
+	bne.s	.0
 	move.l	(sp)+,d0
 	sub.l	a1,d0
 	addq.w	#2,d0
 	btst	#0,d0
-	beq.w	.11D34
+	beq.w	.1
 	clr.b	-(a1)
 	addq.w	#1,d0
-.11D34
+.1	;IDA: loc_11D34
 	move.w	d0,-(a1)
 	move.l	(sp)+,d0
 	rts
 PushNumberWidth	;IDA: DeterStrLength? (93 name). Right-justified number
 	movem.l	d0-d3,-(sp)	;push to stack
-	movea.w	#(unk_FFC00A-M68K_RAM),a1	;move address FFC00A into a1
+	movea.w	#(PushWidthBuf+2-M68K_RAM),a1	;move address FFC00A into a1
 	moveq	#1,d2	;move 1 into d2
 	sub.w	d2,d1	;sub d2 from d1
 	bra.w	.loop	;branch
-.11D4A
+.mul	;IDA: loc_11D4A
 	mulu.w	#$A,d2	;mult d2 by 10 dec
 .loop
-	dbf	d1,.11D4A	;exit when d1 is 0
+	dbf	d1,.mul	;exit when d1 is 0
 	moveq	#$20,d3	;' '   ; move 20 into d3
 .loop2
 	ext.l	d0	;sign extend d0
@@ -696,12 +696,12 @@ PushNumberWidth	;IDA: DeterStrLength? (93 name). Right-justified number
 	cmp.w	#1,d2	;compare d2 to 1
 	beq.w	.0	;branch if equal
 	move.w	d3,d0	;move d3 into d0
-	bra.w	.11D6E
+	bra.w	.put
 .0
 	;DeterStrLength?+26   j
 	moveq	#$30,d3	;'0'   ; move 48 dec into d3
 	add.w	d3,d0	;add d3 to d0
-.11D6E
+.put	;IDA: loc_11D6E
 	move.b	d0,(a1)+	;move d0 into a1 and increment a1
 	swap	d0	;swap d0 words
 	divu.w	#$A,d2	;divide d2 by 10 dec
@@ -713,7 +713,7 @@ PushNumberWidth	;IDA: DeterStrLength? (93 name). Right-justified number
 	clr.b	(a1)+	;clear byte at a1 and increment
 	addq.w	#1,d0	;add 1 to d0
 .00
-	movea.w	#(unk_FFC008-M68K_RAM),a1	;move address FFC008 back into a1
+	movea.w	#(PushWidthBuf-M68K_RAM),a1	;move address FFC008 back into a1
 	move.w	d0,(a1)	;move d0 into a1 address location
 	movem.l	(sp)+,d0-d3	;push from stack
 	rts
@@ -727,30 +727,30 @@ appstring
 	lea	2(a3),a0
 	move.w	(a3),d0
 	subq.w	#3,d0
-	bmi.w	.11DB6
-.11DAE
+	bmi.w	.1
+.0	;IDA: loc_11DAE
 	addq.w	#1,a0
 	tst.b	(a0)
-	dbeq	d0,.11DAE
-.11DB6
+	dbeq	d0,.0
+.1	;IDA: loc_11DB6
 	move.w	(a1)+,d0
 	subq.w	#3,d0
-	bmi.w	.11DDC
-.11DBE
+	bmi.w	.ex
+.2	;IDA: loc_11DBE
 	move.b	(a1)+,(a0)+
-	bne.w	.11DC6
+	bne.w	.3
 	subq.w	#1,a0
-.11DC6
-	dbf	d0,.11DBE
+.3	;IDA: loc_11DC6
+	dbf	d0,.2
 	move.l	a0,d0
 	btst	#0,d0
-	beq.w	.11DD8
+	beq.w	.4
 	clr.b	(a0)+
 	addq.l	#1,d0
-.11DD8
+.4	;IDA: loc_11DD8
 	sub.l	a3,d0
 	move.w	d0,(a3)
-.11DDC
+.ex	;IDA: loc_11DDC
 	movem.l	(sp)+,d0/a0
 	rts
 printbigz	;IDA: sub_11DE2 (93 name). String macro follows the call
@@ -762,7 +762,7 @@ printbigz	;IDA: sub_11DE2 (93 name). String macro follows the call
 	rts
 printbig
 	move.w	(disflags).w,-(sp)
-	bset	#2,(disflags).w
+	bset	#dfng,(disflags).w
 	movem.l	d0-d7/a0/a2,-(sp)
 	move.w	(printx).w,d4
 	move.w	(printy).w,d5
@@ -770,12 +770,12 @@ printbig
 	add.w	(word_FFB010).w,d6
 	move.w	(a1)+,d3
 	subq.w	#2,d3
-	bra.w	.11E78
-.11E1A
+	bra.w	.1
+.0	;IDA: loc_11E1A
 	move.b	(a1)+,d0
-	beq.w	.11E78
+	beq.w	.1
 	ext.w	d0
-	bpl.w	.11E5C
+	bpl.w	.3
 	neg.w	d0
 	move.w	d0,d6
 	asl.w	#8,d6
@@ -794,53 +794,53 @@ printbig
 	ext.w	d5
 	move.w	d5,(printy).w
 	subq.w	#2,d3
-	bra.w	.11E78
-.11E5C
+	bra.w	.1
+.3	;IDA: loc_11E5C
 	cmp.b	#$61,d0
-	blt.w	.11E70
+	blt.w	.2
 	cmp.b	#$7A,d0
-	bgt.w	.11E70
+	bgt.w	.2
 	addi.b	#-$20,d0
-.11E70
+.2	;IDA: loc_11E70
 	move.w	d3,-(sp)
-	bsr.w	sub_11E8E
+	bsr.w	PrintBigChar
 	move.w	(sp)+,d3
-.11E78
-	dbf	d3,.11E1A
+.1	;IDA: loc_11E78
+	dbf	d3,.0
 	move.w	d4,(printx).w
 	move.w	d5,(printy).w
 	movem.l	(sp)+,d0-d7/a0/a2
 	move.w	(sp)+,(disflags).w
 	rts
-sub_11E8E
+PrintBigChar	;IDA: sub_11E8E
 	subi.w	#$20,d0
 	movea.l	#bfasciicon,a0
 	moveq	#1,d2
 	move.b	0(a0,d0.w),d1
 	ext.w	d1
-	bpl.w	.11EA8
+	bpl.w	.0
 	neg.w	d1
 	clr.w	d2
-.11EA8
+.0	;IDA: loc_11EA8
 	asl.w	#1,d1
-	movea.l	#unk_A9A10,a0
+	movea.l	#BigFontMap,a0
 	adda.l	4(a0),a0
-.11EB4
+.loop	;IDA: loc_11EB4
 	move.w	4(a0,d1.w),d3
-	bsr.w	sub_11EDA
+	bsr.w	PutBigTile
 	move.w	(a0),d7
 	asl.w	#1,d7
 	add.w	d7,d1
 	move.w	4(a0,d1.w),d3
 	sub.w	d7,d1
 	addq.w	#1,d5
-	bsr.w	sub_11EDA
+	bsr.w	PutBigTile
 	subq.w	#1,d5
 	addq.w	#1,d4
 	addq.w	#2,d1
-	dbf	d2,.11EB4
+	dbf	d2,.loop
 	rts
-sub_11EDA
+PutBigTile	;IDA: sub_11EDA
 	add.w	d6,d3
 	movem.l	d1/a0,-(sp)
 	move.w	d5,d0
@@ -856,14 +856,14 @@ sub_11EDA
 	movem.l	(sp)+,d1/a0
 	rts
 AddSmallFont	;IDA: sub_11F04 (93 name)
-	move.w	d4,(word_FFB012).w
-	movea.l	#unk_AAC5A,a2
+	move.w	d4,(smallfontchars).w
+	movea.l	#SmallFontMap+8,a2
 	bra.w	DoDMA_clearCallbackPointer
 AddFramer	;IDA: sub_11F12 (93 name)
-	movea.l	#unk_55B86,a2
+	movea.l	#framermap+8,a2
 	move.w	d4,(framercset).w
 	bra.w	DoDMA_clearCallbackPointer
 AddTeamBlock	;IDA: sub_11F20 (93 name)
 	moveq	#2,d4
-	movea.l	#unk_ABA1C,a2
+	movea.l	#Teamblocksmap+8,a2
 	bra.w	DoDMA_clearCallbackPointer

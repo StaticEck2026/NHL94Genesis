@@ -31,10 +31,10 @@ eraser = $1197E			;bra.w at $17BC6
 FigureJoy = $17E42		;bsr.w at $17BEC (hockey94_09 range; no IDA label)
 UnpackNibbles = $10E88		;bsr.w at $17C30. IDA: sub_10E88
 WeightedRandomSelect = $10EB4		;bsr.w at $17C34. IDA: sub_10EB4
-unk_F8BF4 = $F8BF4		;movea.l #x at $17B28. 64 bytes per team
-unk_AFE12 = $AFE12		;movea.l #x at $17B7C
-unk_ABA14 = $ABA14		;movea.l #x at $17B9C
-unk_B425A = $B425A		;movea.l #x at $17A74. no IDA label (hidden in the string)
+TeamPalettes = $F8BF4		;movea.l #x at $17B28. 64 bytes per team (IDA: unk_F8BF4)
+TeamBitmaps = $AFE12		;movea.l #x at $17B7C (IDA: unk_AFE12)
+Teamblocksmap = $ABA14		;movea.l #x at $17B9C (IDA: unk_ABA14)
+EASportsMap = $B425A		;movea.l #x at $17A74. no IDA label (hidden in the string) (IDA: unk_B425A)
 
 ; Main segment code
 	include	attract94.asm

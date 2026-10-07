@@ -20,7 +20,7 @@ playoffseats = $5576		;#x at $17D24
 randomd0 = $11086		;bsr.w / Bcc.w at $17D18
 rtss2 = $15464			;bsr.w / Bcc.w at $18100
 ResolveGames = $18380		;bsr.w / Bcc.w at $18122. IDA: sub_18380
-sub_FE696 = $FE696		;jsr / jmp (x).l at $18144
+WriteLineData = $FE696		;jsr / jmp (x).l at $18144 (IDA: sub_FE696)
 
 ; Main segment code
 	include	hockey94_09.asm

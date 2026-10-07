@@ -2,7 +2,7 @@
 M68K_RAM equ $FFFF0000
 byte_FF1FFE equ $FFFF1FFE
 word_FF55BF equ $FFFF55BF
-unk_FFAFCA equ $FFFFAFCA
+;$FFFFAFCA is SortCords-SCstruct (IDA unk_FFAFCA)
 VSCRLPM equ $FFFFB000
 VSPRITES equ $FFFFB002
 VmMap1 equ $FFFFB004
@@ -12,7 +12,7 @@ Map2col1 equ $FFFFB00A
 VmMap3 equ $FFFFB00C
 Map3col1 equ $FFFFB00E
 word_FFB010 equ $FFFFB010
-word_FFB012 equ $FFFFB012
+smallfontchars equ $FFFFB012	;IDA: word_FFB012
 word_FFB014 equ $FFFFB014
 word_FFB016 equ $FFFFB016
 rinkvrcset equ $FFFFB018
@@ -41,8 +41,8 @@ word_FFB048 equ $FFFFB048
 SortCords equ $FFFFB04A
 word_FFB066 equ $FFFFB066
 word_FFB366 equ $FFFFB366
-unk_FFB64A equ $FFFFB64A
-unk_FFB6CA equ $FFFFB6CA
+;$FFFFB64A is SortCords+(12*SCstruct) (IDA unk_FFB64A)
+;$FFFFB6CA is SortCords+(13*SCstruct) (IDA unk_FFB6CA)
 puckx equ $FFFFB74A
 word_FFB74E equ $FFFFB74E
 pucky equ $FFFFB75E
@@ -55,8 +55,8 @@ puckx_nopuck equ $FFFFB7A8
 puckc equ $FFFFB7AA
 byte_FFB7AC equ $FFFFB7AC
 puck_pflags2 equ $FFFFB7AD
-unk_FFB7CA equ $FFFFB7CA
-unk_FFB7E2 equ $FFFFB7E2
+;$FFFFB7CA is SortCords+((puckscnum+1)*SCstruct) (IDA unk_FFB7CA)
+;$FFFFB7E2 is SortCords+((puckscnum+1)*SCstruct)+Zpos (IDA unk_FFB7E2)
 byte_FFB7E3 equ $FFFFB7E3
 Ylist equ $FFFFB84A
 OOlistpos equ $FFFFB86A
@@ -88,7 +88,7 @@ word_FFBD36 equ $FFFFBD36
 dword_FFBD4A equ $FFFFBD4A
 dword_FFBD4E equ $FFFFBD4E
 word_FFBD52 equ $FFFFBD52
-unk_FFBD68 equ $FFFFBD68
+CardPalette equ $FFFFBD68	;IDA: unk_FFBD68
 word_FFBD6A equ $FFFFBD6A
 word_FFBD82 equ $FFFFBD82
 word_FFBDA2 equ $FFFFBDA2
@@ -162,7 +162,7 @@ lty equ $FFFFBF7E
 iflags equ $FFFFBF80
 icingPlayer equ $FFFFBF81
 word_FFBF86 equ $FFFFBF86
-unk_FFBF8C equ $FFFFBF8C
+clockramend equ $FFFFBF8C	;IDA: unk_FFBF8C
 xc1 equ $FFFFBF8E
 yc1 equ $FFFFBF90
 yleader equ $FFFFBF92
@@ -175,11 +175,11 @@ deltay equ $FFFFBF9E
 collflag equ $FFFFBFA0
 evalue equ $FFFFBFA2
 mesarea equ $FFFFBFA4
-word_FFBFA6 equ $FFFFBFA6
-unk_FFBFC2 equ $FFFFBFC2
-unk_FFC008 equ $FFFFC008
-unk_FFC00A equ $FFFFC00A
-unk_FFC010 equ $FFFFC010
+TextBuffer equ $FFFFBFA6	;IDA: word_FFBFA6
+;$FFFFBFC2 is mesarea+30 (IDA unk_FFBFC2)
+PushWidthBuf equ $FFFFC008	;IDA: unk_FFC008
+;$FFFFC00A is PushWidthBuf+2 (IDA unk_FFC00A)
+PushNumberBuf equ $FFFFC010	;IDA: unk_FFC010
 byte_FFC012 equ $FFFFC012
 ltack equ $FFFFC014
 lastsfx equ $FFFFC016
@@ -219,7 +219,7 @@ cont3team equ $FFFFC32C
 cont4team equ $FFFFC32E
 HomeTeam equ $FFFFC330
 VisTeam equ $FFFFC332
-unk_FFC334 equ $FFFFC334
+TeamBlockMap equ $FFFFC334	;IDA: unk_FFC334. Map word buffer for CopyTeamBlockMapData and PrintTeamData (93 unk_FFC210)
 PenBuf equ $FFFFC3A4
 Pencntdwn equ $FFFFC3E6
 Penaltytimer equ $FFFFC3E8
@@ -254,9 +254,9 @@ dword_FFCA50 equ $FFFFCA50
 word_FFCA58 equ $FFFFCA58
 byte_FFCA62 equ $FFFFCA62
 byte_FFCACC equ $FFFFCACC
-unk_FFCD96 equ $FFFFCD96
+statsbuffer equ $FFFFCD96	;IDA: unk_FFCD96
 gsstruct equ $FFFFCE66
-unk_FFCED6 equ $FFFFCED6
+;$FFFFCED6 is gsstruct+(7*$10) (IDA unk_FFCED6)
 gamenum equ $FFFFCEE6
 postarts equ $FFFFCEE8
 bosgames equ $FFFFCEEA
@@ -264,7 +264,7 @@ gamelevel equ $FFFFCEEC
 potreeteam equ $FFFFCEEE
 pojoy equ $FFFFCEF0
 word_FFCEF2 equ $FFFFCEF2
-unk_FFCEF4 equ $FFFFCEF4
+potree equ $FFFFCEF4	;IDA: unk_FFCEF4
 PlList equ $FFFFCF14
 dword_FFCF20 equ $FFFFCF20
 dword_FFCF24 equ $FFFFCF24
@@ -302,20 +302,20 @@ word_FFD06E equ $FFFFD06E
 word_FFD070 equ $FFFFD070
 TmpOptLine2 equ $FFFFD072
 TempOptPlayMode equ $FFFFD074
-unk_FFD076 equ $FFFFD076
-unk_FFD088 equ $FFFFD088
-unk_FFD092 equ $FFFFD092
-unk_FFD176 equ $FFFFD176
+databuffer equ $FFFFD076	;IDA: unk_FFD076
+pwddatabuffer equ $FFFFD088	;IDA: unk_FFD088
+outputbuffer equ $FFFFD092	;IDA: unk_FFD092
+tpassbits equ $FFFFD176	;IDA: unk_FFD176
 byte_FFD180 equ $FFFFD180
 dword_FFD182 equ $FFFFD182
 byte_FFD186 equ $FFFFD186
-unk_FFD187 equ $FFFFD187
-unk_FFD18E equ $FFFFD18E
-unk_FFD19C equ $FFFFD19C
-unk_FFD1A4 equ $FFFFD1A4
-unk_FFD3A4 equ $FFFFD3A4
-unk_FFD3CC equ $FFFFD3CC
-unk_FFD3D4 equ $FFFFD3D4
+per_channel_attenuation_table equ $FFFFD187	;IDA: unk_FFD187
+per_channel_frequency_table equ $FFFFD18E	;IDA: unk_FFD18E
+per_channel_patch_table equ $FFFFD19C	;IDA: unk_FFD19C
+fm_voice_usage_table equ $FFFFD1A4	;IDA: unk_FFD1A4
+fm_channel_structs equ $FFFFD3A4	;IDA: unk_FFD3A4
+fm_channel_struct6 equ $FFFFD3CC	;IDA: unk_FFD3CC
+fm_track_slots equ $FFFFD3D4	;IDA: unk_FFD3D4
 BA_Team equ $FFFFD404
 BA_Sktr_SCnum equ $FFFFD406
 BA_Goalie_SCnum equ $FFFFD408
@@ -391,10 +391,10 @@ word_FFD5AA equ $FFFFD5AA
 DispAttribCtr equ $FFFFD5AC
 VertLineScrolling equ $FFFFD5AE
 PlayerScrollCtr equ $FFFFD5B0
-word_FFD5B2 equ $FFFFD5B2
+SelectedPlayerIdx equ $FFFFD5B2	;IDA: word_FFD5B2
 word_FFD5B4 equ $FFFFD5B4
 word_FFD5B6 equ $FFFFD5B6
-word_FFD5B8 equ $FFFFD5B8
+TestList equ $FFFFD5B8	;IDA: word_FFD5B8
 word_FFD6AC equ $FFFFD6AC
 word_FFD6AE equ $FFFFD6AE
 word_FFD6B0 equ $FFFFD6B0
@@ -439,13 +439,13 @@ word_FFDEEA equ $FFFFDEEA
 dword_FFDEEC equ $FFFFDEEC
 word_FFDEF0 equ $FFFFDEF0
 word_FFDEF2 equ $FFFFDEF2
-unk_FFFFF6 equ $FFFFFFF6
+;$FFFFFFF6: IDA unk_FFFFF6, not used
 Stack equ $FFFFFFFE
-unk_FFFFFF equ $FFFFFFFF
+;$FFFFFFFF: IDA unk_FFFFFF, not used
 Z80_RAM equ $A00000
 byte_A00083 equ $A00083
 byte_A0008E equ $A0008E
-unk_A02000 equ $A02000
+;$A02000 is Z80_RAM+$2000 (IDA unk_A02000)
 Z80_YM2612 equ $A04000
 ; ----------------------------------
 

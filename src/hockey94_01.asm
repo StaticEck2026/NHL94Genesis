@@ -29,11 +29,11 @@ Begin	;cold start, entered from Start. Clear RAM, init sound and menus, go to ti
 	jsr	(AllSndOff).l		;93 p_turnoff
 	jsr	(MusicVB).l		;93 p_music_vblank
 	jsr	(KillCrowd).l
-	jsr	(Unk_ControlsSetRelated).l
+	jsr	(Detect4WayPlay).l
 	move.w	#$FFFF,(word_FFBE86).w
 	jsr	(EASportsScreen).l	;94 only (attract94)
 	jsr	(InitSaveRAM).l		;94 only (sram94)
-	jsr	(sub_FE660).l
+	jsr	(ReadLineData).l
 	jsr	(HiScoreScreen).l	;94 only (attract94)
 	jsr	(LoadDefMenuOptions).l	;94 only (attract94). 93: DefaultMenus
 	move.w	(OptLine).w,(TmpOptLine2).w
@@ -54,7 +54,7 @@ StartGame	;reset game state for a new game, then start the first period
 .chkpen	clr.b	(gmode).w
 	cmpi.w	#1,(OptPen).w
 	bne.w	.0
-	bset	#5,(gmode).w		;gmoffs: offsides pen. is active
+	bset	#gmoffs,(gmode).w		;gmoffs: offsides pen. is active
 .0	cmpi.w	#1,(OptPlayMode).w
 	ble.w	.1			;IDA: loc_778C. OptPlayMode 0-1 keep the shot buffer
 	bsr.w	ClearShotData
@@ -79,7 +79,7 @@ StartGame	;reset game state for a new game, then start the first period
 
 ClearShotData	;IDA: sub_77E4. Clear $E4 words at $FFD092 (93: 49 words at $FFCB0A)
 	move.w	#$E3,d0
-	movea.w	#(unk_FFD092-M68K_RAM),a0
+	movea.w	#(outputbuffer-M68K_RAM),a0
 .0	clr.w	(a0)+			;IDA: loc_77EC
 	dbf	d0,.0
 	rts
@@ -87,11 +87,11 @@ ClearShotData	;IDA: sub_77E4. Clear $E4 words at $FFD092 (93: 49 words at $FFCB0
 restoreteams	;Put both teams' rosters on the bench
 	movea.w	#(HmShots-M68K_RAM),a2	;team 1
 	bsr.w	.r
-	adda.w	#$364,a2		;team 2 (tmsize, 93: $1A2)
+	adda.w	#tmsize,a2		;team 2 (tmsize, 93: $1A2)
 .r	;reset one team struct (a2), falls in for team 2
-	move.w	#6,$24(a2)		;tmap: no players in pen. box
+	move.w	#6,tmap(a2)		;tmap: no players in pen. box
 	moveq	#$32,d0			;(maxros-1)*2
-.0	move.w	#$FFFE,$66(a2,d0.w)	;tmpdst: -2 = all players on bench
+.0	move.w	#$FFFE,tmpdst(a2,d0.w)	;tmpdst: -2 = all players on bench
 	subq.w	#2,d0
 	bpl.s	.0
 	rts
@@ -109,7 +109,7 @@ ResetClock	;set period length and stop clock
 	asr.w	#1,d0
 	jsr	(randomd0).l
 	sub.w	d0,(word_FFB048).w	;length - random(length/2)
-	bset	#0,(gmode).w		;gmclock: stop clock
+	bset	#gmclock,(gmode).w		;gmclock: stop clock
 	rts
 
 GetPeriodTime	;IDA: ClockLength. Return d0 = period length in seconds for the period length option
@@ -144,8 +144,8 @@ StartPer	;start a period: reset stack, rink and clock, face off, run the game lo
 	bra.w	.ass			;IDA: loc_78CA
 .fo	move.l	#$1B,d0			;pfaceoff
 .ass	jsr	(assreplace).l		;face off starts period
-	bset	#2,(sflags2).w		;sf2drec: don't record
-	bclr	#4,(sflags).w		;sfwrap: reset replay stuff
+	bset	#sf2drec,(sflags2).w		;sf2drec: don't record
+	bclr	#sfwrap,(sflags).w		;sfwrap: reset replay stuff
 	move.w	#$FFFF,(lastsfx).w
 	move.l	#M68K_RAM,(recbpr).w	;replaystart
 	move.w	(vcount).w,(oldvcount).w
@@ -168,7 +168,7 @@ StartPer	;start a period: reset stack, rink and clock, face off, run the game lo
 Gameloop	;IDA: GameLoop. Main loop for game
 	bsr.w	DoGameFrame
 	bsr.w	demoread		;check if demo mode
-	btst	#0,(sflags).w		;sfpz
+	btst	#sfpz,(sflags).w		;sfpz
 	beq.s	Gameloop
 	bsr.w	Pausemode
 	bra.s	Gameloop
@@ -196,10 +196,10 @@ DoGameFrame	;wait for at least one vblank, then run one frame of game logic
 periodicevents	;IDA: periodiceevents. Called every time thru game loop with d7 = elapsed frames
 	jsr	(PenaltyManager).l
 	bsr.w	updatecrowdf
-	jsr	(sub_FE2C8).l
+	jsr	(RunArenaAnim).l
 	jsr	(updatesound).l
 	bsr.w	clockcont
-	btst	#7,(sflags).w		;sfhor
+	btst	#sfhor,(sflags).w		;sfhor
 	bne.w	rtss8			;exit if in horizontal mode
 	sub.w	d7,(lldisp).w		;count down for screen updates
 	bpl.w	rtss8
@@ -221,15 +221,15 @@ UpdateLineChange	;IDA: loc_79F8. Called once per second. Restore energy for play
 	bne.w	.ex			;exit if line changes are off
 	movea.w	#(HmShots-M68K_RAM),a2	;team 1
 	bsr.w	.notinprog
-	lea	$364(a2),a2		;team 2 (tmsize)
+	lea	tmsize(a2),a2		;team 2 (tmsize)
 .notinprog
 	moveq	#$32,d0			;(maxros-1)*2
-.b0	cmpi.w	#$FFFE,$66(a2,d0.w)	;tmpdst: -2 = bench, -1 = ice, 0+ = pen box
+.b0	cmpi.w	#$FFFE,tmpdst(a2,d0.w)	;tmpdst: -2 = bench, -1 = ice, 0+ = pen box
 	bne.w	.next
-	addi.w	#9,$32(a2,d0.w)		;tmpde: energy +9
-	cmpi.w	#$1000,$32(a2,d0.w)
+	addi.w	#9,tmpde(a2,d0.w)		;tmpde: energy +9
+	cmpi.w	#$1000,tmpde(a2,d0.w)
 	blt.w	.next
-	move.w	#$1000,$32(a2,d0.w)	;max energy
+	move.w	#$1000,tmpde(a2,d0.w)	;max energy
 .next	subq.w	#2,d0
 	bpl.s	.b0
 .ex	rts
@@ -305,7 +305,7 @@ updatecrowdf	;this is called every game loop with d7 = elapsed frames
 	rts
 
 clockcont	;monitor period clock and initiate various clock activated events
-	btst	#0,(gmode).w		;gmclock
+	btst	#gmclock,(gmode).w		;gmclock
 	bne.w	rtss8
 	tst.w	(gameclock).w
 	bne.w	rtss8
@@ -345,8 +345,8 @@ clockcont_0	;IDA: loc_7B5C. End of period. Also entered from puckfaceoff+B2
 
 .sc	move.l	#8,d0			;stanley cup assignment
 	moveq	#$B,d2			;all 12 players lose joystick control
-.t0	bclr	#3,$62(a3)		;pfjoycon, pflags(a3)
-	adda.w	#$80,a3			;SCstruct
+.t0	bclr	#pfjoycon,pflags(a3)		;pfjoycon, pflags(a3)
+	adda.w	#SCstruct,a3			;SCstruct
 	dbf	d2,.t0
 	movea.w	#(SortCords-M68K_RAM),a3
 .t3	moveq	#5,d2			;winning team's skaters celebrate
@@ -354,18 +354,18 @@ clockcont_0	;IDA: loc_7B5C. End of period. Also entered from puckfaceoff+B2
 	sub.w	(AwGoals).w,d1
 	beq.w	.eop			;tied
 	bpl.w	.t2			;home team leads
-	adda.w	#$300,a3		;6*SCstruct: away team leads
-.t2	tst.w	$34(a3)			;position
+	adda.w	#6*SCstruct,a3		;6*SCstruct: away team leads
+.t2	tst.w	position(a3)			;position
 	ble.w	.n2			;skip the goalie
 	jsr	(assinsert).l		;first skater gets d0, the rest get score
 	move.l	#7,d0			;score assignment
-.n2	adda.w	#$80,a3			;SCstruct
+.n2	adda.w	#SCstruct,a3			;SCstruct
 	dbf	d2,.t2
 .eog	jsr	(clrPenBuf).l		;end of game (93 ClearPenaltyBuffer)
 	addi.w	#$3E8,(crowdlevel).w	;1000
 	bset	#0,(gmode).w		;gmclock: stop clock
 	bset	#6,(gmode).w		;set at end of game
-	jsr	(sub_FF88E).l
+	jsr	(ClearPenalties).l
 	move.w	#4,d0			;PenEOG
 	jmp	AddPenalty2
 
@@ -438,9 +438,9 @@ Pausemode	;IDA: PauseMode. Game is in pause mode now
 	lea	SetupPauseScreen(pc),a1	;screen draw routine
 	btst	#0,(word_FFC2FA).w
 	beq.w	.chk2			;IDA: loc_7D38
-	movea.l	#unk_19664,a0		;94 only: third item list
+	movea.l	#PauseMenuItems,a0		;94 only: third item list
 	bra.w	.0
-.chk2	btst	#2,$30(a2)		;tmflags
+.chk2	btst	#2,tmflags(a2)		;tmflags
 	beq.w	.0			;IDA: loc_7D48
 	movea.l	#PauseText2,a0		;alternate item list (93 PauseText2)
 .0	bsr.w	InitMenuState		;93 InitMenuState
@@ -456,15 +456,15 @@ Pausemode	;IDA: PauseMode. Game is in pause mode now
 	move.w	(sp)+,(sflags).w
 	btst	#7,(sflags).w		;sfhor
 	beq.w	.clr			;IDA: loc_7D8A
-	jsr	(sub_16CE0).l
+	jsr	(ReloadRefHorTiles).l
 	jsr	(SetHor).l
 	bra.w	.hor			;IDA: loc_7D90
 .clr	jsr	(ClrHor).l
 .hor	movea.l	#VDP_DATA,a0
 	move.w	#$9100,4(a0)
 	move.w	#$9200,4(a0)
-	bset	#3,(disflags).w		;dfclock: clock needs update
-	bclr	#0,(sflags).w		;sfpz
+	bset	#dfclock,(disflags).w		;dfclock: clock needs update
+	bclr	#sfpz,(sflags).w		;sfpz
 	jsr	(PrintScores1).l
 	jsr	(setvideo).l
 	move.w	#$18,(palcount).w
@@ -491,11 +491,11 @@ SetupPauseScreen	;IDA: sub_7DCE. Draw routine for the pause menu (92 Pausemode .
 seta2	;IDA: sub_7E0E. Set a2 to the team struct of the pause joystick
 	;also called from sub_7E88 (93 HandleMenuInput)
 	movea.w	#(HmShots-M68K_RAM),a2
-	btst	#1,(sflags).w		;sfpj
+	btst	#sfpj,(sflags).w		;sfpj
 	beq.w	.seta20			;IDA: loc_7E26
 	cmpi.w	#1,(cont2team).w
 	bra.w	.seta21			;IDA: loc_7E2C
 .seta20	cmpi.w	#1,(cont1team).w
 .seta21	beq.w	.x			;IDA: locret_7E34
-	adda.w	#$364,a2		;tmsize
+	adda.w	#tmsize,a2		;tmsize
 .x	rts

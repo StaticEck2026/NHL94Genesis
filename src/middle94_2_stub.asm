@@ -23,12 +23,10 @@ remap = $10EE0			;bsr.w / Bcc.w at $11766
 rtss2 = $15464			;dc.l at $11AF4 (ControlCodeJumpTable entry 0; the rts at $15464)
 PrintStringFromList = $13508		;bsr.w / Bcc.w at $11C7E. IDA: sub_13508
 bfasciicon = $1916A		;#x at $11E92. IDA: unk_1916A
-unk_55B86 = $55B86		;#x at $11F12
-unk_A9A10 = $A9A10		;#x at $11EAA
-unk_AAC52 = $AAC52		;#x at $11AAE
-unk_AAC5A = $AAC5A		;#x at $11F08
-unk_ABA1C = $ABA1C		;#x at $11F22
-unk_BE26A = $BE26A		;#x at $11ABE
+BigFontMap = $A9A10		;#x at $11EAA (IDA: unk_A9A10)
+SmallFontMap = $AAC52		;#x at $11AAE (IDA: unk_AAC52)
+Teamblocksmap = $ABA14		;#x at $11F22 (unk_ABA1C is Teamblocksmap+8)
+PrintFont2Map = $BE26A		;#x at $11ABE (IDA: unk_BE26A)
 
 ; Main segment code
 	include	middle94_2.asm

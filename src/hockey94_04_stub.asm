@@ -36,8 +36,8 @@ rtss2 = $15464			;bsr.w / Bcc.w at $145F2. an rts
 sfx = $11132			;bsr.w / Bcc.w at $14746. middle94_1
 sroot = $110BE			;bsr.w / Bcc.w at $145D0. middle94_1
 play_new_song = $1A304		;bsr.w / Bcc.w at $14838. IDA: sub_1A304
-sub_F37C = $F37C			;jsr / jmp (x).l at $14814. logic94_4
-sub_FEFF0 = $FEFF0		;jsr / jmp (x).l at $14A7E
+EndPenaltyShotPlay = $F37C		;jsr / jmp (x).l at $14814. logic94_4 (IDA: sub_F37C)
+EndOneTimer = $FEFF0		;jsr / jmp (x).l at $14A7E (IDA: sub_FEFF0)
 
 ; Main segment code
 	include	hockey94_04.asm

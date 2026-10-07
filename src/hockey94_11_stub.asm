@@ -66,12 +66,12 @@ PlayerStatsScreen = $945A			;dc.l in the menu lists, retail value. no IDA label
 CrowdMeterScreen = $9A2A			;dc.l in the menu lists, retail value. no IDA label
 TimeoutMenu = $9D7A			;dc.l in the menu lists, retail value. no IDA label
 SelectGoalieMenu = $9DE6			;dc.l in the menu lists, retail value. no IDA label
-sub_FA07E = $FA07E		;dc.l in the menu lists, retail value. no IDA label
-sub_FBC14 = $FBC14		;dc.l in the menu lists, retail value. no IDA label
-sub_FC620 = $FC620		;dc.l in the menu lists, retail value. no IDA label
-sub_FD90C = $FD90C		;dc.l in the menu lists, retail value. no IDA label
+PlayerCards = $FA07E		;dc.l in the menu lists, retail value. no IDA label (IDA: sub_FA07E)
+RecordHoldersScreen = $FBC14		;dc.l in the menu lists, retail value. no IDA label (IDA: sub_FBC14)
+ShootoutShooters = $FC620		;dc.l in the menu lists, retail value. no IDA label (IDA: sub_FC620)
+PeriodStatsScreen = $FD90C		;dc.l in the menu lists, retail value. no IDA label (IDA: sub_FD90C)
 GameStatisticsScreen = $FDC5A		;dc.l in the menu lists, retail value. no IDA label
-sub_FE1D8 = $FE1D8		;dc.l in the menu lists, retail value. no IDA label
+ManualGoalieMenu = $FE1D8		;dc.l in the menu lists, retail value. no IDA label (IDA: sub_FE1D8)
 
 ; Main segment code
 	include	hockey94_11.asm

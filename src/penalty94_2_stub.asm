@@ -55,19 +55,19 @@ setupice_highlight = $16BAC		;bsr.w / Bcc.w at $1365C. 93 setupice_highlight. ID
 InitMenuState = $7E36			;jsr (x).w at $13158. 93 InitMenuState. IDA: sub_7E36
 DrawMenuScreen = $7E46			;jsr (x).w at $13784. 93 DrawMenuScreen. IDA: sub_7E46
 PrintTeamData = $8078			;jsr / jmp (x).l at $12D38. 93 PrintTeamData. IDA: sub_8078
-sub_F9CDE = $F9CDE		;jsr / jmp (x).l at $130F6
+UpdateRecords = $F9CDE		;jsr / jmp (x).l at $130F6 (IDA: sub_F9CDE)
 PerLabels = $191E4		;#x at $12C48. 93 PerLabels. IDA: unk_191E4
-unk_191F8 = $191F8		;#x at $12C5C. 94 period names
-unk_19A00 = $19A00		;#x at $13146. 94 item list (word_FFC2FA bit 0)
+PenShotPenalties2 = $191F8		;#x at $12C5C. 94 period names (IDA: unk_191F8)
+ShootoutIntermissionMenu = $19A00		;#x at $13146. 94 item list (word_FFC2FA bit 0) (IDA: unk_19A00)
 StartGameText = $19A84		;dc.l in .sslist (93 StartGameText). IDA: unk_19A84
 StartGameTextPO = $19B38		;dc.l in .sslist (93 StartGameTextPO). IDA: unk_19B38
 IntermissionText = $19C04		;dc.l in .sslist (93 IntermissionText). IDA: unk_19C04
 ExitGameText = $19D60		;dc.l in .sslist (93 ExitGameText). IDA: unk_19D60
 ExitGameTextPO = $19E74		;dc.l in .sslist (93 ExitGameTextPO). IDA: unk_19E74
-unk_5C410 = $5C410		;#x at $1367A. 93 RefsMap+8 (logic94_4 uses this name)
-unk_A892A = $A892A		;#x at $13114. 93 ZamSprites+8
-unk_AB920 = $AB920		;#x at $12E8E. 93 EnergyBarMap
-unk_B3530 = $B3530		;#x at $12D84. 93 EASNmap
+RefsMap = $5C408		;#x at $1367A. 93 RefsMap+8 (logic94_4 uses this name) (unk_5C410 is RefsMap+8)
+ZamFrameList = $A8922		;#x at $13114. 93 ZamSprites+8 (unk_A892A is ZamFrameList+8)
+EnergyBarMap = $AB920		;#x at $12E8E. 93 EnergyBarMap (IDA: unk_AB920)
+EASNmap = $B3530		;#x at $12D84. 93 EASNmap (IDA: unk_B3530)
 waitxsr = $111D0			;bsr.w / Bcc.w at $13178. middle94_1 (93 IntermissionLoop)
 
 ; Main segment code
