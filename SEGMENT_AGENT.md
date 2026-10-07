@@ -4,7 +4,7 @@ This file is the queue and the history. Do not rewrite it as a whole file. Edit 
 
 ## Current segment
 
-None. Every ROM map row is matched (checksum94 was the last). What is left is the full build: the Full build to-do items in History (names other stubs use, `src/hockey94.asm` includes and the `dcb.b` fill size).
+None. Every ROM map row is matched, and the full build (`npm.cmd run build:retail`) is byte-identical to `lst/nhl94.bin`. See the last History entry.
 
 ## Sources
 
@@ -72,12 +72,14 @@ The style source is https://github.com/abdulahmad/NHLPA93Genesis.
 
 The first row that is not matched is the current segment. Ranges are provisional until that row is matched.
 
+The rows are in ROM address order, the same order as the includes in `src/hockey94.asm`. hockey94_08 and hockey94_07 sit between the high94 rows. The `Org` column is the stub `org` and the `seg:` verify address.
+
 | File | Status | Org, start label | Note |
 |---|---|---|---|
 | main94 | matched | org 0 | 778 bytes, `$000000-$000309`. vectors, header, Start, SegaInit |
 | teamdata94 | matched | org $30A | 22546 bytes, `$00030A-$005B1B`. TeamList, 28 team blocks, playoffseats, Credits |
 | frames94 | matched | org $5B1C, SPAList | 7062 bytes, `$005B1C-$0076B1`. SPAlist, 66 SPA tables |
-| ram94 | skipped | no org (equates only)
+| ram94 | skipped | no org (equates only) | equates only, no ROM bytes: no byte verify is possible. Skipped by the user; the queue goes past it. Included in hockey94.asm after frames94 |
 | hockey94_01 | matched | org $76B2, VBjsr | 1924 bytes, `$0076B2-$007E35`. VBjsr, Begin ... Pausemode, SetupPauseScreen, seta2 |
 | menu94 | matched | org $7E36, InitMenuState | 670 bytes, `$007E36-$0080D3`. InitMenuState (IDA sub_7E36) ... PrintTeamData, vcountwait, as 93 menu93 |
 | stats94 | matched | org $80D4, ShowScores | 7932 bytes, `$0080D4-$009FCF`. ShowScores ... _rjoy, as 93 stats93: the stats screens (menu item handlers) |
