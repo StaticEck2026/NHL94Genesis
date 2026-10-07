@@ -484,7 +484,7 @@ PauseText2	;IDA: unk_1988C (93 name). Pause menu item list without Timeout (Paus
 	dc.l	ManualGoalieMenu	;94 only
 	String	$FF
 
-ShootoutIntermissionMenu	;IDA: unk_19A00. 94 only: Intermission menu in Shootout (word_FFC2FA bit 0; penalty94_2)
+ShootoutIntermissionMenu	;IDA: unk_19A00. 94 only: Intermission menu in Shootout (gmode2 bit 0; penalty94_2)
 	String	$FE,5
 	String	$FE,4
 	String	'  Start Shootout  '

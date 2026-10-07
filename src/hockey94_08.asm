@@ -3,7 +3,7 @@
 ;	and the start / demo exits, setoptions only builds the screen, and GameSetUp_2 waits for a pad (93 .top / .wait). The 93 setoptions
 ;	locals are 94 routines: MoveMenuFrame (.nms), GameSetUp_3 (.IncItem), WrapOption (.iilimit), PrintOptions (.ps), GameSetUp_4 (.psd),
 ;	PrintOptTeamName (.psdtp), SetFrameRect (.setrect), SetupDemo (.demo), SetupStart (.ex), OptionLimits (.pslim), OptionValueOffsets (.pl), OptionNames (.text).
-;	94 adds the Goalies and User Records options (9 lines, 6 shown, scrolled by word_FFD422), Shootout, four way play, the team logo
+;	94 adds the Goalies and User Records options (9 lines, 6 shown, scrolled by setupfirstline), Shootout, four way play, the team logo
 ;	blocks (DrawHomeBlock / DrawVisBlock) and player cards with user records (PlayerCardTimer, PlayerCardScreen). The 93 team block roster players
 ;	(UpdateBothTeamDisplays ... AddTeamSpriteFrame) are not here (UpdateBothTeamDisplays is called in their place). VBlank_SetOptions is attract94; DefaultMenus, NewPO, MakeTree and
 ;	FigureJoy are hockey94_09. This range is in the 94 code at the end of the ROM, after the hot / cold player code (GetHotColdTotal) and
@@ -20,7 +20,7 @@
 ;	fixopcodes.js patches the cmp encoding after assembly.
 ;	Options (d7 = line * 2, the offset from OptPlayMode): 0 OptPlayMode (Regular Season, Continue Playoffs, New Playoffs, New
 ;	Playoffs/7 game, Shootout), 2 OptNOP, 4 Opt1Team, 6 Opt2Team, 8 OptPerlen, $A OptGoalie, $C OptUserRec (0 On), $E OptPen (0 Off),
-;	$10 OptLine (0 On, 2 Auto). word_FFD42E bits: 0 player card up, 1 card side (visitors), 2 / 3 home / visitors block drawn,
+;	$10 OptLine (0 On, 2 Auto). setupcardflags bits: 0 player card up, 1 card side (visitors), 2 / 3 home / visitors block drawn,
 ;	5 C pressed, 6 / 7 home / visitors logo shown. Pad bits: ubut 0, dbut 1, lbut 2, rbut 3, cbut 5, sbut 7.
 ;	printz String first byte, negated: low 2 bits = map, the rest << 9 = printa ($FF / $FE map 1 / 2, $BF map 1 + priority).
 
@@ -32,12 +32,12 @@ GameSetUp	;IDA name. 94 game setup screen, called from PeriodOver (93 PeriodOver
 	jsr	(ReadPassBits).l	;(93 ReadPassBits)
 	move.w	(TmpOptLine2).w,(OptLine).w	;undo the start changes of SetupStart (Auto line changes, Shootout)
 	move.w	(TempOptPlayMode).w,(OptPlayMode).w
-	bclr	#1,(byte_FFC2FC).w
+	bclr	#1,(sflags7).w
 	jsr	(ClearGameStats).l
 	jsr	(ReadNameLog).l	;read the SRAM name list
 	bsr.w	setoptions	;build the screen
-	clr.w	(word_FFD422).w	;first menu line shown
-	clr.w	(word_FFD424).w
+	clr.w	(setupfirstline).w	;first menu line shown
+	clr.w	(setupprevline).w
 	bsr.w	PrintOptionNames	;option names
 	tst.w	(demoflag).w	;clear after a demo (93 .keep)
 	bne.w	.shootout	;keep the teams
@@ -65,11 +65,11 @@ GameSetUp	;IDA name. 94 game setup screen, called from PeriodOver (93 PeriodOver
 	clr.w	d0
 	bsr.w	MoveMenuFrame	;frame the line
 	bsr.w	FixModeOptions	;print the options
-	move.w	(HomeTeam).w,(word_FFD42A).w
-	move.w	(HomeTeam).w,(word_FFD428).w
+	move.w	(HomeTeam).w,(setuphome).w
+	move.w	(HomeTeam).w,(logoteam).w
 	bsr.w	DrawHomeBlock	;home team block
-	move.w	(VisTeam).w,(word_FFD42C).w
-	move.w	(VisTeam).w,(word_FFD428).w
+	move.w	(VisTeam).w,(setupvis).w
+	move.w	(VisTeam).w,(logoteam).w
 	bsr.w	DrawVisBlock	;visitors team block
 	move.w	#$18,(palcount).w	;24
 	bclr	#2,(disflags).w	;dfng: fade in graphics now
@@ -192,54 +192,54 @@ GameSetUp	;IDA name. 94 game setup screen, called from PeriodOver (93 PeriodOver
 	move.w	(Opt1Team).w,(HomeTeam).w	;Regular Season and Shootout: the menu teams
 	move.w	(Opt2Team).w,(VisTeam).w
 .19	;IDA: loc_F75FE
-	move.w	(HomeTeam).w,(word_FFD428).w
-	btst	#6,(word_FFD42E).w	;home logo shown?
+	move.w	(HomeTeam).w,(logoteam).w
+	btst	#6,(setupcardflags).w	;home logo shown?
 	beq.w	.20
 	movem.w	d0,-(sp)
-	move.w	(word_FFD42A).w,d0
+	move.w	(setuphome).w,d0
 	cmp.w	(HomeTeam).w,d0
 	movem.w	(sp)+,d0
 	beq.w	.21
 .20	;IDA: loc_F7622
-	move.w	(HomeTeam).w,(word_FFD42A).w
+	move.w	(HomeTeam).w,(setuphome).w
 	bsr.w	DrawHomeBlock
 .21	;IDA: loc_F762C
-	btst	#7,(word_FFD42E).w	;visitors logo shown?
+	btst	#7,(setupcardflags).w	;visitors logo shown?
 	beq.w	.22
 	movem.w	d0,-(sp)
-	move.w	(word_FFD42C).w,d0
+	move.w	(setupvis).w,d0
 	cmp.w	(VisTeam).w,d0
 	movem.w	(sp)+,d0
 	beq.w	.23
 .22	;IDA: loc_F764A
-	move.w	(VisTeam).w,(word_FFD42C).w
-	move.w	(VisTeam).w,(word_FFD428).w
+	move.w	(VisTeam).w,(setupvis).w
+	move.w	(VisTeam).w,(logoteam).w
 	bsr.w	DrawVisBlock
-	move.w	(HomeTeam).w,(word_FFD428).w
+	move.w	(HomeTeam).w,(logoteam).w
 .23	;IDA: loc_F7660
 	tst.w	(sp)+
 	bra.w	.25	;redraw
 	move.w	(sp)+,d0	;IDA dc.b, no xref: an older copy of the team block update above
 	cmp.w	(VisTeam).w,d0
 	beq.w	.25
-	move.w	(VisTeam).w,(word_FFD428).w
+	move.w	(VisTeam).w,(logoteam).w
 	movem.w	d0,-(sp)
 	move.w	(VisTeam).w,d0
 	cmp.w	(VisTeam).w,d0
 	movem.w	(sp)+,d0
 	beq.w	.24
-	move.w	(VisTeam).w,(word_FFD42C).w
+	move.w	(VisTeam).w,(setupvis).w
 	bsr.w	DrawVisBlock
 .24
 	movem.w	d0,-(sp)
-	move.w	(word_FFD42A).w,d0
+	move.w	(setuphome).w,d0
 	cmp.w	(HomeTeam).w,d0
 	movem.w	(sp)+,d0
 	beq.w	.25
-	move.w	(HomeTeam).w,(word_FFD42A).w
-	move.w	(HomeTeam).w,(word_FFD428).w
+	move.w	(HomeTeam).w,(setuphome).w
+	move.w	(HomeTeam).w,(logoteam).w
 	bsr.w	DrawHomeBlock
-	move.w	(VisTeam).w,(word_FFD428).w
+	move.w	(VisTeam).w,(logoteam).w
 .25	;IDA: loc_F76BE
 	bsr.w	FixModeOptions
 	bra.w	.loop
@@ -248,28 +248,28 @@ j_NewPO	;IDA name. New playoffs: jmp NewPO (hockey94_09; 93 SelectRandomPlayoffT
 	jmp	NewPO
 GoContinuePlayoffs	;IDA: sub_F76CE. 94 only. Continue playoffs: jmp ContinuePlayoffs (hockey94_09; 93 NewPO). Called from GameSetUp
 	jmp	ContinuePlayoffs
-MoveMenuFrame	;IDA: sub_F76D4. 93 setoptions .nms: move the menu frame by d0 (+2 / -2 lines). 94 shows 6 of the 9 lines and scrolls: word_FFD422 = first line shown
-	;(0-3), word_FFD424 = the one before (word_FFC2F6 bit 2 set on a scroll; FixModeOptions reprints the names when they differ). Continue playoffs
+MoveMenuFrame	;IDA: sub_F76D4. 93 setoptions .nms: move the menu frame by d0 (+2 / -2 lines). 94 shows 6 of the 9 lines and scrolls: setupfirstline = first line shown
+	;(0-3), setupprevline = the one before (sflags5 bit 2 set on a scroll; FixModeOptions reprints the names when they differ). Continue playoffs
 	;skips lines 1-3, new playoffs line 3 (Team 2). The old frame is erased by redrawing the SetupMenuMap background under it. Called from GameSetUp
 	move.w	d7,d3
 .optionup
-	bclr	#2,(word_FFC2F6).w
+	bclr	#2,(sflags5).w
 	tst.w	d0
 	bpl.w	.optiondown
 	move.w	d0,-(sp)
 	move.w	d7,d0
 	asr.w	#1,d0
-	cmp.w	(word_FFD422).w,d0
+	cmp.w	(setupfirstline).w,d0
 	bne.w	.noscroll
-	move.w	(word_FFD422).w,(word_FFD424).w
-	bset	#2,(word_FFC2F6).w
-	subq.w	#1,(word_FFD422).w
+	move.w	(setupfirstline).w,(setupprevline).w
+	bset	#2,(sflags5).w
+	subq.w	#1,(setupfirstline).w
 	bpl.w	.noscroll
-	clr.w	(word_FFD422).w
+	clr.w	(setupfirstline).w
 .noscroll
 	move.w	(sp)+,d0
 .optiondown
-	move.w	d7,(word_FFBF12).w
+	move.w	d7,(TempWord1).w
 	add.w	d0,d7
 	bpl.w	.0
 	clr.w	d7
@@ -279,30 +279,30 @@ MoveMenuFrame	;IDA: sub_F76D4. 93 setoptions .nms: move the menu frame by d0 (+2
 	move.w	d0,-(sp)
 	move.w	d7,d0
 	asr.w	#1,d0
-	sub.w	(word_FFD422).w,d0
+	sub.w	(setupfirstline).w,d0
 	cmp.w	#5,d0
 	bgt.w	.scrolldown
 	bra.w	.2
 .scrolldown
-	move.w	(word_FFD422).w,(word_FFD424).w
-	bset	#2,(word_FFC2F6).w
-	addq.w	#1,(word_FFD422).w
+	move.w	(setupfirstline).w,(setupprevline).w
+	bset	#2,(sflags5).w
+	addq.w	#1,(setupfirstline).w
 	move.w	d7,d0
 	asr.w	#1,d0
-	sub.w	(word_FFD422).w,d0
+	sub.w	(setupfirstline).w,d0
 	cmp.w	#5,d0
 	ble.w	.1
-	addq.w	#1,(word_FFD422).w
+	addq.w	#1,(setupfirstline).w
 .1	;IDA: loc_F7756
-	cmpi.w	#3,(word_FFD422).w
+	cmpi.w	#3,(setupfirstline).w
 	ble.w	.2
-	move.w	#3,(word_FFD422).w
+	move.w	#3,(setupfirstline).w
 .2	;IDA: loc_F7766
 	move.w	(sp)+,d0
 .3	;IDA: loc_F7768
-	btst	#2,(word_FFC2F6).w
+	btst	#2,(sflags5).w
 	bne.w	.4
-	move.w	(word_FFD422).w,(word_FFD424).w
+	move.w	(setupfirstline).w,(setupprevline).w
 .4	;IDA: loc_F7778
 	cmp.w	#$12,d7	;past the last line (Line Changes)
 	blt.w	.contplayoffs
@@ -324,8 +324,8 @@ MoveMenuFrame	;IDA: sub_F76D4. 93 setoptions .nms: move the menu frame by d0 (+2
 .5	;IDA: loc_F77B6
 	bsr.w	SetMenuArea	;printx $10, printy $E, 23 x 13
 	movem.l	d0-d7/a0-a6,-(sp)
-	move.w	(word_FFD426).w,d4
-	movea.l	#SetupMenuMap,a0	;menu background: redraw that part (word_FFC2F8 bit 0) over the old frame
+	move.w	(setupmenuchars).w,d4
+	movea.l	#SetupMenuMap,a0	;menu background: redraw that part (sflags6 bit 0) over the old frame
 	movea.l	a0,a1
 	movea.l	a0,a2
 	adda.l	(a2)+,a0
@@ -337,9 +337,9 @@ MoveMenuFrame	;IDA: sub_F76D4. 93 setoptions .nms: move the menu frame by d0 (+2
 	subi.w	#$E,d1
 	moveq	#$17,d2
 	moveq	#0,d5
-	bset	#0,(word_FFC2F8).w
+	bset	#0,(sflags6).w
 	jsr	(dobitmap).l
-	bclr	#0,(word_FFC2F8).w
+	bclr	#0,(sflags6).w
 	movem.l	(sp)+,d0-d7/a0-a6
 	move.w	d7,d3
 	bsr.w	SetFrameRect	;the new frame
@@ -351,9 +351,9 @@ SetMenuArea	;IDA: sub_F780C. 94 only. Set the menu area for MoveMenuFrame: print
 	move.w	#$17,d0
 	move.w	#$D,d1
 	rts
-SetFrameRectUnused	;no IDA label (was sub_F7822) (IDA dc.b, no xref). An unused copy of SetFrameRect without its printz that uses word_FFD424 and stops at row $18
+SetFrameRectUnused	;no IDA label (was sub_F7822) (IDA dc.b, no xref). An unused copy of SetFrameRect without its printz that uses setupprevline and stops at row $18
 	add.w	d3,(printy).w
-	move.w	(word_FFD424).w,d0
+	move.w	(setupprevline).w,d0
 	add.w	d0,d0
 	sub.w	d0,(printy).w
 	cmpi.w	#$18,(printy).w
@@ -370,12 +370,12 @@ SetFrameRectUnused	;no IDA label (was sub_F7822) (IDA dc.b, no xref). An unused 
 	bne.w	rtsSetup
 	moveq	#5,d1
 	rts
-SetFrameRect	;IDA: sub_F7864. 93 setoptions .setrect: frame position for line d3 (row $E + d3 - word_FFD422 * 2), 23 x 3, or 23 x 5 for Team 1 in new playoffs (93 22 x 3 / 5). Called from
+SetFrameRect	;IDA: sub_F7864. 93 setoptions .setrect: frame position for line d3 (row $E + d3 - setupfirstline * 2), 23 x 3, or 23 x 5 for Team 1 in new playoffs (93 22 x 3 / 5). Called from
 	;MoveMenuFrame
 	jsr	(printz).l
 	String	$FF,$10,$E	;IDA: ori.b (and dropped a word)
 	add.w	d3,(printy).w	;2 rows per line
-	move.w	(word_FFD422).w,d0
+	move.w	(setupfirstline).w,d0
 	add.w	d0,d0
 	sub.w	d0,(printy).w
 	moveq	#$17,d0
@@ -390,8 +390,8 @@ SetFrameRect	;IDA: sub_F7864. 93 setoptions .setrect: frame position for line d3
 rtsSetup	;IDA: locret_F78A0. IDA label. The shared rts; GameSetUp_3, GameSetUp_4, SetFrameRectUnused and WrapOption branch to it
 	rts
 FixModeOptions	;IDA: sub_F78A2. 94 only. Fix the options a mode does not allow, then print them: Shootout and Demo set User Records Off, Demo sets both goalies to
-	;Auto Control. Reprint the option names (PrintOptionNames) after a scroll, then the values (PrintOptions) in the setup font (word_FFC2F8 bit 3: print2
-	;uses word_FFBF52). Called from GameSetUp
+	;Auto Control. Reprint the option names (PrintOptionNames) after a scroll, then the values (PrintOptions) in the setup font (sflags6 bit 3: print2
+	;uses setupfontchars). Called from GameSetUp
 	movem.l	d0-d7/a0-a6,-(sp)
 	cmpi.w	#4,(OptPlayMode).w
 	bne.w	.0
@@ -404,22 +404,22 @@ FixModeOptions	;IDA: sub_F78A2. 94 only. Fix the options a mode does not allow, 
 	tst.w	(OptNOP).w
 	bne.w	.2
 	move.w	#0,(OptGoalie).w
-	move.w	#0,(word_FFD05A).w
-	move.w	#0,(word_FFD05C).w
+	move.w	#0,(goaliemode1).w
+	move.w	#0,(goaliemode2).w
 	tst.w	(OptNOP).w
 	bne.w	.2
 	move.w	#1,(OptGoalie).w	;Auto Control
-	move.w	#1,(word_FFD05A).w	;both teams
-	move.w	#1,(word_FFD05C).w
+	move.w	#1,(goaliemode1).w	;both teams
+	move.w	#1,(goaliemode2).w
 .2	;IDA: loc_F78F8
-	move.w	(word_FFD422).w,d0
-	cmp.w	(word_FFD424).w,d0
+	move.w	(setupfirstline).w,d0
+	cmp.w	(setupprevline).w,d0
 	beq.w	.3
 	bsr.w	PrintOptionNames
 .3	;IDA: loc_F7908
-	bset	#3,(word_FFC2F8).w
+	bset	#3,(sflags6).w
 	bsr.w	PrintOptions
-	bclr	#3,(word_FFC2F8).w
+	bclr	#3,(sflags6).w
 	movem.l	(sp)+,d0-d7/a0-a6
 	rts
 OptionLimits	;IDA: unk_F791E. Number of values of each option (93 setoptions .pslim)
@@ -587,7 +587,7 @@ PrintOptions	;IDA: sub_F7B20. 93 setoptions .ps: limit each option (GameSetUp_3 
 	bsr.w	GameSetUp_3
 	movem.l	d7,-(sp)
 	asr.w	#1,d7
-	cmp.w	(word_FFD422).w,d7
+	cmp.w	(setupfirstline).w,d7
 	movem.l	(sp)+,d7
 	blt.w	.0
 	bsr.w	GameSetUp_4
@@ -597,7 +597,7 @@ PrintOptions	;IDA: sub_F7B20. 93 setoptions .ps: limit each option (GameSetUp_3 
 	bsr.w	PrintScrollMarks
 	move.w	d6,d7
 	jsr	(DrawMatchupBitmaps).l
-	btst	#0,(word_FFD42E).w
+	btst	#0,(setupcardflags).w
 	bne.w	.x
 	jsr	(ResetCardTimer).l
 .x	;IDA: locret_F7B64
@@ -606,7 +606,7 @@ GameSetUp_4	;IDA name. 93 setoptions .psd: print the value of option d7 at x $11
 	;Per. Length in Shootout prints 'N/A'; Players with FourWayPlay uses the second list (+$B0). Called from PrintOptions
 	jsr	(printz).l
 	String	$BF,$11,$10	;IDA: ori.b / move.b d0,d0
-	move.w	(word_FFD422).w,d0
+	move.w	(setupfirstline).w,d0
 	add.w	d0,d0
 	sub.w	d0,(printy).w
 	add.w	d7,(printy).w
@@ -642,7 +642,7 @@ GameSetUp_4	;IDA name. 93 setoptions .psd: print the value of option d7 at x $11
 PrintScrollMarks	;IDA: sub_F7BFA. 94 only. Print the scroll marks at x 2: '}' at row $19 when more lines follow (first line < 3), '{' at row $F when lines are above (first line > 0), else a space
 	move.w	#$19,(printy).w
 	movea.l	#ScrollClearTxt,a1
-	cmpi.w	#3,(word_FFD422).w
+	cmpi.w	#3,(setupfirstline).w
 	beq.w	.0
 	cmpi.w	#4,(OptPlayMode).w
 	beq.w	.0
@@ -652,7 +652,7 @@ PrintScrollMarks	;IDA: sub_F7BFA. 94 only. Print the scroll marks at x 2: '}' at
 	jsr	(print).l
 	movea.l	#ScrollClearTxt,a1
 	move.w	#$F,(printy).w
-	tst.w	(word_FFD422).w
+	tst.w	(setupfirstline).w
 	beq.w	.1
 	movea.l	#ScrollUpTxt,a1
 .1	;IDA: loc_F7C46
@@ -737,13 +737,14 @@ LineChangeValues	;no IDA label (was unk_F802E). Line Changes (94 adds Auto)
 	String	'On                  '
 	String	'Off                 '
 	String	'Auto                '
-PrintOptionNames	;IDA: sub_F8070. 94 only. Print the option names from OptionNames at x 3, 2 rows apart from row $F - word_FFD422 * 2, rows $F-$19 only (93 printed setoptions .text once). Called from
+PrintOptionNames	;IDA: sub_F8070. 94 only. Print the option names from OptionNames at x 3, 2 rows apart from row $F - setupfirstline * 2, rows $F-$19 only (93 printed setoptions .text once). Called
+	;from
 	;GameSetUp and FixModeOptions
 	movem.l	d0-d1,-(sp)
-	bset	#3,(word_FFC2F8).w
+	bset	#3,(sflags6).w
 	movea.l	#OptionNames,a1
 	move.w	#$F,d0
-	move.w	(word_FFD422).w,d1
+	move.w	(setupfirstline).w,d1
 	add.w	d1,d1
 	sub.w	d1,d0
 	move.w	d0,(printy).w
@@ -763,7 +764,7 @@ PrintOptionNames	;IDA: sub_F8070. 94 only. Print the option names from OptionNam
 	addq.w	#2,(printy).w
 	bra.s	.loop
 .2	;IDA: loc_F80C8
-	bclr	#3,(word_FFC2F8).w
+	bclr	#3,(sflags6).w
 	movem.l	(sp)+,d0-d1
 	rts
 OptionNames	;IDA: unk_F80D4. Option names (93 setoptions .text, which had positions); the last entry is 93 dc.w 4,0 (92 String 0)
@@ -805,8 +806,8 @@ setoptions	;options screen display and input (IDA comment). 94: build the game s
 	movea.l	#SmallFontMap+8,a2	;small font (93 SmallFontMap+8)
 	jsr	(DecompressGraphicsWithCallback).l
 	dc.l	$0FC04567,$89ABCDEF	;remap table (IDA: bset / or.l)
-	move.w	d4,(word_FFBF52).w
-	movea.l	#PrintFont2Map+8,a2	;setup screen font (print2 with word_FFC2F8 bit 3)
+	move.w	d4,(setupfontchars).w
+	movea.l	#PrintFont2Map+8,a2	;setup screen font (print2 with sflags6 bit 3)
 	jsr	(DecompressGraphicsWithCallback).l
 	dc.l	$01234567,$89ABCDEF	;remap table (IDA: btst / or.l)
 	jsr	(printz).l
@@ -828,7 +829,7 @@ setoptions	;options screen display and input (IDA comment). 94: build the game s
 	moveq	#$1C,d3
 	moveq	#$D,d5	;color fam 1, 3, 4
 	jsr	(dobitmap).l
-	move.w	d4,(word_FFD432).w
+	move.w	d4,(vispicchars).w
 	addi.w	#$24,d4
 	jsr	(printz).l
 	String	$FF,0,0	;IDA: ori.b x3
@@ -845,7 +846,7 @@ setoptions	;options screen display and input (IDA comment). 94: build the game s
 	jsr	(dobitmap).l
 	jsr	(printz).l
 	String	$FF,1,$E	;IDA: ori.b (and dropped a word)
-	move.w	d4,(word_FFD426).w
+	move.w	d4,(setupmenuchars).w
 	movea.l	#SetupMenuMap,a0	;menu background, 38 x 13 at x 1, y $E
 	movea.l	a0,a1
 	movea.l	a0,a2
@@ -857,23 +858,23 @@ setoptions	;options screen display and input (IDA comment). 94: build the game s
 	moveq	#$D,d3
 	moveq	#0,d5
 	jsr	(dobitmap).l
-	move.w	d4,(word_FFD430).w
+	move.w	d4,(homepicchars).w
 	addi.w	#$24,d4
-	move.w	d4,(word_FFD436).w
+	move.w	d4,(logobox1chars).w
 	movea.l	#LogoBoxMap+8,a2	;logo box tiles
 	jsr	(DoDMA_clearCallbackPointer).l
-	move.w	d4,(word_FFD438).w
+	move.w	d4,(logobox2chars).w
 	movea.l	#LogoBoxMap+8,a2	;again, remapped
 	jsr	(DecompressGraphicsWithCallback).l
 	dc.l	$03414567,$89ABCDEF	;remap table (IDA: bchg / or.l, a word dropped)
 	jsr	(defaultsprites2).l
-	move.w	#$28,(word_FFB066).w	;as 93
-	move.w	#$28,(word_FFB366).w
+	move.w	#$28,(SortCords+OldXpos).w	;as 93
+	move.w	#$28,(SortCords+(6*SCstruct)+OldXpos).w
 	st	(HmShots).w	;(93 hmtmstruct / awtmstruct)
 	st	(AwShots).w
 	rts
 GameSetUp_2	;IDA name. 93 setoptions .top / .wait: wait up to $5460 frames (6 minutes) for a press on any pad (4 with FourWayPlay); return d1 =
-	;the presses, 0 on timeout. C does not return: it sets word_FFD42E bit 5 (next player card sooner). When only one logo is shown (after a
+	;the presses, 0 on timeout. C does not return: it sets setupcardflags bit 5 (next player card sooner). When only one logo is shown (after a
 	;player card) redraws the team blocks. For the first $E10 frames of the wait, and while a card is up, runs the player cards (PlayerCardTimer), else
 	;resets their timer (ResetCardTimer). Called from GameSetUp
 	move.l	#$5460,d6	;21600 frames
@@ -882,7 +883,7 @@ GameSetUp_2	;IDA name. 93 setoptions .top / .wait: wait up to $5460 frames (6 mi
 	sub.w	(oldvcount).w,d1
 	beq.s	.loop
 	move.w	(vcount).w,(oldvcount).w
-	bclr	#5,(word_FFD42E).w
+	bclr	#5,(setupcardflags).w
 	jsr	(UpdateBothTeamDisplays).l
 	jsr	(ReadJoy1).l
 	jsr	(ProcessInputWithRepeat).l
@@ -892,9 +893,9 @@ GameSetUp_2	;IDA name. 93 setoptions .top / .wait: wait up to $5460 frames (6 mi
 	beq.w	.x	;another button: return
 	btst	#5,d2
 	beq.w	.0
-	move.w	#$53,(word_FFD43C).l
+	move.w	#$53,(cardtimer).l
 .0	;IDA: loc_F8350
-	bset	#5,(word_FFD42E).w
+	bset	#5,(setupcardflags).w
 .1	;IDA: loc_F8356
 	jsr	(ReadJoy2).l
 	jsr	(ProcessInputWithRepeat).l
@@ -902,7 +903,7 @@ GameSetUp_2	;IDA name. 93 setoptions .top / .wait: wait up to $5460 frames (6 mi
 	beq.w	.2
 	btst	#5,d1
 	beq.w	.x
-	bset	#5,(word_FFD42E).w
+	bset	#5,(setupcardflags).w
 .2	;IDA: loc_F8376
 	tst.w	(FourWayPlay).w
 	beq.w	.4
@@ -912,7 +913,7 @@ GameSetUp_2	;IDA name. 93 setoptions .top / .wait: wait up to $5460 frames (6 mi
 	beq.w	.3
 	btst	#5,d1
 	beq.w	.x
-	bset	#5,(word_FFD42E).w
+	bset	#5,(setupcardflags).w
 .3	;IDA: loc_F839E
 	jsr	(ReadJoy4).l
 	jsr	(ProcessInputWithRepeat).l
@@ -920,23 +921,23 @@ GameSetUp_2	;IDA name. 93 setoptions .top / .wait: wait up to $5460 frames (6 mi
 	beq.w	.4
 	btst	#5,d1
 	beq.w	.x
-	bset	#5,(word_FFD42E).w
+	bset	#5,(setupcardflags).w
 .4	;IDA: loc_F83BE
-	btst	#6,(word_FFD42E).w
+	btst	#6,(setupcardflags).w
 	beq.w	.5
-	btst	#7,(word_FFD42E).w
+	btst	#7,(setupcardflags).w
 	bne.w	.6
-	move.w	(word_FFD42C).w,(word_FFD428).w
+	move.w	(setupvis).w,(logoteam).w
 	bsr.w	DrawVisBlock
 .5	;IDA: loc_F83DC
-	btst	#7,(word_FFD42E).w
+	btst	#7,(setupcardflags).w
 	beq.w	.6
-	move.w	(word_FFD42A).w,(word_FFD428).w
+	move.w	(setuphome).w,(logoteam).w
 	bsr.w	DrawHomeBlock
 .6	;IDA: loc_F83F0
 	cmp.w	#$4650,d6	;the first $E10 frames (a minute)?
 	bgt.w	.7
-	btst	#0,(word_FFD42E).w
+	btst	#0,(setupcardflags).w
 	bne.w	.7
 	jsr	(ResetCardTimer).l
 	bra.w	.8
@@ -956,11 +957,11 @@ SetupDemo	;IDA: loc_F8418. IDA label. 93 setoptions .demo: no press for $5460 fr
 	clr.w	(OptLine).w
 	move.w	#1,(OptPen).w	;On
 SetupStart	;IDA: loc_F843E. IDA label. 93 setoptions .ex: start. Copy Goalies to both teams, set pojoy (SetPojoyMode), seed RNGseed, and keep OptLine / OptPlayMode
-	;in TmpOptLine2 / TempOptPlayMode: Auto line changes play as On with byte_FFC2FC bit 4, Shootout as Regular Season with word_FFC2FA bit 0
+	;in TmpOptLine2 / TempOptPlayMode: Auto line changes play as On with sflags7 bit 4, Shootout as Regular Season with gmode2 bit 0
 	;(ClearShootout). Then jmp MakeTree. Branched to from GameSetUp
 	move.w	(OptGoalie).w,-(sp)
-	move.w	(sp),(word_FFD05A).w
-	move.w	(sp)+,(word_FFD05C).w
+	move.w	(sp),(goaliemode1).w
+	move.w	(sp)+,(goaliemode2).w
 	jsr	(SetPojoyMode).l
 	move.w	(VDP_CNTR).l,(RNGseed).w
 	move.w	(VDP_CNTR).l,(RNGseed+2).w
@@ -968,13 +969,13 @@ SetupStart	;IDA: loc_F843E. IDA label. 93 setoptions .ex: start. Copy Goalies to
 	cmpi.w	#2,(OptLine).w
 	bne.w	.0
 	clr.w	(OptLine).w
-	bset	#4,(byte_FFC2FC).w
+	bset	#4,(sflags7).w
 .0	;IDA: loc_F847A
 	move.w	(OptPlayMode).w,(TempOptPlayMode).w
 	cmpi.w	#4,(OptPlayMode).w
 	bne.w	.1
 	move.w	#0,(OptPlayMode).w
-	bset	#0,(word_FFC2FA).w
+	bset	#0,(gmode2).w
 	jsr	(ClearShootout).l
 .1	;IDA: loc_F849C
 	jmp	MakeTree	;hockey94_09
@@ -990,13 +991,14 @@ CheckNOPUnused	;no IDA label (was sub_F84A2), no xref. Tests OptNOP for 0, 5, 6,
 	cmpi.w	#$A,(OptNOP).w
 .x	;IDA: locret_F84CE
 	rts
-LoadSetupTiles	;IDA: sub_F84D0. IDA: unk_F84D0 (IDA dc.b and code). 94 only: load the TeamBitmaps+8 tiles from char 2 (where 93 setoptions called AddTeamBlock), then again remapped at word_FFD43A.
+LoadSetupTiles	;IDA: sub_F84D0. IDA: unk_F84D0 (IDA dc.b and code). 94 only: load the TeamBitmaps+8 tiles from char 2 (where 93 setoptions called AddTeamBlock), then again remapped at
+	;teambitmapchars.
 	;Called
 	;from setoptions
 	moveq	#2,d4	;IDA dc.b. vram char 2
 	movea.l	#TeamBitmaps+8,a2
 	jsr	(DoDMA_clearCallbackPointer).l
-	move.w	d4,(word_FFD43A).w
+	move.w	d4,(teambitmapchars).w
 	movea.l	#TeamBitmaps+8,a2
 	jsr	(DecompressGraphicsWithCallback).l
 	dc.l	$03412567,$89ABCDEF	;remap table (IDA: bchg / move.l / dc.b)
@@ -1004,20 +1006,20 @@ LoadSetupTiles	;IDA: sub_F84D0. IDA: unk_F84D0 (IDA dc.b and code). 94 only: loa
 UpdateBothTeamDisplays	;IDA: nullsub_3. An empty routine, called from GameSetUp_2 (93 bsr UpdateBothTeamDisplays). An unused rts follows
 	rts
 	rts
-EraseCard	;IDA: sub_F84FC. 94 only. If a player card is up (word_FFD42E bit 0, cleared here), clear both logo flags (bits 6 / 7) and erase the card: its logo
+EraseCard	;IDA: sub_F84FC. 94 only. If a player card is up (setupcardflags bit 0, cleared here), clear both logo flags (bits 6 / 7) and erase the card: its logo
 	;box and its 25 x 8 box. Called from DrawHomeBlock and DrawVisBlock
 	movem.l	d0-d7,-(sp)
-	bclr	#0,(word_FFD42E).w
+	bclr	#0,(setupcardflags).w
 	beq.w	.x
-	bclr	#6,(word_FFD42E).w
-	bclr	#7,(word_FFD42E).w
+	bclr	#6,(setupcardflags).w
+	bclr	#7,(setupcardflags).w
 	jsr	(printz).l
 	String	$EF,0,0	;IDA: ori.b x3
 	move.w	#5,(printy).w	;IDA hid this in the string
 	moveq	#8,d0
 	moveq	#8,d1
 	move.w	#$7FF,d2
-	btst	#1,(word_FFD42E).w
+	btst	#1,(setupcardflags).w
 	beq.w	.1
 	move.w	#3,(printx).w
 	jsr	(eraser).l
@@ -1045,14 +1047,14 @@ EraseCard	;IDA: sub_F84FC. 94 only. If a player card is up (word_FFD42E bit 0, c
 .x	;IDA: loc_F85AA
 	movem.l	(sp)+,d0-d7
 	rts
-DrawHomeBlock	;IDA: sub_F85B0. 94 only. Draw the home team block: the logo box (LogoBoxHome) and the HomeTeam logo (word_FFD428) at x $19, y 6. word_FFD42E bit 2:
+DrawHomeBlock	;IDA: sub_F85B0. 94 only. Draw the home team block: the logo box (LogoBoxHome) and the HomeTeam logo (logoteam) at x $19, y 6. setupcardflags bit 2:
 	;home drawn, bit 6: home logo shown. Called from GameSetUp and GameSetUp_2
 	movem.l	d0-d7/a0-a6,-(sp)
 	bsr.w	EraseCard
-	bset	#2,(word_FFD42E).w
-	bset	#6,(word_FFD42E).w
+	bset	#2,(setupcardflags).w
+	bset	#6,(setupcardflags).w
 	bsr.w	LogoBoxHome
-	bclr	#3,(word_FFD42E).w
+	bclr	#3,(setupcardflags).w
 	beq.w	.0
 	jsr	(printz).l
 	String	$EF,0,0	;IDA: ori.b x3
@@ -1066,13 +1068,13 @@ DrawHomeBlock	;IDA: sub_F85B0. 94 only. Draw the home team block: the logo box (
 	String	$FF,0,0	;IDA: ori.b x3
 	move.w	#$19,(printx).w	;IDA hid this in the string
 	bra.w	DrawTeamLogo
-DrawVisBlock	;IDA: sub_F8608. 94 only. The same for the visitors: logo box (LogoBoxVis), logo at x 9. word_FFD42E bit 3, bit 7. Called from GameSetUp and GameSetUp_2
+DrawVisBlock	;IDA: sub_F8608. 94 only. The same for the visitors: logo box (LogoBoxVis), logo at x 9. setupcardflags bit 3, bit 7. Called from GameSetUp and GameSetUp_2
 	movem.l	d0-d7/a0-a6,-(sp)
 	bsr.w	EraseCard
-	bset	#3,(word_FFD42E).w
-	bset	#7,(word_FFD42E).w
+	bset	#3,(setupcardflags).w
+	bset	#7,(setupcardflags).w
 	bsr.w	LogoBoxVis
-	bclr	#2,(word_FFD42E).w
+	bclr	#2,(setupcardflags).w
 	beq.w	.0
 	jsr	(printz).l
 	String	$EF,0,0	;IDA: ori.b x3
@@ -1085,16 +1087,16 @@ DrawVisBlock	;IDA: sub_F8608. 94 only. The same for the visitors: logo box (Logo
 	jsr	(printz).l
 	String	$CF,0,0	;IDA dc.b
 	move.w	#9,(printx).w
-DrawTeamLogo	;IDA: loc_F865C. IDA label. Draw the logo of team word_FFD428 (TeamLogoBitmaps) at printx, y 6, 6 x 6, palette TeamLogoPalettes + team * 8 - $20 (home, color fam
-	;2) or - $40 (visitors, color fam 3), then wait $B4 frames before a player card (word_FFD440). Branched to from DrawHomeBlock
-	move.w	#$B4,(word_FFD440).w	;180 frames
+DrawTeamLogo	;IDA: loc_F865C. IDA label. Draw the logo of team logoteam (TeamLogoBitmaps) at printx, y 6, 6 x 6, palette TeamLogoPalettes + team * 8 - $20 (home, color fam
+	;2) or - $40 (visitors, color fam 3), then wait $B4 frames before a player card (carddelay). Branched to from DrawHomeBlock
+	move.w	#$B4,(carddelay).w	;180 frames
 	move.w	#6,(printy).w
-	move.w	(word_FFD430).w,d4
-	btst	#2,(word_FFD42E).w
+	move.w	(homepicchars).w,d4
+	btst	#2,(setupcardflags).w
 	bne.w	.0
-	move.w	(word_FFD432).w,d4
+	move.w	(vispicchars).w,d4
 .0	;IDA: loc_F867A
-	move.w	(word_FFD428).w,d3
+	move.w	(logoteam).w,d3
 	asl.w	#2,d3
 	movea.l	#TeamLogoBitmaps,a0
 	movea.l	0(a0,d3.w),a0
@@ -1103,7 +1105,7 @@ DrawTeamLogo	;IDA: loc_F865C. IDA label. Draw the logo of team word_FFD428 (Team
 	adda.l	(a2)+,a0
 	asl.w	#3,d3
 	movea.l	#TeamLogoPalettes,a0
-	btst	#2,(word_FFD42E).w
+	btst	#2,(setupcardflags).w
 	beq.w	.1
 	subi.w	#$20,d3
 	bra.w	.2
@@ -1116,16 +1118,16 @@ DrawTeamLogo	;IDA: loc_F865C. IDA label. Draw the logo of team word_FFD428 (Team
 	move.w	#6,d2
 	clr.w	d0
 	clr.w	d1
-	move.l	(dword_FFBD4A).w,-(sp)
-	move.l	(dword_FFBD4E).w,-(sp)
+	move.l	(palfadenew+$22).w,-(sp)
+	move.l	(palfadenew+$26).w,-(sp)
 	move.w	#4,d5
-	btst	#2,(word_FFD42E).w
+	btst	#2,(setupcardflags).w
 	beq.w	.3
 	move.w	#2,d5
 .3	;IDA: loc_F86D8
 	jsr	(dobitmap).l
-	move.l	(sp)+,(dword_FFBD4E).w
-	move.l	(sp)+,(dword_FFBD4A).w
+	move.l	(sp)+,(palfadenew+$26).w
+	move.l	(sp)+,(palfadenew+$22).w
 	move.w	#$64,(palcount).w
 	movem.l	(sp)+,d0-d7/a0-a6
 	rts
@@ -1134,22 +1136,22 @@ TeamLogoBitmaps	;IDA: unk_F86F2. Team logo bitmaps by team number (TeamList orde
 	dc.l	$C142A,$C1900,$C1FEC,$C2638,$C29AE,$C1B96,$C2E64,$C333A
 	dc.l	$C3750,$C3B06,$C3E7C,$C41D2,$C4608,$C49DE,$C4DF4,$C514A
 	dc.l	$C5560,$C57D6,$C5C4C,$C6022
-LogoBoxRight	;IDA: sub_F8762. 94 only. Logo box (LogoBoxMap, 8 x 8) at x $1C, y 5 with the word_FFD436 tiles. Called from PlayerCardScreen
-	move.w	(word_FFD436).w,d4
+LogoBoxRight	;IDA: sub_F8762. 94 only. Logo box (LogoBoxMap, 8 x 8) at x $1C, y 5 with the logobox1chars tiles. Called from PlayerCardScreen
+	move.w	(logobox1chars).w,d4
 	move.w	#$1C,(printx).w
 	bra.w	DrawLogoBox
 LogoBoxHome	;IDA: sub_F8770. 94 only. Logo box at x $18 (home block). Called from DrawHomeBlock
-	move.w	(word_FFD436).w,d4
+	move.w	(logobox1chars).w,d4
 	move.w	#$18,(printx).w
 	bra.w	DrawLogoBox
-LogoBoxLeft	;IDA: sub_F877E. 94 only. Logo box at x 3 with the word_FFD438 tiles. Called from PlayerCardScreen
-	move.w	(word_FFD438).w,d4
+LogoBoxLeft	;IDA: sub_F877E. 94 only. Logo box at x 3 with the logobox2chars tiles. Called from PlayerCardScreen
+	move.w	(logobox2chars).w,d4
 	move.w	#3,(printx).w
 	bra.w	DrawLogoBox
 LogoBoxVis	;IDA: sub_F878C. 94 only. Logo box at x 8 (visitors block). Called from DrawVisBlock
-	move.w	(word_FFD438).w,d4
+	move.w	(logobox2chars).w,d4
 	move.w	#8,(printx).w
-DrawLogoBox	;IDA: loc_F8796. IDA label. Draw the LogoBoxMap box at printx, y 5 (word_FFC2F8 bit 0 set). Branched to from LogoBoxRight ... LogoBoxVis
+DrawLogoBox	;IDA: loc_F8796. IDA label. Draw the LogoBoxMap box at printx, y 5 (sflags6 bit 0 set). Branched to from LogoBoxRight ... LogoBoxVis
 	clr.w	(printa).w
 	move.w	#5,(printy).w
 	movea.l	#LogoBoxMap,a0
@@ -1162,57 +1164,57 @@ DrawLogoBox	;IDA: loc_F8796. IDA label. Draw the LogoBoxMap box at printx, y 5 (
 	clr.w	d0
 	clr.w	d1
 	move.w	#0,d5
-	bset	#0,(word_FFC2F8).w
+	bset	#0,(sflags6).w
 	jsr	(dobitmap).l
-	bclr	#0,(word_FFC2F8).w
+	bclr	#0,(sflags6).w
 	rts
-ResetCardTimer	;IDA: sub_F87D2. 94 only. Reset the player card timer word_FFD43C to $AA ($53 if C was pressed). Called from GameSetUp_2, PrintOptions and PlayerCardTimer
-	move.w	#$AA,(word_FFD43C).w
-	btst	#5,(word_FFD42E).w
+ResetCardTimer	;IDA: sub_F87D2. 94 only. Reset the player card timer cardtimer to $AA ($53 if C was pressed). Called from GameSetUp_2, PrintOptions and PlayerCardTimer
+	move.w	#$AA,(cardtimer).w
+	btst	#5,(setupcardflags).w
 	beq.w	.x
-	move.w	#$53,(word_FFD43C).w
+	move.w	#$53,(cardtimer).w
 .x	;IDA: locret_F87E8
 	rts
-PlayerCardTimer	;IDA: sub_F87EA. 94 only. Player cards, called each frame from GameSetUp_2 in the first minute of its wait. When word_FFD440 runs out set word_FFD42E
-	;bit 0; then count word_FFD43C down (C skips $50); at $52 switch sides (bit 1), forget the logos and draw the next card (PlayerCardScreen); below 0
+PlayerCardTimer	;IDA: sub_F87EA. 94 only. Player cards, called each frame from GameSetUp_2 in the first minute of its wait. When carddelay runs out set setupcardflags
+	;bit 0; then count cardtimer down (C skips $50); at $52 switch sides (bit 1), forget the logos and draw the next card (PlayerCardScreen); below 0
 	;restart the timer (ResetCardTimer)
-	subq.w	#1,(word_FFD440).w
+	subq.w	#1,(carddelay).w
 	bpl.w	.x
-	move.w	#$FFFF,(word_FFD440).w
-	bset	#0,(word_FFD42E).w
-	btst	#0,(word_FFD42E).w
+	move.w	#$FFFF,(carddelay).w
+	bset	#0,(setupcardflags).w
+	btst	#0,(setupcardflags).w
 	beq.w	.x
-	btst	#5,(word_FFD42E).w
+	btst	#5,(setupcardflags).w
 	beq.w	.0
-	cmpi.w	#$52,(word_FFD43C).w
+	cmpi.w	#$52,(cardtimer).w
 	bge.w	.0
-	subi.w	#$50,(word_FFD43C).w
+	subi.w	#$50,(cardtimer).w
 .0	;IDA: loc_F8822
-	subq.w	#1,(word_FFD43C).w
+	subq.w	#1,(cardtimer).w
 	bmi.w	.1
-	cmpi.w	#$52,(word_FFD43C).w
+	cmpi.w	#$52,(cardtimer).w
 	bne.w	.x
-	bclr	#2,(word_FFD42E).w
-	bclr	#3,(word_FFD42E).w
-	bchg	#1,(word_FFD42E).w
-	st	(word_FFD42A).w
-	st	(word_FFD42C).w
-	bclr	#6,(word_FFD42E).w
-	bclr	#7,(word_FFD42E).w
+	bclr	#2,(setupcardflags).w
+	bclr	#3,(setupcardflags).w
+	bchg	#1,(setupcardflags).w
+	st	(setuphome).w
+	st	(setupvis).w
+	bclr	#6,(setupcardflags).w
+	bclr	#7,(setupcardflags).w
 	jsr	(PlayerCardScreen).l
 .x	;IDA: locret_F8860
 	rts
 .1	;IDA: loc_F8862
 	jmp	ResetCardTimer
-PlayerCardScreen	;IDA: sub_F8868. 94 only. Draw a player card on one side (word_FFD42E bit 1: visitors on the left, else home on the right): erase the team block, a
-	;logo box, the picture of featured player word_FFD43E (0-5, from the loc_F92F0+4 list of the team; next one after each visitors card), a
+PlayerCardScreen	;IDA: sub_F8868. 94 only. Draw a player card on one side (setupcardflags bit 1: visitors on the left, else home on the right): erase the team block, a
+	;logo box, the picture of featured player featuredplayer (0-5, from the loc_F92F0+4 list of the team; next one after each visitors card), a
 	;framed box with the player's number and name, and with SRAM his user records (PrintRecordValue, PrintRecordHolder, PrintRecordVs; not matched yet). IDA ends the
 	;routine at the last printz; the rest is IDA code with no label. Called from PlayerCardTimer
 	movem.l	d0-d7/a0-a6,-(sp)
 	jsr	(printz).l
 	String	$FF,0,0	;IDA: ori.b x3
 	move.w	#$1C,(printx).w	;IDA hid this in the string
-	btst	#1,(word_FFD42E).w
+	btst	#1,(setupcardflags).w
 	bne.w	.0
 	move.w	#3,(printx).w
 .0	;IDA: loc_F888E
@@ -1224,7 +1226,7 @@ PlayerCardScreen	;IDA: sub_F8868. 94 only. Draw a player card on one side (word_
 	jsr	(printz).l
 	String	$FF,0,0	;IDA: ori.b x3
 	move.w	#3,(printx).w	;IDA hid this in the string
-	btst	#1,(word_FFD42E).w
+	btst	#1,(setupcardflags).w
 	bne.w	.1
 	move.w	#$B,(printx).w
 .1	;IDA: loc_F88C8
@@ -1233,35 +1235,35 @@ PlayerCardScreen	;IDA: sub_F8868. 94 only. Draw a player card on one side (word_
 	move.w	#8,d1
 	move.w	#$7FF,d2
 	jsr	(eraser).l
-	btst	#1,(word_FFD42E).w
+	btst	#1,(setupcardflags).w
 	bne.w	.2
 	bsr.w	LogoBoxRight
 	bra.w	.3
 .2	;IDA: loc_F88F2
 	bsr.w	LogoBoxLeft
-	addq.w	#1,(word_FFD43E).w
+	addq.w	#1,(featuredplayer).w
 .3	;IDA: loc_F88FA
 	jsr	(printz).l
 	String	$FF,0,0	;IDA: ori.b x3 / add.b
-	cmpi.w	#6,(word_FFD43E).l	;IDA hid this in the string
+	cmpi.w	#6,(featuredplayer).l	;IDA hid this in the string
 	blt.w	.4
-	clr.w	(word_FFD43E).w
+	clr.w	(featuredplayer).w
 .4	;IDA: loc_F8916
 	move.w	(HomeTeam).w,d0
 	move.w	#$1D,(printx).w
-	btst	#1,(word_FFD42E).w
+	btst	#1,(setupcardflags).w
 	beq.w	.5
 	move.w	(VisTeam).w,d0
 	move.w	#4,(printx).w
 .5	;IDA: loc_F8934
 	move.w	#6,(printy).w
-	move.w	(word_FFD430).w,d4
-	move.w	(word_FFD43E).w,d3
+	move.w	(homepicchars).w,d4
+	move.w	(featuredplayer).w,d3
 	mulu.w	#6,d3
 	asl.w	#2,d0
 	movea.l	#FeaturedPictures,a0	;IDA #(loc_F92F0+4). pictures of each team: picture.l, roster index.w entries
 	movea.l	0(a0,d0.w),a0
-	move.w	4(a0,d3.w),(word_FFD434).w	;roster index
+	move.w	4(a0,d3.w),(cardroster).w	;roster index
 	movea.l	0(a0,d3.w),a0
 	movea.l	a0,a1
 	movea.l	a0,a2
@@ -1287,44 +1289,44 @@ PlayerCardScreen	;IDA: sub_F8868. 94 only. Draw a player card on one side (word_
 	move.w	#6,d2
 	clr.w	d0
 	clr.w	d1
-	move.l	(dword_FFBD4A).w,-(sp)
-	move.l	(dword_FFBD4E).w,-(sp)
+	move.l	(palfadenew+$22).w,-(sp)
+	move.l	(palfadenew+$26).w,-(sp)
 	move.w	#2,d5
 	jsr	(dobitmap).l
-	move.l	(sp)+,(dword_FFBD4E).w
-	move.l	(sp)+,(dword_FFBD4A).w
+	move.l	(sp)+,(palfadenew+$26).w
+	move.l	(sp)+,(palfadenew+$22).w
 	jsr	(printz).l
 	String	$BF,0,0	;IDA dc.b (IDA ends the routine here)
 	move.w	#$6000,(printa).w
 	move.w	#3,(printx).w
 	move.w	#$19,d0
-	btst	#1,(word_FFD42E).w
+	btst	#1,(setupcardflags).w
 	beq.w	.8
 	move.w	#$B,(printx).w
 	move.w	#$19,d0
 .8	;IDA: loc_F89EC
 	move.w	#5,(printy).w
 	move.w	#8,d1
-	move.w	(printx).w,(word_FFD442).w
-	addq.w	#1,(word_FFD442).w
-	move.w	(printy).w,(word_FFD444).w
-	addq.w	#1,(word_FFD444).w
+	move.w	(printx).w,(cardprintx).w
+	addq.w	#1,(cardprintx).w
+	move.w	(printy).w,(cardprinty).w
+	addq.w	#1,(cardprinty).w
 	jsr	(Framer).l	;25 x 8 box
-	move.w	(word_FFD442).w,(printx).w
-	move.w	(word_FFD444).w,(printy).w
+	move.w	(cardprintx).w,(printx).w
+	move.w	(cardprinty).w,(printy).w
 	move.w	#0,(printa).w
 	move.w	#0,(printm).w
 	move.w	(HomeTeam).w,d0
-	btst	#1,(word_FFD42E).w
+	btst	#1,(setupcardflags).w
 	beq.w	.9
 	move.w	(VisTeam).w,d0
 .9	;IDA: loc_F8A3A
-	move.w	d0,(word_FFD446).w
+	move.w	d0,(cardteamnum).w
 	movea.l	#TeamList,a2
 	asl.w	#2,d0
 	movea.l	0(a2,d0.w),a2
 	adda.w	(a2),a2
-	move.w	(word_FFD434).w,d0
+	move.w	(cardroster).w,d0
 	bra.w	.10
 .loop2	;IDA: loc_F8A54
 	adda.w	(a2),a2
@@ -1343,45 +1345,45 @@ PlayerCardScreen	;IDA: sub_F8868. 94 only. Draw a player card on one side (word_
 	movea.l	(sp)+,a1
 	jsr	(appstring).l	;and the name
 	movea.l	a3,a1
-	bset	#3,(word_FFC2F8).w
+	bset	#3,(sflags6).w
 	jsr	(print2).l
-	bclr	#3,(word_FFC2F8).w
+	bclr	#3,(sflags6).w
 	movea.l	#mesarea,a1
-	move.w	(word_FFD446).w,d0
-	move.w	(word_FFD434).w,d1
+	move.w	(cardteamnum).w,d0
+	move.w	(cardroster).w,d1
 	tst.w	(ValidSRAM).w	;no SRAM: no records
 	bmi.w	.12
 	jsr	(PrintRecordValue).l
 	cmpi.w	#2,(a1)
 	beq.w	.12
-	move.w	(word_FFD442).w,(printx).w
+	move.w	(cardprintx).w,(printx).w
 	addq.w	#2,(printy).w
-	bset	#3,(word_FFC2F8).w
+	bset	#3,(sflags6).w
 	jsr	(print2).l
-	bclr	#3,(word_FFC2F8).w
+	bclr	#3,(sflags6).w
 	movea.l	#mesarea,a1
-	move.w	(word_FFD446).w,d0
-	move.w	(word_FFD434).w,d1
+	move.w	(cardteamnum).w,d0
+	move.w	(cardroster).w,d1
 	movea.l	#M68K_RAM,a0
 	jsr	(PrintRecordHolder).l
-	move.w	(word_FFD442).w,(printx).w
+	move.w	(cardprintx).w,(printx).w
 	cmpi.w	#2,(a1)
 	beq.w	.11
 	addq.w	#1,(printy).w
-	bset	#3,(word_FFC2F8).w
+	bset	#3,(sflags6).w
 	jsr	(print2).l
-	bclr	#3,(word_FFC2F8).w
+	bclr	#3,(sflags6).w
 .11	;IDA: loc_F8B18
 	movea.l	#mesarea,a1
-	move.w	(word_FFD446).w,d0
-	move.w	(word_FFD434).w,d1
+	move.w	(cardteamnum).w,d0
+	move.w	(cardroster).w,d1
 	movea.l	#M68K_RAM,a0
 	jsr	(PrintRecordVs).l
-	move.w	(word_FFD442).w,(printx).w
+	move.w	(cardprintx).w,(printx).w
 	addq.w	#1,(printy).w
-	bset	#3,(word_FFC2F8).w
+	bset	#3,(sflags6).w
 	jsr	(print2).l
-	bclr	#3,(word_FFC2F8).w
+	bclr	#3,(sflags6).w
 .12	;IDA: loc_F8B4E
 	move.w	#$64,(palcount).w
 	movem.l	(sp)+,d0-d7/a0-a6

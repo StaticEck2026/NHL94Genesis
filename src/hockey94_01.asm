@@ -19,18 +19,18 @@ Begin	;cold start, entered from Start. Clear RAM, init sound and menus, go to ti
 .0	clr.l	(a0)+			;clear RAM $B000-$DEF3
 	cmpa.w	#$DEF4,a0
 	blt.s	.0
-	clr.w	(word_FFDEF2).w		;clear the PAL flag (IDA: DMA flag)
+	clr.w	(PALflag).w		;clear the PAL flag (IDA: DMA flag)
 	move.w	(VDP_CTRL).l,d0
 	andi.w	#1<<PAL_MODE,d0		;VDP status bit 0 = PAL (50 Hz). IDA calls it DMA busy; that is bit 1
-	move.w	d0,(word_FFD06E).w
+	move.w	d0,(music_global_tick_counter).w
 	beq.w	.ntsc			;IDA: loc_76E8
-	bset	#0,(word_FFDEF2).w	;PAL
+	bset	#0,(PALflag).w	;PAL
 .ntsc	jsr	(Z80_LoadROM).l		;sound stuff (93 p_initialZ80)
 	jsr	(AllSndOff).l		;93 p_turnoff
 	jsr	(MusicVB).l		;93 p_music_vblank
 	jsr	(KillCrowd).l
 	jsr	(Detect4WayPlay).l
-	move.w	#$FFFF,(word_FFBE86).w
+	move.w	#$FFFF,(PadControlBits34).w
 	jsr	(EASportsScreen).l	;94 only (attract94)
 	jsr	(InitSaveRAM).l		;94 only (sram94)
 	jsr	(ReadLineData).l
@@ -42,11 +42,11 @@ Begin	;cold start, entered from Start. Clear RAM, init sound and menus, go to ti
 	jmp	Opening			;goto title screen and options etc.
 
 StartGame	;reset game state for a new game, then start the first period
-	st	(word_FFD6B4).w
-	clr.l	(dword_FFDEA4).w
-	clr.l	(dword_FFDEAC).w
-	clr.l	(dword_FFDEA8).w
-	clr.l	(dword_FFDEB0).w
+	st	(arenaanim).w
+	clr.l	(homepresses).w
+	clr.l	(awaypresses).w
+	clr.l	(homedirpresses).w
+	clr.l	(awaydirpresses).w
 	jsr	(ReadJoy1).l		;pad 1 = $E0 at game start forces 30 second periods (93 ChkShortPeriods)
 	cmp.b	#$E0,d3
 	bne.w	.chkpen			;IDA: loc_776A
@@ -59,7 +59,7 @@ StartGame	;reset game state for a new game, then start the first period
 	ble.w	.1			;IDA: loc_778C. OptPlayMode 0-1 keep the shot buffer
 	bsr.w	ClearShotData
 .1	jsr	(clearTeamStats).l
-	btst	#0,(word_FFC2FA).w
+	btst	#0,(gmode2).w
 	beq.w	.2			;IDA: loc_77B8
 	move.l	a0,-(sp)
 	movea.l	#$FFFFC6CE,a0
@@ -105,10 +105,10 @@ ResetClock	;set period length and stop clock
 	move.w	#$258,d0		;OptPlayMode 0 overtime is always 10:00
 .0	move.w	d0,(gameclock).w
 	move.w	d0,(PerTimeTotal).w
-	move.w	d0,(word_FFB048).w	;CheckPeriodEnd trigger time =
+	move.w	d0,(periodendtime).w	;CheckPeriodEnd trigger time =
 	asr.w	#1,d0
 	jsr	(randomd0).l
-	sub.w	d0,(word_FFB048).w	;length - random(length/2)
+	sub.w	d0,(periodendtime).w	;length - random(length/2)
 	bset	#gmclock,(gmode).w		;gmclock: stop clock
 	rts
 
@@ -124,19 +124,19 @@ GetPeriodTime	;IDA: ClockLength. Return d0 = period length in seconds for the pe
 StartPer	;start a period: reset stack, rink and clock, face off, run the game loop
 	cmpi.w	#3,(gsp).w
 	bne.w	.reg			;IDA: loc_7876
-	bset	#1,(byte_FFC2FC).w	;overtime
-.reg	st	(word_FFD6BE).w
+	bset	#1,(sflags7).w	;overtime
+.reg	st	(faceoffanim).w
 	movea.w	#(Stack-M68K_RAM),sp
 	jsr	(AllSndOff).l		;sound off
 	jsr	(setupice).l
 	bsr.s	ResetClock
-	ori.w	#$F000,(word_FFBE78).w
+	ori.w	#$F000,(PadControlBits).w
 	st	(c1playernum).w		;no controlled player yet
 	st	(c2playernum).w
 	movea.w	#(puckx-M68K_RAM),a3	;puck
 	clr.w	(fox).w			;face off at center ice
 	clr.w	(foy).w
-	btst	#0,(word_FFC2FA).w
+	btst	#0,(gmode2).w
 	beq.w	.fo			;IDA: loc_78C4
 	move.w	#$1E,d0
 	move.w	#8,(BA_Skater_Offset).w
@@ -180,13 +180,13 @@ DoGameFrame	;wait for at least one vblank, then run one frame of game logic
 	move.w	(vcount).w,(oldvcount).w
 	bsr.w	periodicevents
 	bsr.w	updateplayers		;apply velocity and check collisions
-	tst.w	(word_FFDECC).w		;delayed song countdown
+	tst.w	(songdelay).w		;delayed song countdown
 	beq.w	.nosong			;IDA: loc_798A
 	bmi.w	.nosong
-	subq.w	#1,(word_FFDECC).w
+	subq.w	#1,(songdelay).w
 	bne.w	.nosong
 	jsr	(play_new_song).l
-	move.w	(word_FFDECE).w,-(sp)
+	move.w	(delayedsong).w,-(sp)
 	jsr	(song).l
 .nosong	jsr	(setSlotBit).l
 	bsr.w	checkwindow
@@ -241,9 +241,9 @@ CheckPeriodEnd	;IDA: sub_7A34. Called once per second. 3rd period: choose and pl
 	btst	#4,(gmode).w
 	bne.w	.x
 	move.w	(gameclock).w,d0
-	cmp.w	(word_FFB048).w,d0
+	cmp.w	(periodendtime).w,d0
 	bgt.w	.x			;not there yet
-	st	(word_FFB048).w		;high byte $FF: trigger goes negative, fires once
+	st	(periodendtime).w		;high byte $FF: trigger goes negative, fires once
 	move.w	(HomeTeam).w,(HmTeam).w
 	move.w	#5,(SongIndex).w
 	jsr	(ChooseSong).l
@@ -405,22 +405,22 @@ HandleJoy1	;IDA: loc_7CB0. Any button on the pad just read (d1) ends the demo
 	jmp	ExitToOpening		;exit demo (93 ExitToOpening)
 
 startpause1	;pause initiated by cont 1
-	clr.w	(word_FFC316).w		;94: pausing pad number (0 = pad 1 or 2)
+	clr.w	(pausepad).w		;94: pausing pad number (0 = pad 1 or 2)
 	bclr	#1,(sflags).w		;sfpj
 	bra.w	startpause
 startpause2	;pause initiated by cont 2
-	clr.w	(word_FFC316).w
+	clr.w	(pausepad).w
 	bset	#1,(sflags).w		;sfpj
 startpause
 	bset	#0,(sflags).w		;sfpz
 	rts
 
 startpause3	;IDA: loc_7CDC. 94 only: pause initiated by cont 3 (4 way play). Also from doinput+A4
-	move.w	#3,(word_FFC316).w
+	move.w	#3,(pausepad).w
 	bclr	#1,(sflags).w		;sfpj
 	bra.s	startpause
 startpause4	;IDA: loc_7CEA. 94 only: pause initiated by cont 4 (4 way play). Also from doinput+A8
-	move.w	#4,(word_FFC316).w
+	move.w	#4,(pausepad).w
 	bset	#1,(sflags).w		;sfpj
 	bra.s	startpause
 
@@ -436,7 +436,7 @@ Pausemode	;IDA: PauseMode. Game is in pause mode now
 	bsr.w	seta2			;a2 = team of pausing controller
 	movea.l	#PauseText,a0		;menu item list (93 PauseText)
 	lea	SetupPauseScreen(pc),a1	;screen draw routine
-	btst	#0,(word_FFC2FA).w
+	btst	#0,(gmode2).w
 	beq.w	.chk2			;IDA: loc_7D38
 	movea.l	#PauseMenuItems,a0		;94 only: third item list
 	bra.w	.0

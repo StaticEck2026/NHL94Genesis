@@ -1,8 +1,8 @@
 ;	NHL 94 (retail) segment $7E36-$80D3
 ;	The menu engine, as 93 menu93: InitMenuState through vcountwait (93 MenuWaitVblank). The scrolling menu of the pause screen
 ;	(PauseMode in hockey94_01), also used from penalty94_2, middle94_1 and the stats code after it (stats94).
-;	94 changes from 93: the menu state is dword_FFCF20-dword_FFCF28 (93 dword_FFC9B4-dword_FFC9BC); printz2 / print2 (93
-;	printsmallz / printsmall); a handler can keep its own screen (word_FFC2F6 bit 1); the 94 item printer PrintMenuItem (the Manual /
+;	94 changes from 93: the menu state is menuitem-menudraw (93 dword_FFC9B4-dword_FFC9BC); printz2 / print2 (93
+;	printsmallz / printsmall); a handler can keep its own screen (sflags5 bit 1); the 94 item printer PrintMenuItem (the Manual /
 ;	Auto Goalie item); PrintTeamData copies 11 words from TeamBlockMap (93 unk_FFC210, 12 words); vcountwait reads oldvcount twice.
 ;	Transcribed from lst/nhl94.bin.lst lines 30310-30582. Global names are the 93 menu93 names where IDA has an auto name (IDA name
 ;	in an ;IDA: comment); PrintMenuItem (IDA sub_8008) is 94 only; vcountwait is the IDA name. Locals are the 93 menu93 locals, with
@@ -11,12 +11,12 @@
 
 InitMenuState	;IDA: sub_7E36 (93 name). Start a menu: a0 = item list, a1 = screen draw routine; selection and first shown item 0. Falls into
 	;DrawMenuScreen. Called from PauseMode (hockey94_01), penalty94_2 and the stats code
-	move.l	a0,(dword_FFCF24).w	;item list (93 dword_FFC9B8)
-	move.l	a1,(dword_FFCF28).w	;draw routine (93 dword_FFC9BC)
-	clr.w	(dword_FFCF20).w	;selected item (93 dword_FFC9B4)
-	clr.w	(dword_FFCF20+2).w	;first item shown
+	move.l	a0,(menulist).w	;item list (93 dword_FFC9B8)
+	move.l	a1,(menudraw).w	;draw routine (93 dword_FFC9BC)
+	clr.w	(menuitem).w	;selected item (93 dword_FFC9B4)
+	clr.w	(menuitem+2).w	;first item shown
 DrawMenuScreen	;IDA: sub_7E46 (93 name). Call the draw routine, frame the menu box, print the items and fade in. Called from HandleMenuInput and penalty94_2
-	movea.l	(dword_FFCF28).w,a0
+	movea.l	(menudraw).w,a0
 	jsr	(a0)
 	jsr	(printz2).l
 	String	$FE,4,$FC,$C	;IDA: ori.b
@@ -34,25 +34,25 @@ SetMenuPrintX	;IDA: sub_7E72 (93 name). printx = the left edge of the menu box: 
 	addq.w	#4,(printx).w
 	rts
 HandleMenuInput	;IDA: sub_7E88 (93 name). Act on the pad bits d1 for the current menu: down / up move the selection, C runs the item's handler and
-	;redraws the menu (94: not if the handler set word_FFC2F6 bit 1). Returns eq to leave the menu (start, or C on item 0), ne to stay. Called
+	;redraws the menu (94: not if the handler set sflags5 bit 1). Returns eq to leave the menu (start, or C on item 0), ne to stay. Called
 	;from PauseMode (hockey94_01), middle94_1 and the stats code
 	btst	#7,d1	;sbut
 	bne.w	.flip	;start: Z clear, flipped to eq
 	btst	#1,d1	;dbut
 	beq.w	.1
-	addq.w	#1,(dword_FFCF20).w	;next lower item
+	addq.w	#1,(menuitem).w	;next lower item
 	bra.w	UpdateMenuSelection
 .1	;IDA: loc_7EA0
 	btst	#0,d1	;ubut
 	beq.w	.2
-	subq.w	#1,(dword_FFCF20).w	;next higher item
+	subq.w	#1,(menuitem).w	;next higher item
 	bra.w	UpdateMenuSelection
 .2	;IDA: loc_7EB0
 	btst	#5,d1	;cbut
 	beq.w	.flip	;nothing: Z set, flipped to ne
 	bsr.w	seta2
-	move.w	(dword_FFCF20).w,d0	;find the handler of the selected item
-	movea.l	(dword_FFCF24).w,a0
+	move.w	(menuitem).w,d0	;find the handler of the selected item
+	movea.l	(menulist).w,a0
 	adda.w	(a0),a0
 	adda.w	(a0),a0
 	bra.w	.3
@@ -63,23 +63,23 @@ HandleMenuInput	;IDA: sub_7E88 (93 name). Act on the pad bits d1 for the current
 	dbf	d0,.4
 	movea.l	(a0),a0
 	jsr	(a0)	;the handler of the selected item
-	bclr	#1,(word_FFC2F6).w	;94: the handler drew its own screen
+	bclr	#1,(sflags5).w	;94: the handler drew its own screen
 	bne.w	.noredraw
 	bsr.w	DrawMenuScreen
 .noredraw	;IDA: loc_7EE6
-	tst.w	(dword_FFCF20).w	;item 0 (resume) leaves the menu
+	tst.w	(menuitem).w	;item 0 (resume) leaves the menu
 	rts
 .flip	;IDA: loc_7EEC
 	eori	#4,ccr	;invert Z
 	rts
 UpdateMenuSelection	;IDA: sub_7EF2 (93 name). Clamp the selection, scroll the 4 rows shown and print the menu: title, the items (PrintMenuItem), the
 	;selected item marked, { / } when there are items above / below. Called from DrawMenuScreen and HandleMenuInput
-	move.w	(dword_FFCF20).w,d0
+	move.w	(menuitem).w,d0
 	bpl.w	.0
-	clr.w	(dword_FFCF20).w	;no item above the first
+	clr.w	(menuitem).w	;no item above the first
 	clr.w	d0
 .0	;IDA: loc_7F00
-	movea.l	(dword_FFCF24).w,a0
+	movea.l	(menulist).w,a0
 	adda.w	(a0),a0
 	adda.w	(a0),a0
 	bra.w	.2
@@ -90,20 +90,20 @@ UpdateMenuSelection	;IDA: sub_7EF2 (93 name). Clamp the selection, scroll the 4 
 .2	;IDA: loc_7F14
 	dbmi	d0,.1
 	addq.w	#1,d0
-	sub.w	d0,(dword_FFCF20).w	;no item below the last
-	move.w	(dword_FFCF20).w,d0
-	cmp.w	(dword_FFCF20+2).w,d0
+	sub.w	d0,(menuitem).w	;no item below the last
+	move.w	(menuitem).w,d0
+	cmp.w	(menuitem+2).w,d0
 	bge.w	.3
-	move.w	d0,(dword_FFCF20+2).w	;scroll up
+	move.w	d0,(menuitem+2).w	;scroll up
 .3	;IDA: loc_7F2E
 	subq.w	#3,d0
-	cmp.w	(dword_FFCF20+2).w,d0
+	cmp.w	(menuitem+2).w,d0
 	ble.w	.4
-	move.w	d0,(dword_FFCF20+2).w	;scroll down
+	move.w	d0,(menuitem+2).w	;scroll down
 .4	;IDA: loc_7F3C
 	bsr.w	SetMenuPrintX
 	move.w	#$D,(printy).w
-	movea.l	(dword_FFCF24).w,a1
+	movea.l	(menulist).w,a1
 	jsr	(print2).l	;the menu title (93 printsmall)
 	jsr	(printz2).l	;clear the 4 item rows (93 printsmallz)
 	dc.w	$0026	;String length, 36 bytes: too many for the macro (as 93). IDA: ori.b / move.l / btst
@@ -111,7 +111,7 @@ UpdateMenuSelection	;IDA: sub_7EF2 (93 name). Clamp the selection, scroll the 4 
 	dc.b	$20,$FB,$FF,$FA,$01,$20,$FB,$12,$20,$FB,$FF,$FA
 	dc.b	$FF,$20,$FB,$FF,$FA,$FF,$20,$FB,$FF,$FA,$FF,$20
 	adda.w	(a1),a1
-	move.w	(dword_FFCF20+2).w,d0	;skip to the first item shown
+	move.w	(menuitem+2).w,d0	;skip to the first item shown
 	bra.w	.6
 .5	;IDA: loc_7F86
 	adda.w	(a1),a1
@@ -121,7 +121,7 @@ UpdateMenuSelection	;IDA: sub_7EF2 (93 name). Clamp the selection, scroll the 4 
 	moveq	#3,d1	;4 rows
 	move.w	#$C,(printy).w
 	bsr.w	SetMenuPrintX
-	move.w	(dword_FFCF20+2).w,d0
+	move.w	(menuitem+2).w,d0
 	beq.w	.7
 	jsr	(printz2).l	;more items above
 	String	$FE,5,$FB,1,$FA,1,'{',$FA,$FF	;IDA: ori.b (and hid the rest)
@@ -130,9 +130,9 @@ UpdateMenuSelection	;IDA: sub_7EF2 (93 name). Clamp the selection, scroll the 4 
 	jsr	(printz2).l	;start of an item row
 	String	$FB,2,$FA,1	;IDA: ori.b
 	move.l	a1,-(sp)
-	movea.l	(dword_FFCF24).w,a1
+	movea.l	(menulist).w,a1
 	jsr	(print2).l
-	cmp.w	(dword_FFCF20).w,d0
+	cmp.w	(menuitem).w,d0
 	bne.w	.8
 	jsr	(print2).l	;the selected item marker
 .8	;IDA: loc_7FDE
@@ -149,7 +149,7 @@ UpdateMenuSelection	;IDA: sub_7EF2 (93 name). Clamp the selection, scroll the 4 
 .x	;IDA: locret_8006
 	rts
 PrintMenuItem	;IDA: sub_8008. 94 only. Print menu item a1 and step a1 past it. An item whose text starts with 'x' is the goalie option: it prints Manual Goalie
-	;(.manual) when the pause team word is 0, else Auto Goalie (.auto): word_FFD05C with sflags bit 1 (sfpj) set, else word_FFD05A. Called from
+	;(.manual) when the pause team word is 0, else Auto Goalie (.auto): goaliemode2 with sflags bit 1 (sfpj) set, else goaliemode1. Called from
 	;UpdateMenuSelection
 	cmpi.b	#$78,2(a1)	;first char 'x'
 	bne.w	.plain
@@ -157,10 +157,10 @@ PrintMenuItem	;IDA: sub_8008. 94 only. Print menu item a1 and step a1 past it. A
 	movea.l	#.manual,a1
 	btst	#1,(sflags).w	;sfpj: the pause pad
 	beq.w	.homegoalie
-	tst.w	(word_FFD05C).w
+	tst.w	(goaliemode2).w
 	bra.w	.chkgoalie
 .homegoalie	;IDA: loc_802C
-	tst.w	(word_FFD05A).w
+	tst.w	(goaliemode1).w
 .chkgoalie	;IDA: loc_8030
 	beq.w	.print
 	movea.l	#.auto,a1

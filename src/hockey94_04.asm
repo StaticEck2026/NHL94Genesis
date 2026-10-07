@@ -210,11 +210,11 @@ checkgoal	;look for coll with goal/net. a2 = goal struct, a3 = object, d2/d3 = x
 	bmi.w	wallcoll
 	neg.w	d1
 	bra.w	wallcoll
-.goal	;93 Goal: puck in goal. 94 first: in a penalty shot or shootout (BA_PS_flags bit 2) only the shooter's end counts (word_FFC2FA bit 0:
-	;shootout, word_FFD594 picks the end); it counts the shootout goal (word_FFD574 / word_FFD576) and calls EndPenaltyShotPlay
+.goal	;93 Goal: puck in goal. 94 first: in a penalty shot or shootout (BA_PS_flags bit 2) only the shooter's end counts (gmode2 bit 0:
+	;shootout, shootoutteam picks the end); it counts the shootout goal (homeshootgoals / awayshootgoals) and calls EndPenaltyShotPlay
 	btst	#2,(BA_PS_flags).w
 	beq.w	.7
-	btst	#0,(word_FFC2FA).w
+	btst	#0,(gmode2).w
 	bne.w	.1
 	movem.l	d0/a0,-(sp)
 	move.w	(BA_Sktr_SCnum).w,d0
@@ -226,7 +226,7 @@ checkgoal	;look for coll with goal/net. a2 = goal struct, a3 = object, d2/d3 = x
 	bne.w	.2
 	bra.w	.3
 .1	;IDA: loc_147D8
-	tst.w	(word_FFD594).w
+	tst.w	(shootoutteam).w
 	bne.w	.3
 .2	;IDA: loc_147E0
 	tst.w	(pucky).w
@@ -236,23 +236,23 @@ checkgoal	;look for coll with goal/net. a2 = goal struct, a3 = object, d2/d3 = x
 	tst.w	(pucky).w
 	bpl.w	rtss2
 .4	;IDA: loc_147F4
-	bset	#5,(word_FFC2F4).w	;94 only: penalty shot / shootout goal
-	tst.w	(word_FFD594).w
+	bset	#5,(sflags4).w	;94 only: penalty shot / shootout goal
+	tst.w	(shootoutteam).w
 	beq.w	.5
-	addq.w	#1,(word_FFD576).w
+	addq.w	#1,(awayshootgoals).w
 	bra.w	.6
 .5	;IDA: loc_1480A
-	addq.w	#1,(word_FFD574).w
+	addq.w	#1,(homeshootgoals).w
 .6	;IDA: loc_1480E
-	bset	#0,(byte_FFC2FE).w
+	bset	#0,(sflags8).w
 	jsr	(EndPenaltyShotPlay).l	;IDA: sub_F37C
 	bra.w	.8
 .7	;IDA: loc_1481E
 	btst	#0,(gmode).w
 	bne.w	rtss2
 .8	;IDA: loc_14828
-	bset	#0,(word_FFC2F4).w	;94 only
-	bclr	#3,(byte_FFC2FE).w
+	bset	#0,(sflags4).w	;94 only
+	bclr	#3,(sflags8).w
 	bsr.w	ChkShotStat
 	bsr.w	play_new_song	;94 only
 	move.w	d0,-(sp)
@@ -276,13 +276,13 @@ checkgoal	;look for coll with goal/net. a2 = goal struct, a3 = object, d2/d3 = x
 	exg	a2,a1
 .10	;IDA: loc_1487C
 	addq.w	#1,$C(a2)	;tmscore: add to Goals
-	btst	#5,(word_FFC2F4).w	;94 only: goal stats
+	btst	#5,(sflags4).w	;94 only: goal stats
 	beq.w	.11
-	btst	#0,(word_FFC2FA).w	;94: no new assignments in a shootout
+	btst	#0,(gmode2).w	;94: no new assignments in a shootout
 	bne.w	.11
 	addq.w	#1,$362(a2)	;add to SH Goals (IDA comment)
 .11	;IDA: loc_14898
-	bclr	#4,(word_FFC2FA).w
+	bclr	#4,(gmode2).w
 	beq.w	.12
 	addq.w	#1,$35A(a2)	;add to BA Goals (IDA comment)
 .12	;IDA: loc_148A6
@@ -305,18 +305,18 @@ checkgoal	;look for coll with goal/net. a2 = goal struct, a3 = object, d2/d3 = x
 	adda.w	d0,a2
 	addq.w	#1,$342(a2)	;goals by period
 	movem.l	(sp)+,d0/a2
-	bclr	#7,(byte_FFC2FE).w
+	bclr	#7,(sflags8).w
 	beq.w	.15
-	addq.w	#1,$35E(a2)	;byte_FFC2FE bit 7 goals
+	addq.w	#1,$35E(a2)	;sflags8 bit 7 goals
 .15	;IDA: loc_148F6
 	cmpa.w	#(HmShots-M68K_RAM),a2	;home goal: ChooseSong (93 song $30)
 	bne.w	.16
 	move.w	(HomeTeam).w,(HmTeam).w
 	move.w	#3,(SongIndex).w
 	jsr	(ChooseSong).l
-	move.w	#$78,(word_FFDECC).w
+	move.w	#$78,(songdelay).w
 	move.w	(SongNum).w,-(sp)
-	move.w	(sp)+,(word_FFDECE).w
+	move.w	(sp)+,(delayedsong).w
 .16	;IDA: loc_1491E
 	cmpi.w	#$168,(ScoreSumbytes).w	;60 entries of 6 bytes full? (93 $B4, 30)
 	bne.w	.17
@@ -366,8 +366,8 @@ checkgoal	;look for coll with goal/net. a2 = goal struct, a3 = object, d2/d3 = x
 	bsr.w	PenGoalStuff	;penalty94_1 (IDA sub_1284A)
 	bclr	#3,(BA_PS_flags).w
 	bsr.w	PrintScores1
-	move.w	#$2710,(word_FFC304).w	;94 only
-	btst	#0,(word_FFC2FA).w
+	move.w	#$2710,(crowdnoisedelay).w	;94 only
+	btst	#0,(gmode2).w
 	beq.w	.21
 	bra.w	.22
 .21	;IDA: loc_149E0
@@ -435,7 +435,7 @@ GetPeriodTimeRemaining	;IDA: sub_14A94 (93 name). Return d0 = (gsp << 14 | PerTi
 	sub.w	(gameclock).w,d0
 	rts
 checkgoalp	;check for player a3 collision with goal/net a2. Entered from checkgoal. Oval goal; skipped for no player coll (pflags2 bit 5), a high
-	;player or a non-player. CheckBump, then wallcoll with word_FFC2F8 bit 4 set (no wall collision bit)
+	;player or a non-player. CheckBump, then wallcoll with sflags6 bit 4 set (no wall collision bit)
 	btst	#5,pflags2(a3)	;pflags2 bit 5: no player coll
 	bne.w	rtss2
 	cmpi.w	#$A,Zpos(a3)	;Zpos
@@ -474,9 +474,9 @@ checkgoalp	;check for player a3 collision with goal/net a2. Entered from checkgo
 	divs.w	d2,d0
 	asl.l	#8,d1
 	divs.w	d2,d1
-	bset	#4,(word_FFC2F8).w	;wallcoll: do not set the wall collision bit
+	bset	#4,(sflags6).w	;wallcoll: do not set the wall collision bit
 	bsr.w	wallcoll
-	bclr	#4,(word_FFC2F8).w
+	bclr	#4,(sflags6).w
 .exit	;IDA: loc_14B32
 	movem.w	(sp)+,d2-d3
 	rts
@@ -567,7 +567,7 @@ wallcollb2	;IDA name (93 wallcollb). Check for puck over wall. a3 = object, d0/d
 	movea.l	(sp)+,a3
 	rts
 wallcoll	;d0 = cosine, d1 = sine of angle of incidence with wall, a3 = object. Bounce a3 off the wall: the puck loses speed, flips and plays
-	;sfx $28-$2B; a player sets the wall collision bit (unless word_FFC2F8 bit 4) and plays SFXplayerwall on a hard hit. Called from checkgoal,
+	;sfx $28-$2B; a player sets the wall collision bit (unless sflags6 bit 4) and plays SFXplayerwall on a hard hit. Called from checkgoal,
 	;checkgoalp and wallcollb2
 	move.w	d0,Wallcos(a3)	;wallcos
 	move.w	d1,Wallsin(a3)	;wallsin
@@ -619,7 +619,7 @@ wallcoll	;d0 = cosine, d1 = sine of angle of incidence with wall, a3 = object. B
 .player
 	cmp.w	#$3E8,d2	;#1000
 	bgt.w	.nocoll
-	bclr	#4,(word_FFC2F8).w	;94 only: set by checkgoalp
+	bclr	#4,(sflags6).w	;94 only: set by checkgoalp
 	bne.w	.0
 	bset	#4,$64(a3)	;set wall collision bit
 .0	;IDA: loc_14D16
@@ -656,8 +656,8 @@ wallcoll	;d0 = cosine, d1 = sine of angle of incidence with wall, a3 = object. B
 	addq.w	#4,sp
 	movem.l	(sp)+,d2-d3
 	rts
-checkpuckcoll_sfx	;IDA: _sfx (a local of wallcoll in IDA, entered from checkpuckcoll; a global so it does not clash with sfx). Puck in the air: sfx 5 once when word_FFC2F4 bit 2 is set
-	bclr	#2,(word_FFC2F4).w
+checkpuckcoll_sfx	;IDA: _sfx (a local of wallcoll in IDA, entered from checkpuckcoll; a global so it does not clash with sfx). Puck in the air: sfx 5 once when sflags4 bit 2 is set
+	bclr	#2,(sflags4).w
 	beq.w	rtss2
 	move.w	#5,-(sp)
 	bra.w	sfx
@@ -834,9 +834,9 @@ checkpuckcoll	;look for puck coll with players. a3 = puck. Clears Yvel past the 
 	movea.l	#.cbg,a0
 	clr.w	d0
 	move.b	$68(a2),d0	;move Agl into d0
-	btst	#1,(byte_FFC2FE).w	;check if cwd meter broken (always is)
+	btst	#1,(sflags8).w	;check if cwd meter broken (always is)
 	bne.w	.boost
-	btst	#6,(byte_FFC2FC).w	;check if crowd meter currently broken
+	btst	#6,(sflags7).w	;check if crowd meter currently broken
 	beq.w	.joycont	;branch if not
 .boost
 	addq.b	#2,d0
@@ -847,7 +847,7 @@ checkpuckcoll	;look for puck coll with players. a3 = puck. Clears Yvel past the 
 	move.w	#$F,d0	;move F into d0 (remove Agl)
 .calcagl
 	add.w	d0,d0	;add d0 to itself
-	btst	#0,(word_FFC2FA).w	;check if shootout
+	btst	#0,(gmode2).w	;check if shootout
 	beq.w	.maxagl	;branch if not
 	tst.w	d0	;check that d0 is 0
 	beq.w	.maxagl	;branch if zero
@@ -863,7 +863,7 @@ checkpuckcoll	;look for puck coll with players. a3 = puck. Clears Yvel past the 
 	move.w	0(a0,d0.w),(ChkBodySqG+2).w
 	move.w	(ChkBodyG).w,(NegChkBodyG).w
 	neg.w	(NegChkBodyG).w
-	btst	#1,(word_FFC2F8).w	;check if one timer
+	btst	#1,(sflags6).w	;check if one timer
 	beq.w	.2	;branch if not set
 	move.w	#$C,(ChkBodyG).w
 	move.l	#$90,(ChkBodySqG).w
@@ -922,7 +922,7 @@ checkpuckcoll	;look for puck coll with players. a3 = puck. Clears Yvel past the 
 	bsr.w	puckgoalie
 	bra.w	.exit
 .exit2
-	bclr	#2,(word_FFC2F4).w	;clear bit 2
+	bclr	#2,(sflags4).w	;clear bit 2
 	beq.w	.exit	;exit if it was cleared already
 	move.w	(puckc).w,d0	;move puckc into d0
 	cmp.w	$52(a2),d0	;compare SCnum to d0

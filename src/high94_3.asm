@@ -11,16 +11,16 @@
 ;	Strings and remap table IDA hid in newTitleScreen. The data tables are formatted from the retail bytes; the IDA labels inside
 ;	Strings or tables (unk_FDAA9, unk_FF633) are not labels.
 
-EndShootout	;IDA: sub_FD618. 94 only. Shootout over (CountShootoutGoals, high94_2): freezewindow, then the 5 skaters of player slots 1-5 (word_FFD574 > word_FFD576) or
+EndShootout	;IDA: sub_FD618. 94 only. Shootout over (CountShootoutGoals, high94_2): freezewindow, then the 5 skaters of player slots 1-5 (homeshootgoals > awayshootgoals) or
 	;7-$B are set up (setplayer) above or below the view and get assscore (assinsert 7)
 	movem.l	d0-d7/a0-a6,-(sp)
 	bset	#2,(sflags2).w
 	jsr	(freezewindow).l
-	move.w	#$60,(word_FFDED0).w
+	move.w	#$60,(shootoutdelay).w
 	movea.l	#SortCords,a3
 	move.w	#0,d0
-	move.w	(word_FFD574).w,d2
-	cmp.w	(word_FFD576).w,d2
+	move.w	(homeshootgoals).w,d2
+	cmp.w	(awayshootgoals).w,d2
 	bgt.w	.0
 	move.w	#6,d0
 .0	;IDA: loc_FD648
@@ -89,8 +89,8 @@ PositionBoxes	;no IDA label (was unk_FD71C). ClampPositionBox boxes: min / max o
 	dc.w	$FFB5,0,0,$108,0,$4B,0,$108
 PositionBoxesTop	;no IDA label (was unk_FD72C). ClampPositionBox boxes, top net
 	dc.w	$FFB5,0,$FEF8,0,0,$4B,$FEF8,0
-ClearGameStats	;IDA: sub_FD73C. 94 only. Clear the game stats: word_FFD572 (19 words), both team structs (HmShots, AwShots), PenBuf, BA_PS_flags, word_FFC2F4 / F8 /
-	;FA and word_FFD42E / word_FFD43E. Called from GameSetUp (hockey94_08)
+ClearGameStats	;IDA: sub_FD73C. 94 only. Clear the game stats: word_FFD572 (19 words), both team structs (HmShots, AwShots), PenBuf, BA_PS_flags, sflags4 / F8 /
+	;FA and setupcardflags / featuredplayer. Called from GameSetUp (hockey94_08)
 	movem.l	d0-d7/a0-a6,-(sp)
 	movea.l	#$FFFFD572,a0
 	moveq	#$12,d0
@@ -108,31 +108,31 @@ ClearGameStats	;IDA: sub_FD73C. 94 only. Clear the game stats: word_FFD572 (19 w
 	clr.w	(a0)+
 	dbf	d0,.loop3
 	clr.w	(BA_PS_flags).w
-	clr.w	(word_FFC2F4).w
-	clr.w	(word_FFC2F8).w
-	clr.w	(word_FFC2FA).w
-	clr.w	(word_FFD42E).w
-	clr.w	(word_FFD43E).w
+	clr.w	(sflags4).w
+	clr.w	(sflags6).w
+	clr.w	(gmode2).w
+	clr.w	(setupcardflags).w
+	clr.w	(featuredplayer).w
 	movem.l	(sp)+,d0-d7/a0-a6
 	rts
-AddArenaAnimSprite	;IDA: sub_FD78A. 94 only. Add the frame word_FFD6AE of the arena animation (sprite list dword_FFD6BA, see RunArenaAnim) to the sprite table a6 (d6
-	;sprites, 64 at most) for the pieces inside the view (Hpos / Vpos). Not in a reverse angle replay (word_FFC2F4 bit 4), sflags2 bit 3 or sflags
+AddArenaAnimSprite	;IDA: sub_FD78A. 94 only. Add the frame arenaframe of the arena animation (sprite list arenaspritelist, see RunArenaAnim) to the sprite table a6 (d6
+	;sprites, 64 at most) for the pieces inside the view (Hpos / Vpos). Not in a reverse angle replay (sflags4 bit 4), sflags2 bit 3 or sflags
 	;bit 7. Called from setvideo (video94_1)
-	tst.w	(word_FFD6B4).w
+	tst.w	(arenaanim).w
 	bmi.w	.x2
-	tst.l	(dword_FFD6BA).w
+	tst.l	(arenaspritelist).w
 	beq.w	.x2
-	btst	#4,(word_FFC2F4).w	;check if reverse angle replay
+	btst	#4,(sflags4).w	;check if reverse angle replay
 	bne.w	.x2	;branch if so
 	btst	#3,(sflags2).w
 	bne.w	.x2
 	btst	#7,(sflags).w
 	bne.w	.x2
-	movea.l	(dword_FFD6BA).w,a1
+	movea.l	(arenaspritelist).w,a1
 	adda.l	4(a1),a1
 	move.w	(Hpos).w,d4
 	move.w	(Vpos).w,d5
-	move.w	(word_FFD6AE).w,d0
+	move.w	(arenaframe).w,d0
 	bra.w	.2
 	andi.w	#$F,d2	;nothing branches here: draw d2 + 1 (4 at most) frames from d3 (.2)
 	cmp.w	#3,d2
@@ -190,7 +190,7 @@ AddArenaAnimSprite	;IDA: sub_FD78A. 94 only. Add the frame word_FFD6AE of the ar
 	move.w	6(a0),d5
 	andi.w	#$F800,d5
 	add.w	4(a0),d5
-	add.w	(word_FFD6AC).w,d5
+	add.w	(arenaanimchars).w,d5
 	move.w	d5,(a6)+
 	move.w	(a0),d5
 	addi.w	#$70,d5
@@ -209,7 +209,7 @@ AddArenaAnimSprite	;IDA: sub_FD78A. 94 only. Add the frame word_FFD6AE of the ar
 PrintPlayerNameRight	;IDA: sub_FD89A. 94 only. Print the name of player d0 of team a2 (FormatPlayerName), moved left so it ends before column $29 (a trailing pad byte or
 	;two not counted), then the icon of HotColdIcon. Called from PrintMatchupRatings (hockey94_07)
 	movem.l	d0-d7/a0-a6,-(sp)
-	move.w	d0,(word_FFDEE8).w
+	move.w	d0,(iconplayer).w
 	move.l	a2,-(sp)
 	jsr	(FormatPlayerName).l
 	movea.l	a1,a0
@@ -245,10 +245,10 @@ SkipNameNumber	;no IDA label (was sub_FD8EC), and nothing calls it (IDA left it 
 	rts
 	String	' . '
 PeriodStatsScreen	;no IDA label (was sub_FD90C) (IDA left it as data; 93 has no counterpart). "Period Stats" menu item (hockey94_11 menu lists): both team logos
-	;(TeamLogoBitmaps, TeamLogoPalettes palettes), then the goals (word_FFD598 0) or shots of each team by period ($342 / $34A of the team struct; OT when
-	;byte_FFC2FC bit 1) and the total. Left / right switch, start exits (ExitAttributeScreen2)
+	;(TeamLogoBitmaps, TeamLogoPalettes palettes), then the goals (matchup 0) or shots of each team by period ($342 / $34A of the team struct; OT when
+	;sflags7 bit 1) and the total. Left / right switch, start exits (ExitAttributeScreen2)
 	movem.l	d0-d7/a0-a6,-(sp)
-	clr.w	(word_FFD598).w
+	clr.w	(matchup).w
 	moveq	#0,d0
 	moveq	#$1C,d1
 	jsr	(SetupScreen).l
@@ -282,7 +282,7 @@ PeriodStatsScreen	;no IDA label (was sub_FD90C) (IDA left it as data; 93 has no 
 	move.w	#6,d3
 	moveq	#4,d5
 	jsr	(dobitmap).l
-	movea.l	#CardPalette,a0
+	movea.l	#palfadenew+$40,a0
 	movea.l	#$FFFFBD88,a1
 	move.w	#7,d0
 .loop
@@ -315,7 +315,7 @@ PeriodStatsScreen	;no IDA label (was sub_FD90C) (IDA left it as data; 93 has no 
 	jsr	(Framer).l
 	jsr	(printbigz).l
 	String	$BD,6,3,'  Period Stats  ',$BE,6,1
-	btst	#1,(byte_FFC2FC).w
+	btst	#1,(sflags7).w
 	beq.w	.0
 	jsr	(printz).l
 	dc.w	$001C	;String length: too many arguments for the String macro (as 93)
@@ -345,16 +345,16 @@ PeriodStatsScreen	;no IDA label (was sub_FD90C) (IDA left it as data; 93 has no 
 	bne.w	.2
 	bra.s	.loop2
 .2
-	tst.w	(word_FFD598).w
+	tst.w	(matchup).w
 	bne.s	.loop2
-	st	(word_FFD598).w
+	st	(matchup).w
 	bsr.w	.5
 	bsr.w	.7
 	bra.s	.loop2
 .3
-	tst.w	(word_FFD598).w
+	tst.w	(matchup).w
 	beq.s	.loop2
-	clr.w	(word_FFD598).w
+	clr.w	(matchup).w
 	bsr.w	.5
 	bsr.w	.7
 	bra.s	.loop2
@@ -362,7 +362,7 @@ PeriodStatsScreen	;no IDA label (was sub_FD90C) (IDA left it as data; 93 has no 
 	movem.l	(sp)+,d0-d7/a0-a6
 	jmp	(ExitAttributeScreen2).l
 .5
-	tst.w	(word_FFD598).w
+	tst.w	(matchup).w
 	beq.w	.6
 	jsr	(printz).l
 	String	$BE,$12,7,'Shots',$BE,$F,$1A,'[ For Goals'
@@ -385,11 +385,11 @@ PeriodStatsScreen	;no IDA label (was sub_FD90C) (IDA left it as data; 93 has no 
 	rts
 .8
 	lea	$342(a2),a0
-	tst.w	(word_FFD598).w
+	tst.w	(matchup).w
 	beq.w	.9
 	lea	$34A(a2),a0
 .9
-	clr.w	(word_FFD5A8).w
+	clr.w	(matchuptimer).w
 	move.w	#$B,(printx).w
 	bsr.w	.12
 	cmpi.w	#1,(gsp).w
@@ -402,7 +402,7 @@ PeriodStatsScreen	;no IDA label (was sub_FD90C) (IDA left it as data; 93 has no 
 	bsr.w	.12
 	cmpi.w	#3,(gsp).w
 	blt.w	.10
-	btst	#1,(byte_FFC2FC).w
+	btst	#1,(sflags7).w
 	beq.w	.10
 	move.w	#$1A,(printx).w
 	bsr.w	.12
@@ -411,7 +411,7 @@ PeriodStatsScreen	;no IDA label (was sub_FD90C) (IDA left it as data; 93 has no 
 	jsr	(printz).l
 	String	'   '
 	subq.w	#3,(printx).w
-	move.w	(word_FFD5A8).w,d0
+	move.w	(matchuptimer).w,d0
 	move.w	#2,d1
 	cmp.w	#$64,d0
 	blt.w	.11
@@ -422,7 +422,7 @@ PeriodStatsScreen	;no IDA label (was sub_FD90C) (IDA left it as data; 93 has no 
 	rts
 .12
 	move.w	(a0)+,d0
-	add.w	d0,(word_FFD5A8).w
+	add.w	d0,(matchuptimer).w
 	jsr	(printz).l
 	String	'   '
 	subq.w	#3,(printx).w
@@ -434,7 +434,7 @@ PeriodStatsScreen	;no IDA label (was sub_FD90C) (IDA left it as data; 93 has no 
 	jsr	(PushNumberWidth).l
 	jmp	(print).l
 GameStatisticsScreen	;no IDA label (IDA left it as data; 93 name). "Game Statistics" menu item (hockey94_11 menu lists): both teams' totals
-	;(DisplayTeamStatsScreen). 94 has more rows than the screen: up / down scroll them (word_FFD59E the most, $70 or $30 without penalties,
+	;(DisplayTeamStatsScreen). 94 has more rows than the screen: up / down scroll them (matchupvis the most, $70 or $30 without penalties,
 	;OptPen), start exits (ExitAttributeScreen2)
 	moveq	#9,d0
 	moveq	#$1A,d1
@@ -454,10 +454,10 @@ GameStatisticsScreen	;no IDA label (IDA left it as data; 93 name). "Game Statist
 	clr.w	(DispAttribCtr).w
 	clr.w	(VertLineScrolling).w
 	clr.w	(PlayerScrollCtr).w
-	move.w	#$70,(word_FFD59E).w	;the most scroll: 15 rows
+	move.w	#$70,(matchupvis).w	;the most scroll: 15 rows
 	tst.w	(OptPen).w
 	bne.w	.0
-	move.w	#$30,(word_FFD59E).w	;11 rows
+	move.w	#$30,(matchupvis).w	;11 rows
 .0
 	bsr.w	DisplayTeamStatsScreen
 	bsr.w	PrintStatScrollArrows
@@ -486,7 +486,7 @@ GameStatisticsScreen	;no IDA label (IDA left it as data; 93 name). "Game Statist
 	beq.w	rtsStatTables
 	add.w	(VertLineScrolling).w,d0
 	bmi.w	rtsStatTables
-	cmp.w	(word_FFD59E).w,d0
+	cmp.w	(matchupvis).w,d0
 	bgt.w	rtsStatTables
 	move.w	(VertLineScrolling).w,d1
 	move.w	d0,(VertLineScrolling).w
@@ -526,7 +526,7 @@ StatScrollRowEnd	;no IDA label (was sub_FDD9C). d3 = VertLineScrolling / 16 + 6 
 	bra.w	rtsStatScroll
 rtsStatScroll	;no IDA label (was locret_FDDA8). rts of StatScrollRow / StatScrollRowEnd
 	rts
-PrintStatScrollArrows	;no IDA label (was sub_FDDAA). GameStatisticsScreen scroll arrows (printz2): up ($7B) when VertLineScrolling > 0, down ($7D) when it is below word_FFD59E
+PrintStatScrollArrows	;no IDA label (was sub_FDDAA). GameStatisticsScreen scroll arrows (printz2): up ($7B) when VertLineScrolling > 0, down ($7D) when it is below matchupvis
 	movem.l	d0-d7/a0-a6,-(sp)
 	jsr	(printz2).l
 	String	$F9,1
@@ -539,7 +539,7 @@ PrintStatScrollArrows	;no IDA label (was sub_FDDAA). GameStatisticsScreen scroll
 	jsr	(printz2).l
 	String	$F8,4,3,'&',8,$F9,1,' '
 .1
-	move.w	(word_FFD59E).w,d0
+	move.w	(matchupvis).w,d0
 	cmp.w	(VertLineScrolling).w,d0
 	beq.w	.2
 	jsr	(printz2).l
@@ -766,7 +766,7 @@ GetTeamRating	;IDA: sub_FE172. 94 only. d0 = the TeamRatings byte of team $28(a2
 TeamRatings	;IDA: unk_FE18E. GetTeamRating values, one byte per team (TeamList order)
 	dc.b	$33,$4C,$49,$4B,$4E,$43,$4B,$43,$34,$42,$4A,$49,$44,$42
 	dc.b	$4A,$37,$45,$4B,$47,$38,$45,$38,$48,$47,$48,$46,$5B,$59
-ShortenMsgTimer	;IDA: sub_FE1AA. 94 only. Cap word_FFC31A at 2, unless a second pad is on (cont2team) and a3 is not the puck carrier. Called from doinput (logic94_1)
+ShortenMsgTimer	;IDA: sub_FE1AA. 94 only. Cap msgtimer at 2, unless a second pad is on (cont2team) and a3 is not the puck carrier. Called from doinput (logic94_1)
 	movem.l	d0,-(sp)
 	tst.w	(cont2team).w
 	beq.w	.0
@@ -774,15 +774,15 @@ ShortenMsgTimer	;IDA: sub_FE1AA. 94 only. Cap word_FFC31A at 2, unless a second 
 	cmp.w	(puckc).w,d0
 	bne.w	.x
 .0	;IDA: loc_FE1C2
-	cmpi.w	#2,(word_FFC31A).w
+	cmpi.w	#2,(msgtimer).w
 	ble.w	.x
-	move.w	#2,(word_FFC31A).w
+	move.w	#2,(msgtimer).w
 .x	;IDA: loc_FE1D2
 	movem.l	(sp)+,d0
 	rts
 ManualGoalieMenu	;no IDA label (was sub_FE1D8) (IDA left it as data; 93 has no counterpart). "x Manual Goalie" menu item (hockey94_11 menu lists; PrintMenuItem prints
-	;Manual / Auto Goalie from the same words): with OptNOP set, toggle the goalie mode of the pause pad (word_FFD05C for pad 2, sflags bit 1,
-	;else word_FFD05A; both when the pads are on one team). In a penalty shot or shootout (word_FFC2FA bit 0, BA_PS_flags bit 2) the pad then
+	;Manual / Auto Goalie from the same words): with OptNOP set, toggle the goalie mode of the pause pad (goaliemode2 for pad 2, sflags bit 1,
+	;else goaliemode1; both when the pads are on one team). In a penalty shot or shootout (gmode2 bit 0, BA_PS_flags bit 2) the pad then
 	;takes player 0 / 6 or 5 / $B by its mode, when BA_Sktr_SCnum is on its side (setc1player / setc2player)
 	movem.l	d0-d7/a0-a6,-(sp)
 	tst.w	(OptNOP).w
@@ -790,17 +790,17 @@ ManualGoalieMenu	;no IDA label (was sub_FE1D8) (IDA left it as data; 93 has no c
 	move.w	(cont1team).w,d0
 	cmp.w	(cont2team).w,d0
 	bne.w	.0
-	eori.w	#1,(word_FFD05C).w
+	eori.w	#1,(goaliemode2).w
 	bra.w	.1
 .0
 	btst	#1,(sflags).w
 	beq.w	.1
-	eori.w	#1,(word_FFD05C).w
+	eori.w	#1,(goaliemode2).w
 	bra.w	.2
 .1
-	eori.w	#1,(word_FFD05A).w
+	eori.w	#1,(goaliemode1).w
 .2
-	btst	#0,(word_FFC2FA).w
+	btst	#0,(gmode2).w
 	bne.w	.3
 	btst	#2,(BA_PS_flags).w
 	beq.w	.x
@@ -821,7 +821,7 @@ ManualGoalieMenu	;no IDA label (was sub_FE1D8) (IDA left it as data; 93 has no c
 	bne.w	.6
 	move.w	#6,d0
 .6
-	tst.w	(word_FFD05A).w
+	tst.w	(goaliemode1).w
 	bne.w	.7
 	move.w	#5,d0
 	cmpi.w	#2,(OptNOP).w
@@ -841,7 +841,7 @@ ManualGoalieMenu	;no IDA label (was sub_FE1D8) (IDA left it as data; 93 has no c
 	bgt.w	.x
 .10
 	move.w	#6,d0
-	tst.w	(word_FFD05C).w
+	tst.w	(goaliemode2).w
 	bne.w	.11
 	move.w	#$B,d0
 .11
@@ -849,51 +849,51 @@ ManualGoalieMenu	;no IDA label (was sub_FE1D8) (IDA left it as data; 93 has no c
 .x
 	movem.l	(sp)+,d0-d7/a0-a6
 	rts
-RunArenaAnim	;IDA: sub_FE2C8. 94 only. Run the arena animation word_FFD6B4 (negative: none): the first time, its frame list and graphics from ArenaAnims
-	;(dword_FFD6B6 / dword_FFD6BA, tiles to VRAM d4 = word_FFD6AC: DoDMA_clearCallbackPointer); then count down the frame time word_FFD6B2 by d7
+RunArenaAnim	;IDA: sub_FE2C8. 94 only. Run the arena animation arenaanim (negative: none): the first time, its frame list and graphics from ArenaAnims
+	;(arenaframelist / arenaspritelist, tiles to VRAM d4 = arenaanimchars: DoDMA_clearCallbackPointer); then count down the frame time arenaframetime by d7
 	;and step (NextArenaFrame). Called from periodicevents (hockey94_01) and waitxsr (middle94_1)
-	tst.w	(word_FFD6B4).w
+	tst.w	(arenaanim).w
 	bmi.w	.x2
 	movem.l	d0-d7/a0-a6,-(sp)
-	tst.l	(dword_FFD6BA).w
+	tst.l	(arenaspritelist).w
 	bne.w	.0
-	move.w	(word_FFD6B4).w,d0
+	move.w	(arenaanim).w,d0
 	asl.w	#3,d0
 	movea.l	#ArenaAnims,a0
-	move.l	0(a0,d0.w),(dword_FFD6B6).w
-	move.l	4(a0,d0.w),(dword_FFD6BA).w
+	move.l	0(a0,d0.w),(arenaframelist).w
+	move.l	4(a0,d0.w),(arenaspritelist).w
 	movea.l	4(a0,d0.w),a2
 	addq.w	#8,a2
-	move.w	(word_FFD6AC).w,d4
+	move.w	(arenaanimchars).w,d4
 	jsr	(DoDMA_clearCallbackPointer).l
-	clr.w	(word_FFD6B0).w
+	clr.w	(arenaframeidx).w
 	bsr.w	NextArenaFrame
 	bra.w	.x
 .0	;IDA: loc_FE310
-	sub.w	d7,(word_FFD6B2).w
+	sub.w	d7,(arenaframetime).w
 	bpl.w	.x
-	addq.w	#1,(word_FFD6B0).w
+	addq.w	#1,(arenaframeidx).w
 	bsr.w	NextArenaFrame
 .x	;IDA: loc_FE320
 	movem.l	(sp)+,d0-d7/a0-a6
 .x2	;IDA: locret_FE324
 	rts
-NextArenaFrame	;IDA: sub_FE326. 94 only. Read frame word_FFD6B0 of the list: word_FFD6AE = frame, word_FFD6B2 = time; frame $FF loops to the start, $FE ends the animation (EndArenaAnim)
-	movea.l	(dword_FFD6B6).w,a0
-	move.w	(word_FFD6B0).w,d0
+NextArenaFrame	;IDA: sub_FE326. 94 only. Read frame arenaframeidx of the list: arenaframe = frame, arenaframetime = time; frame $FF loops to the start, $FE ends the animation (EndArenaAnim)
+	movea.l	(arenaframelist).w,a0
+	move.w	(arenaframeidx).w,d0
 	add.w	d0,d0
 	move.b	0(a0,d0.w),d1
 	ext.w	d1
-	move.w	d1,(word_FFD6AE).w
+	move.w	d1,(arenaframe).w
 	move.b	1(a0,d0.w),d1
 	ext.w	d1
-	move.w	d1,(word_FFD6B2).w
-	cmpi.w	#$FFFF,(word_FFD6AE).w
+	move.w	d1,(arenaframetime).w
+	cmpi.w	#$FFFF,(arenaframe).w
 	bne.w	.0
-	clr.w	(word_FFD6B0).w
+	clr.w	(arenaframeidx).w
 	bra.s	NextArenaFrame
 .0	;IDA: loc_FE354
-	cmpi.w	#$FFFE,(word_FFD6AE).w
+	cmpi.w	#$FFFE,(arenaframe).w
 	bne.w	.x
 	bsr.w	EndArenaAnim
 .x	;IDA: locret_FE362
@@ -945,24 +945,24 @@ SetCameraTop	;no IDA label (was sub_FE4FC), and nothing calls it (IDA left it as
 	move.w	#0,(xc1).w
 	move.w	#$160,(yc1).w
 	rts
-StartArenaAnim	;IDA: sub_FE510. 94 only. Start arena animation d0 (ArenaAnims): word_FFD6B4 = d0, RunArenaAnim loads it. Called from FallDown (hockey94_03, 7),
+StartArenaAnim	;IDA: sub_FE510. 94 only. Start arena animation d0 (ArenaAnims): arenaanim = d0, RunArenaAnim loads it. Called from FallDown (hockey94_03, 7),
 	;DisplayPlayerAttributeMenu (hockey94_10, 0 on a home hat trick) and puckfaceoff2 (logic94_4, the one SetFaceoffAnim set)
 	movem.l	d0-d7/a0-a6,-(sp)
-	move.w	d0,(word_FFD6B4).w
-	move.l	#0,(dword_FFD6B6).w
-	move.l	#0,(dword_FFD6BA).w
-	move.w	#1,(word_FFD6AE).w
-	clr.w	(word_FFD6B0).w
-	st	(word_FFD6BE).w
+	move.w	d0,(arenaanim).w
+	move.l	#0,(arenaframelist).w
+	move.l	#0,(arenaspritelist).w
+	move.w	#1,(arenaframe).w
+	clr.w	(arenaframeidx).w
+	st	(faceoffanim).w
 	movem.l	(sp)+,d0-d7/a0-a6
 	rts
-SetFaceoffAnim	;IDA: sub_FE53C. 94 only. Set the faceoff animation: byte_FFC2FC bit 0, word_FFD6BE = d0. Called from puckfaceoff (logic94_4)
-	bset	#0,(byte_FFC2FC).w
-	move.w	d0,(word_FFD6BE).w
+SetFaceoffAnim	;IDA: sub_FE53C. 94 only. Set the faceoff animation: sflags7 bit 0, faceoffanim = d0. Called from puckfaceoff (logic94_4)
+	bset	#0,(sflags7).w
+	move.w	d0,(faceoffanim).w
 	rts
-EndArenaAnim	;IDA: sub_FE548. 94 only. End the arena animation: word_FFD6B4 = -1, byte_FFC2FC bit 0 cleared. Called from NextArenaFrame and puckfaceoff2 (logic94_4)
-	move.w	#$FFFF,(word_FFD6B4).w
-	bclr	#0,(byte_FFC2FC).w
+EndArenaAnim	;IDA: sub_FE548. 94 only. End the arena animation: arenaanim = -1, sflags7 bit 0 cleared. Called from NextArenaFrame and puckfaceoff2 (logic94_4)
+	move.w	#$FFFF,(arenaanim).w
+	bclr	#0,(sflags7).w
 	rts
 ChooseSong	;IDA name. 94 only: SongNum = byte SongIndex of the 6 song bytes of team HmTeam (TeamSongs), or one of the 8 of RandomSongs at random
 	;when 0; $FFFF with gmode bit 4. Called from StartPer (hockey94_01), checkgoal (hockey94_04), puckshootout (logic94_4) and LeadSong
@@ -972,7 +972,7 @@ ChooseSong	;IDA name. 94 only: SongNum = byte SongIndex of the 6 song bytes of t
 	move.w	#$FFFF,d1
 	bra.w	.1
 .0	;IDA: loc_FE56C
-	bclr	#6,(byte_FFC2FE).w
+	bclr	#6,(sflags8).w
 	movea.l	#TeamSongs,a0
 	movea.l	#RandomSongs,a1
 	move.w	(HmTeam).w,d0
@@ -1064,10 +1064,10 @@ ClearWinRecords	;IDA: sub_FE6D2. 94 only. Clear bytes 8-$B of the 8 ThreeStars r
 	jsr	(MakeSRAMChecksum).l
 	movem.l	(sp)+,d0-d7/a0-a6
 	rts
-PSandSOpassdir	;IDA name (and comments). 94 only: penalty shot / shootout: passdir = word_FFDA1A (the end of the skate path, NextPathPoint), turned by
+PSandSOpassdir	;IDA name (and comments). 94 only: penalty shot / shootout: passdir = sopathdir (the end of the skate path, NextPathPoint), turned by
 	;passdirlist for the bottom net. Called from shotdiradj (logic94_1)
 	movem.l	d0-d7/a0-a6,-(sp)
-	move.w	(word_FFDA1A).w,d0
+	move.w	(sopathdir).w,d0
 	btst	#7,$62(a3)	;check what net shooting at
 	bne.w	.0	;branch if top net
 	movea.l	#passdirlist,a0
@@ -1086,7 +1086,7 @@ passdirlist	dc.w	0	;IDA name. PSandSOpassdir: passdir for the other net
 	dc.w	2
 	dc.w	1
 	dc.w	8
-StartShootoutPath	;IDA: sub_FE756. 94 only. Shootout: pick one of the 7 skate paths (ShootoutPaths) at random (word_FFDA12) and start it (NextPathPoint). Called from NextShooter (high94_2) and
+StartShootoutPath	;IDA: sub_FE756. 94 only. Shootout: pick one of the 7 skate paths (ShootoutPaths) at random (sopath) and start it (NextPathPoint). Called from NextShooter (high94_2) and
 	;puckshootout (logic94_4)
 	movem.l	d0-d7/a0-a6,-(sp)
 .loop	;IDA: loc_FE75A
@@ -1094,10 +1094,10 @@ StartShootoutPath	;IDA: sub_FE756. 94 only. Shootout: pick one of the 7 skate pa
 	jsr	(randomd0).l
 	cmp.w	#6,d0
 	bgt.s	.loop
-	move.w	d0,(word_FFDA12).w
-	bclr	#3,(byte_FFC2FC).w
-	move.w	#$FFFF,(word_FFDA14).w
-	clr.w	(word_FFDA16).w
+	move.w	d0,(sopath).w
+	bclr	#3,(sflags7).w
+	move.w	#$FFFF,(sopathpoint).w
+	clr.w	(sopathx).w
 	bsr.w	NextPathPoint
 	movem.l	(sp)+,d0-d7/a0-a6
 	rts
@@ -1109,54 +1109,54 @@ ShootoutPaths	;IDA: unk_FE788. The 7 shootout skate paths (NextPathPoint)
 	dc.l	ShootoutPath5
 	dc.l	ShootoutPath6
 	dc.l	ShootoutPath7
-ShootoutPath1	;no IDA label (was unk_FE7A4). ShootoutPaths path: x, y points; $80 in the high byte ends it (low byte: word_FFDA1C, then word_FFDA1A)
+ShootoutPath1	;no IDA label (was unk_FE7A4). ShootoutPaths path: x, y points; $80 in the high byte ends it (low byte: sopathend, then sopathdir)
 	dc.w	$10,$E2,$10,$D0,$8020,5
-ShootoutPath2	;no IDA label (was unk_FE7B0). ShootoutPaths path: x, y points; $80 in the high byte ends it (low byte: word_FFDA1C, then word_FFDA1A)
+ShootoutPath2	;no IDA label (was unk_FE7B0). ShootoutPaths path: x, y points; $80 in the high byte ends it (low byte: sopathend, then sopathdir)
 	dc.w	$FFC9,$A0,$FFFF,$C8,$FFE0,$D0,$8020,5
-ShootoutPath3	;no IDA label (was unk_FE7C0). ShootoutPaths path: x, y points; $80 in the high byte ends it (low byte: word_FFDA1C, then word_FFDA1A)
+ShootoutPath3	;no IDA label (was unk_FE7C0). ShootoutPaths path: x, y points; $80 in the high byte ends it (low byte: sopathend, then sopathdir)
 	dc.w	$FFB0,$40,$1A,$BC,$8020,5
-ShootoutPath4	;no IDA label (was unk_FE7CC). ShootoutPaths path: x, y points; $80 in the high byte ends it (low byte: word_FFDA1C, then word_FFDA1A)
+ShootoutPath4	;no IDA label (was unk_FE7CC). ShootoutPaths path: x, y points; $80 in the high byte ends it (low byte: sopathend, then sopathdir)
 	dc.w	$FFCE,$58,$14,$D0,$802C,5
-ShootoutPath5	;no IDA label (was unk_FE7D8). ShootoutPaths path: x, y points; $80 in the high byte ends it (low byte: word_FFDA1C, then word_FFDA1A)
+ShootoutPath5	;no IDA label (was unk_FE7D8). ShootoutPaths path: x, y points; $80 in the high byte ends it (low byte: sopathend, then sopathdir)
 	dc.w	$FFCE,8,$20,$D0,$8028,6
-ShootoutPath6	;no IDA label (was unk_FE7E4). ShootoutPaths path: x, y points; $80 in the high byte ends it (low byte: word_FFDA1C, then word_FFDA1A)
+ShootoutPath6	;no IDA label (was unk_FE7E4). ShootoutPaths path: x, y points; $80 in the high byte ends it (low byte: sopathend, then sopathdir)
 	dc.w	$1C,$F4,8,$E0,$8020,6
-ShootoutPath7	;no IDA label (was unk_FE7F0). ShootoutPaths path: x, y points; $80 in the high byte ends it (low byte: word_FFDA1C, then word_FFDA1A)
+ShootoutPath7	;no IDA label (was unk_FE7F0). ShootoutPaths path: x, y points; $80 in the high byte ends it (low byte: sopathend, then sopathdir)
 	dc.w	$FFE6,$F8,0,$E0,$8020,2
-NextPathPoint	;IDA: sub_FE7FC. 94 only. Next point of shootout path word_FFDA12 (word_FFDA14): word_FFDA16 / word_FFDA18 = x (turned by bit 0 of $76(a3)) / y; at
-	;the end ($80) byte_FFC2FC bit 3, word_FFDA1C and word_FFDA1A (passdir)
+NextPathPoint	;IDA: sub_FE7FC. 94 only. Next point of shootout path sopath (sopathpoint): sopathx / sopathy = x (turned by bit 0 of $76(a3)) / y; at
+	;the end ($80) sflags7 bit 3, sopathend and sopathdir (passdir)
 	movem.l	d0-d7/a0-a6,-(sp)
-	cmpi.b	#$80,(word_FFDA16).w
+	cmpi.b	#$80,(sopathx).w
 	beq.w	.x
-	addq.w	#1,(word_FFDA14).w
-	move.w	(word_FFDA14).w,d0
+	addq.w	#1,(sopathpoint).w
+	move.w	(sopathpoint).w,d0
 	asl.w	#2,d0
 	movea.l	#ShootoutPaths,a0
-	move.w	(word_FFDA12).w,d1
+	move.w	(sopath).w,d1
 	asl.w	#2,d1
 	movea.l	0(a0,d1.w),a0
-	move.w	0(a0,d0.w),(word_FFDA16).w
+	move.w	0(a0,d0.w),(sopathx).w
 	btst	#0,$76(a3)
 	beq.w	.0
-	neg.w	(word_FFDA16).w
+	neg.w	(sopathx).w
 .0	;IDA: loc_FE838
-	move.w	2(a0,d0.w),(word_FFDA18).w
+	move.w	2(a0,d0.w),(sopathy).w
 	cmpi.b	#$80,4(a0,d0.w)
 	bne.w	.x
-	bset	#3,(byte_FFC2FC).w
-	clr.w	(word_FFDA1C).w
-	move.b	5(a0,d0.w),(word_FFDA1C+1).w
-	move.w	6(a0,d0.w),(word_FFDA1A).w
+	bset	#3,(sflags7).w
+	clr.w	(sopathend).w
+	move.b	5(a0,d0.w),(sopathend+1).w
+	move.w	6(a0,d0.w),(sopathdir).w
 .x	;IDA: loc_FE85E
 	movem.l	(sp)+,d0-d7/a0-a6
 	rts
 SkatePath	;IDA: sub_FE864. 94 only. Shootout skate path: d0 / d1 = the point (mirrored for the bottom net); within $A of it ($12 while $28 / $2A(a3) are 0) take
 	;the next one (NextPathPoint). Called from asspuckc (logic94_3)
 	movem.l	d2-d7/a0-a6,-(sp)
-	cmpi.b	#$80,(word_FFDA16).w
+	cmpi.b	#$80,(sopathx).w
 	beq.w	.x
-	move.w	(word_FFDA16).w,d0
-	move.w	(word_FFDA18).w,d1
+	move.w	(sopathx).w,d0
+	move.w	(sopathy).w,d1
 	btst	#7,$62(a3)
 	bne.w	.0
 	neg.w	d0
@@ -1192,35 +1192,35 @@ SkatePath	;IDA: sub_FE864. 94 only. Shootout skate path: d0 / d1 = the point (mi
 .6	;IDA: loc_FE8DA
 	bsr.w	NextPathPoint
 .7	;IDA: loc_FE8DE
-	move.w	(word_FFDA16).w,d0
-	move.w	(word_FFDA18).w,d1
+	move.w	(sopathx).w,d0
+	move.w	(sopathy).w,d1
 .x	;IDA: loc_FE8E6
 	movem.l	(sp)+,d2-d7/a0-a6
 	rts
-ShootoutShootCheck	;IDA: sub_FE8EC. 94 only. Shootout, skater a3 has the puck (word_FFC2FA bit 1): Z set (d0 is restored) = shoot now: after 3 (word_FFD454) at the path
-	;end, within word_FFDA1C of its last point, or with the puck stopped before $F. Called from asspuckc (logic94_3)
+ShootoutShootCheck	;IDA: sub_FE8EC. 94 only. Shootout, skater a3 has the puck (gmode2 bit 1): Z set (d0 is restored) = shoot now: after 3 (shootoutclock) at the path
+	;end, within sopathend of its last point, or with the puck stopped before $F. Called from asspuckc (logic94_3)
 	movem.l	d0-d7/a0-a6,-(sp)
-	btst	#1,(word_FFC2FA).w
+	btst	#1,(gmode2).w
 	beq.w	.5
 	move.w	$52(a3),d0
 	cmp.w	(puckc).w,d0
 	bne.w	.5
-	cmpi.w	#3,(word_FFD454).w
+	cmpi.w	#3,(shootoutclock).w
 	ble.w	.4
-	cmpi.b	#$80,(word_FFDA16).w
+	cmpi.b	#$80,(sopathx).w
 	beq.w	.4
-	btst	#3,(byte_FFC2FC).w
+	btst	#3,(sflags7).w
 	bne.w	.0
 	tst.w	(puckvx).w
 	bne.w	.5
 	tst.w	(puckvy).w
 	bne.w	.5
-	cmpi.w	#$F,(word_FFD454).w
+	cmpi.w	#$F,(shootoutclock).w
 	blt.w	.4
 	bra.w	.5
 .0	;IDA: loc_FE942
-	move.w	(word_FFDA16).w,d0
-	move.w	(word_FFDA18).w,d1
+	move.w	(sopathx).w,d0
+	move.w	(sopathy).w,d1
 	btst	#7,$62(a3)
 	bne.w	.1
 	neg.w	d0
@@ -1234,9 +1234,9 @@ ShootoutShootCheck	;IDA: sub_FE8EC. 94 only. Shootout, skater a3 has the puck (w
 	bpl.w	.3
 	neg.w	d1
 .3	;IDA: loc_FE96A
-	cmp.w	(word_FFDA1C).w,d0
+	cmp.w	(sopathend).w,d0
 	bgt.w	.5
-	cmp.w	(word_FFDA1C).w,d1
+	cmp.w	(sopathend).w,d1
 	bgt.w	.5
 .4	;IDA: loc_FE97A
 	clr.w	d0
@@ -1504,15 +1504,15 @@ CheckScoreLeader	;IDA: sub_FECF8. 94 only. Compare the scores ($24 of HmShots / 
 .x	;IDA: loc_FED24
 	movem.l	(sp)+,d0-d2/a0-a2
 	rts
-DrawPlayoffSprite	;IDA: sub_FED2A. 94 only. The PlayoffSprite sprite at word_FFB8AE / word_FFB8B0 (SetSframe) in Satt, then end the sprite list (word_FFC2E8 = its size). Called from PlayoffScreen
+DrawPlayoffSprite	;IDA: sub_FED2A. 94 only. The PlayoffSprite sprite at playoffspritex / playoffspritey (SetSframe) in Satt, then end the sprite list (Sattsize = its size). Called from PlayoffScreen
 	;(hockey94_06)
 	movea.w	#(Satt-M68K_RAM),a6
 	moveq	#1,d6
 	movea.l	#PlayoffSprite,a0
-	move.w	(word_FFB016).w,d3
+	move.w	(energybarchars).w,d3
 	ori.w	#$8000,d3
-	move.w	(word_FFB8AE).w,d0
-	move.w	(word_FFB8B0).w,d1
+	move.w	(playoffspritex).w,d0
+	move.w	(playoffspritey).w,d1
 	move.w	#1,d2
 	jsr	(SetSframe).l
 	cmpa.w	#$C018,a6
@@ -1524,7 +1524,7 @@ DrawPlayoffSprite	;IDA: sub_FED2A. 94 only. The PlayoffSprite sprite at word_FFB
 	move.l	a6,d0
 	subi.l	#$FFFFC018,d0
 	lsr.w	#1,d0
-	move.w	d0,(word_FFC2E8).w
+	move.w	d0,(Sattsize).w
 	rts
 HiScoreScreen	;IDA name. 94 only: vb2, the $F4378 bitmap and HiScoreImg, then wait up to $50 * 4 frames or a button (waitx). Called from Begin (hockey94_01, attract mode)
 	move.l	#vb2,(vbint).w
@@ -1591,16 +1591,16 @@ GetTeamStruct	;IDA: sub_FEE4A. 94 only. a2 = HmShots, or AwShots when team d2 is
 	movea.l	#AwShots,a2
 .x	;IDA: locret_FEE5E
 	rts
-CountButtonPress	;IDA: sub_FEE60. 94 only. Not in gmode bit 0: add 1 to dword_FFDEA4 (dword_FFDEAC for d4), and to the next long unless word_FFBF12 is 8 or $54(a3). Called from doinput_ispc
+CountButtonPress	;IDA: sub_FEE60. 94 only. Not in gmode bit 0: add 1 to homepresses (awaypresses for d4), and to the next long unless TempWord1 is 8 or $54(a3). Called from doinput_ispc
 	;(logic94_1)
 	movem.l	d1-d7/a0,-(sp)
 	btst	#0,(gmode).w
 	bne.w	.x
-	move.w	(word_FFBF12).w,d1
-	movea.l	#dword_FFDEA4,a0
+	move.w	(TempWord1).w,d1
+	movea.l	#homepresses,a0
 	tst.w	d4
 	beq.w	.0
-	movea.l	#dword_FFDEAC,a0
+	movea.l	#awaypresses,a0
 .0	;IDA: loc_FEE84
 	addq.l	#1,(a0)
 	cmp.w	#8,d1
@@ -1611,33 +1611,33 @@ CountButtonPress	;IDA: sub_FEE60. 94 only. Not in gmode bit 0: add 1 to dword_FF
 .x	;IDA: loc_FEE9A
 	movem.l	(sp)+,d1-d7/a0
 	rts
-TerminateLogName	;no IDA label (was sub_FEEA0), and nothing calls it (IDA left it as data). The GetLogName String at $FFFFDEBA, ended with 0 at word_FFD4E8 and its length word made even
+TerminateLogName	;no IDA label (was sub_FEEA0), and nothing calls it (IDA left it as data). The GetLogName String at $FFFFDEBA, ended with 0 at namelength and its length word made even
 	movem.l	d0-d7/a0-a6,-(sp)
 	movea.l	#$FFFFDEBA,a1
 	bsr.w	GetLogName
-	move.w	(word_FFD4E8).w,d0
+	move.w	(namelength).w,d0
 	move.b	#0,(a1,d0.w)
 	addq.w	#1,d0
 	andi.w	#$FFFE,d0
 	move.w	d0,-2(a1)
 	movem.l	(sp)+,d0-d7/a0-a6
 	rts
-PlayedByHome	;IDA: sub_FEEC8. 94 only. a1 = String "(played by NAME)" for word_FFD042 (GetLogName name), or an empty String for 0. Called from ScoutTextPlayer (hockey94_06)
+PlayedByHome	;IDA: sub_FEEC8. 94 only. a1 = String "(played by NAME)" for homeuser (GetLogName name), or an empty String for 0. Called from ScoutTextPlayer (hockey94_06)
 	movem.l	d0-d7/a0/a2-a6,-(sp)
-	move.w	(word_FFD042).w,d0
+	move.w	(homeuser).w,d0
 PlayedByText	;IDA: loc_FEED0. IDA label. PlayedByHome / PlayedByAway body
 	tst.w	d0
 	beq.w	PlayedByNone
 	movea.l	#$FFFFD4DC,a1
-	move.w	d0,(word_FFD4EA).w
+	move.w	d0,(namelogsel).w
 	bsr.w	GetLogName
-	adda.w	(word_FFD4E8).w,a1
+	adda.w	(namelength).w,a1
 	move.b	#0,(a1)
-	addq.w	#1,(word_FFD4E8).w
-	andi.w	#$FFFE,(word_FFD4E8).w
-	addq.w	#2,(word_FFD4E8).w
-	move.w	(word_FFD4E8).w,(word_FFD4DA).w
-	movea.l	#word_FFD4DA,a1
+	addq.w	#1,(namelength).w
+	andi.w	#$FFFE,(namelength).w
+	addq.w	#2,(namelength).w
+	move.w	(namelength).w,(nameentrybuf).w
+	movea.l	#nameentrybuf,a1
 	move.l	a1,-(sp)
 	movea.l	#$FFFFBF20,a3
 	movea.l	#PlayedByTxt,a1
@@ -1659,16 +1659,16 @@ PlayedByEmptyTxt	;IDA: unk_FEF50. PlayedByHome: the empty String
 PlayedByNone	;IDA: loc_FEF52. IDA label. PlayedByHome: no name
 	movea.l	#PlayedByEmptyTxt,a1
 	bra.s	PlayedByExit
-PlayedByAway	;IDA: sub_FEF5A. 94 only. As PlayedByHome for word_FFD044. Called from ScoutTextPlayer (hockey94_06)
+PlayedByAway	;IDA: sub_FEF5A. 94 only. As PlayedByHome for awayuser. Called from ScoutTextPlayer (hockey94_06)
 	movem.l	d0-d7/a0/a2-a6,-(sp)
-	move.w	(word_FFD044).w,d0
+	move.w	(awayuser).w,d0
 	bra.w	PlayedByText
 set_bit1_C2FE	;IDA name (and comments). 94 only. Called from updateplayers (hockey94_02)
 	bra.w	.set
-	bclr	#1,(byte_FFC2FE).w
+	bclr	#1,(sflags8).w
 	bra.w	.ex
 .set
-	bset	#1,(byte_FFC2FE).w	;set bit 1 of C2FE
+	bset	#1,(sflags8).w	;set bit 1 of C2FE
 .ex
 	rts
 AttribAdjust	;IDA name (and comments). 94 only: an attribute under $32 becomes d0 / 2 + $19. Called from DispAttribValue (stats94), PrintOverallRating (high94_2) and PrintMatchupRatings (hockey94_07)
@@ -1715,7 +1715,7 @@ EndOneTimer	;IDA: sub_FEFF0. 94 only. End a one-timer for a3: bits cleared, onet
 	bclr	#3,$64(a3)
 	bclr	#5,$62(a3)
 	bclr	#1,$63(a3)
-	clr.w	(word_FFBF76).w
+	clr.w	(onetimerflags).w
 	st	(onetimerplayer).w
 	move.w	d1,-(sp)
 	move.w	#$50C,d1
@@ -1781,7 +1781,7 @@ newTitleScreen	;IDA name. 94 only: the title screen (TitleScreenImg, NHLShieldIm
 	move.w	#$17,d3
 	moveq	#$F,d5
 	jsr	(dobitmap).l
-	move.w	d4,(word_FFBF12).w
+	move.w	d4,(TempWord1).w
 	move.w	(sp)+,d4
 	jsr	(printz).l
 	String	$FE,0,$17
@@ -1795,10 +1795,10 @@ newTitleScreen	;IDA name. 94 only: the title screen (TitleScreenImg, NHLShieldIm
 	move.w	(a1),d2
 	move.w	#5,d3
 	moveq	#0,d5
-	bset	#0,(word_FFC2F8).w
+	bset	#0,(sflags6).w
 	jsr	(dobitmap).l
-	bclr	#0,(word_FFC2F8).w
-	move.w	(word_FFBF12).w,d4
+	bclr	#0,(sflags6).w
+	move.w	(TempWord1).w,d4
 	jsr	(printz).l
 	String	$BE,1,1
 	movea.l	#NHLShieldImg,a0
@@ -1839,8 +1839,8 @@ newTitleScreen	;IDA name. 94 only: the title screen (TitleScreenImg, NHLShieldIm
 	moveq	#8,d5
 	jsr	(dobitmap).l
 	clr.w	(palfadenew).w
-	clr.l	(dword_FFBDA8).w
-	clr.w	(word_FFBDAC).w
+	clr.l	(fofdata2).w
+	clr.w	(fofdata2+4).w
 	move.w	d4,(smallfontchars).w
 	movea.l	#SmallFontMap+8,a2
 	jsr	(DecompressGraphicsWithCallback).l
@@ -1850,9 +1850,9 @@ newTitleScreen	;IDA name. 94 only: the title screen (TitleScreenImg, NHLShieldIm
 	movea.l	#$5776,a1	;start of credits for scrolling
 	jsr	(CreditsPrintRow).l
 	addi.w	#$20,(Vscroll).w
-	move.w	#$104,(word_FFB8B2).w
-	move.w	#$120,(word_FFB8AE).w
-	move.w	#$D0,(word_FFB8B0).w
+	move.w	#$104,(clampcounter).w
+	move.w	#$120,(playoffspritex).w
+	move.w	#$D0,(playoffspritey).w
 	clr.w	(asv).w
 	move.w	#$FFCE,(DispAttribCtr).w
 	move.w	#$20,(palcount).w
@@ -1862,7 +1862,7 @@ newTitleScreen	;IDA name. 94 only: the title screen (TitleScreenImg, NHLShieldIm
 	move	#$2500,sr
 .loop	;IDA: loc_FF26A
 	jsr	(CreditsWait).l
-	tst.w	(word_FFB8B2).w
+	tst.w	(clampcounter).w
 	bne.s	.loop
 	move.w	#$3C,d3
 .loop2	;IDA: loc_FF27A
@@ -1912,15 +1912,15 @@ CreditsPrintRow	;IDA: sub_FF2C8. 94 only. Credits: clear the row below the scree
 	tst.w	2(a1)
 	bpl.s	.loop
 	rts
-CreditsWait	;IDA: sub_FF318. 94 only. Credits: wait for vcount, run the word_FFB8B2 count down; start (orjoy bit 7) returns from the caller too
+CreditsWait	;IDA: sub_FF318. 94 only. Credits: wait for vcount, run the clampcounter count down; start (orjoy bit 7) returns from the caller too
 	movem.l	d0-d7/a0-a6,-(sp)
 	move.w	(vcount).w,d0
 .loop	;IDA: loc_FF320
 	cmp.w	(vcount).w,d0
 	beq.s	.loop
-	subq.w	#2,(word_FFB8B2).w
+	subq.w	#2,(clampcounter).w
 	bpl.w	.0
-	clr.w	(word_FFB8B2).w
+	clr.w	(clampcounter).w
 .0	;IDA: loc_FF332
 	jsr	(orjoy).l
 	btst	#7,d1
@@ -1941,9 +1941,9 @@ TitleVBlank	;IDA: loc_FF348. IDA label. newTitleScreen vblank: line scroll table
 	move.l	#$40000010,4(a0)
 	move.w	(Vscroll).w,(a0)
 	movea.w	#(Satt-M68K_RAM),a0
-	move.w	(word_FFC2E8).w,d0
+	move.w	(Sattsize).w,d0
 	beq.w	.0
-	clr.w	(word_FFC2E8).w
+	clr.w	(Sattsize).w
 	move.w	(VSPRITES).w,d1
 	jsr	(DoDMA).l
 .0	;IDA: loc_FF394
@@ -1957,7 +1957,7 @@ TitleVBlank	;IDA: loc_FF348. IDA label. newTitleScreen vblank: line scroll table
 CreditsLineScroll	;IDA: sub_FF3B0. 94 only. Credits: the line scroll table at SortCords
 	movem.l	d0-d1,-(sp)
 	move.w	#$14,(Hscroll).w
-	move.w	#$50,(word_FFBF14).w
+	move.w	#$50,(TempWord2).w
 	move.w	#$50,d0
 	movea.l	#SortCords,a0
 	move.l	#$FD80,d1
@@ -1976,12 +1976,12 @@ CreditsLineScroll	;IDA: sub_FF3B0. 94 only. Credits: the line scroll table at So
 	dbf	d0,.loop2
 	movem.l	(sp)+,d0-d1
 	rts
-CreditsScrollStep	;IDA: sub_FF3F8. 94 only. Credits: line scroll step, every word_FFBF14 frames
-	subq.w	#1,(word_FFBF14).w
+CreditsScrollStep	;IDA: sub_FF3F8. 94 only. Credits: line scroll step, every TempWord2 frames
+	subq.w	#1,(TempWord2).w
 	bmi.w	.0
 	rts
 .0	;IDA: loc_FF402
-	clr.w	(word_FFBF14).w
+	clr.w	(TempWord2).w
 	movem.l	d0-d2/a0,-(sp)
 	move.w	#$DF,d0
 	movea.w	#(SortCords-M68K_RAM),a0
@@ -2038,11 +2038,11 @@ TeamLogoPalettes	;IDA: unk_FF462. Team logo palettes, 16 colors per team. Used b
 	dc.w	$EE8,$600,6,$EE8,$EE8,$EEE,0,$22C,$422,$AAC,$666,$CAA,$444,$66E,$8CE,$226
 	dc.w	$EE8,0,$4A,$EE8,$EE8,$EEE,0,$688,$464,$244,$222,$4E,$A,$22,$AAA,0
 	dc.w	$EE8,0,$4A,$EE8,$EE8,$EEE,0,$688,$464,$244,$222,$4E,$A,$22,$AAA,0
-LeadSong	;IDA: sub_FF7E2. 94 only. Not in a shootout (word_FFC2FA bit 1), scores not level: once (sflags2 bit 5), ChooseSong with SongIndex 1 (home ahead) or 4
-	;and byte_FFC2FE bit 6; sflags2 is put back on exit. Called from puckfaceoff2 (logic94_4)
+LeadSong	;IDA: sub_FF7E2. 94 only. Not in a shootout (gmode2 bit 1), scores not level: once (sflags2 bit 5), ChooseSong with SongIndex 1 (home ahead) or 4
+	;and sflags8 bit 6; sflags2 is put back on exit. Called from puckfaceoff2 (logic94_4)
 	movem.l	d0/a0-a3,-(sp)
 	move.w	(sflags2).w,-(sp)
-	btst	#1,(word_FFC2FA).w
+	btst	#1,(gmode2).w
 	bne.w	LeadSongExit
 	movea.w	#(HmShots-M68K_RAM),a2
 	lea	$364(a2),a3
@@ -2070,7 +2070,7 @@ LeadSong	;IDA: sub_FF7E2. 94 only. Not in a shootout (word_FFC2FA bit 1), scores
 	move.w	#1,(SongIndex).w
 	jsr	(ChooseSong).l
 .loop	;IDA: loc_FF85E
-	bset	#6,(byte_FFC2FE).w
+	bset	#6,(sflags8).w
 	bra.w	LeadSongExit
 .2	;IDA: loc_FF868
 	move.w	(HomeTeam).w,(HmTeam).w
@@ -2108,20 +2108,20 @@ clrTmPdst	;IDA name (and comments). 94 only
 	dbf	d0,.loop
 	move.w	#$FFFF,(a0)	;-1 = ice
 	rts
-HotColdIcon	;IDA: sub_FF8DE. 94 only. The icon by the name of player word_FFDEE8 of team a2 at x word_FFDEEA, y $19: HotIconMap when he is in $FFFFBF5C /
+HotColdIcon	;IDA: sub_FF8DE. 94 only. The icon by the name of player iconplayer of team a2 at x iconx, y $19: HotIconMap when he is in $FFFFBF5C /
 	;$FFFFBF5E, ColdIconMap in $FFFFBF60 / $FFFFBF62, else clear it (eraser)
 	movem.l	d0/a0-a1,-(sp)
 	movea.l	#$FFFFBF5C,a0
-	move.w	#2,(word_FFDEEA).w
+	move.w	#2,(iconx).w
 	cmpa.l	#HmShots,a2
 	bne.w	.0
 	movea.l	#$FFFFBF5E,a0
-	move.w	#$20,(word_FFDEEA).w
+	move.w	#$20,(iconx).w
 .0	;IDA: loc_FF904
 	move.w	#0,d0
 .loop	;IDA: loc_FF908
 	move.w	(a0)+,d1
-	cmp.w	(word_FFDEE8).w,d1
+	cmp.w	(iconplayer).w,d1
 	beq.w	.2
 	dbf	d0,.loop
 	movea.l	#$FFFFBF60,a0
@@ -2132,10 +2132,10 @@ HotColdIcon	;IDA: sub_FF8DE. 94 only. The icon by the name of player word_FFDEE8
 	move.w	#0,d0
 .loop2	;IDA: loc_FF930
 	move.w	(a0)+,d1
-	cmp.w	(word_FFDEE8).w,d1
+	cmp.w	(iconplayer).w,d1
 	beq.w	.3
 	dbf	d0,.loop2
-	move.w	(word_FFDEEA).w,(printx).w
+	move.w	(iconx).w,(printx).w
 	move.w	#$19,(printy).w
 	move.w	#8,d0
 	move.w	#3,d1
@@ -2143,14 +2143,14 @@ HotColdIcon	;IDA: sub_FF8DE. 94 only. The icon by the name of player word_FFDEE8
 	jsr	(eraser).l
 	bra.w	.x
 .2	;IDA: loc_FF960
-	move.w	(word_FFDEE4).w,d4
+	move.w	(hoticonchars).w,d4
 	movea.l	#HotIconMap,a0
 	bra.w	.4
 .3	;IDA: loc_FF96E
-	move.w	(word_FFDEE6).w,d4
+	move.w	(coldiconchars).w,d4
 	movea.l	#ColdIconMap,a0
 .4	;IDA: loc_FF978
-	move.w	(word_FFDEEA).w,(printx).w
+	move.w	(iconx).w,(printx).w
 	move.w	#$19,(printy).w
 	movea.l	a0,a1
 	movea.l	a0,a2
@@ -2169,7 +2169,7 @@ HotColdIcon	;IDA: sub_FF8DE. 94 only. The icon by the name of player word_FFDEE8
 chgplayer	;IDA name (and comments). 94 only: the pad d4 takes the nearest free skater to where the puck is going (not a goalie, not locked or
 	;unavailable; in a penalty shot / shootout only BA_Sktr_SCnum or BA_Goalie_SCnum), or sweep checks when it is the same one. Called from
 	;changeplayer (logic94_1)
-	btst	#6,(word_FFC2F6).w	;Check bit 6. This is never set anywhere
+	btst	#6,(sflags5).w	;Check bit 6. This is never set anywhere
 	bne.w	exit
 	movem.l	d0-d6/a0-a1,-(sp)
 	move.w	(puckvx).w,d0	;lead puck slightly

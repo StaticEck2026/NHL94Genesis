@@ -32,21 +32,21 @@ doinput	;process controller input: d0 = dpad, d1 = new buttons, d2 = changed but
 	beq.w	.5
 	tst.w	d4
 	bne.w	.3
-	move.b	#$11,(word_FFBF06).w
+	move.b	#$11,(bholdtimer).w
 	bra.w	.4
 .3	;IDA: loc_B136
-	move.b	#$11,(word_FFBF06+1).w
+	move.b	#$11,(bholdtimer+1).w
 .4	;IDA: loc_B13C
 	bclr	#4,d2
 .5	;IDA: loc_B140
-	btst	#7,(word_FFC2FA).w
+	btst	#7,(gmode2).w
 	beq.w	.6
 	cmp.b	#8,d0
 	beq.w	.6
 	jsr	(ShortenMsgTimer).l
 .6	;IDA: loc_B158
-	move.w	d0,(word_FFBF12).w
-	andi.w	#$F,(word_FFBF12).w
+	move.w	d0,(TempWord1).w
+	andi.w	#$F,(TempWord1).w
 	bsr.w	setpads
 	btst	#7,d1	;start button
 	beq.w	.0	;branch if no start button pressed
@@ -130,14 +130,14 @@ doinput	;process controller input: d0 = dpad, d1 = new buttons, d2 = changed but
 	bne.w	.33
 	bra.w	.15
 .12	;IDA: loc_B2A2
-	btst	#6,(word_FFC2F6).w
+	btst	#6,(sflags5).w
 	bne.w	.15
 	tst.w	d4
 	beq.w	.13
-	tst.w	(word_FFD05C).w
+	tst.w	(goaliemode2).w
 	bra.w	.14
 .13	;IDA: loc_B2BA
-	tst.w	(word_FFD05A).w
+	tst.w	(goaliemode1).w
 .14	;IDA: loc_B2BE
 	beq.w	.15
 	movem.w	d0,-(sp)
@@ -149,88 +149,88 @@ doinput	;process controller input: d0 = dpad, d1 = new buttons, d2 = changed but
 .15	;IDA: loc_B2DA
 	btst	#4,d3
 	beq.w	.23
-	tst.w	(word_FFD412).w
+	tst.w	(holdreset).w
 	bne.w	.23
 	tst.w	d4
 	beq.w	.19
-	tst.b	(word_FFBF06+1).w
+	tst.b	(bholdtimer+1).w
 	beq.w	.33
-	subq.b	#1,(word_FFBF06+1).w
+	subq.b	#1,(bholdtimer+1).w
 	bpl.w	.16
-	move.b	#0,(word_FFBF06+1).w
+	move.b	#0,(bholdtimer+1).w
 .16	;IDA: loc_B306
-	tst.b	(word_FFBF06+1).w
+	tst.b	(bholdtimer+1).w
 	bne.w	.23
 	tst.w	d4
 	beq.w	.17
-	tst.w	(word_FFD05C).w
+	tst.w	(goaliemode2).w
 	bra.w	.18
 .17	;IDA: loc_B31C
-	tst.w	(word_FFD05A).w
+	tst.w	(goaliemode1).w
 .18	;IDA: loc_B320
 	bne.w	.23
 	bra.w	.31
 .19	;IDA: loc_B328
-	tst.b	(word_FFBF06).w
+	tst.b	(bholdtimer).w
 	beq.w	.33
-	subq.b	#1,(word_FFBF06).w
+	subq.b	#1,(bholdtimer).w
 	bpl.w	.20
-	move.b	#0,(word_FFBF06).w
+	move.b	#0,(bholdtimer).w
 .20	;IDA: loc_B33E
 	tst.w	d4
 	beq.w	.21
-	tst.w	(word_FFD05C).w
+	tst.w	(goaliemode2).w
 	bra.w	.22
 .21	;IDA: loc_B34C
-	tst.w	(word_FFD05A).w
+	tst.w	(goaliemode1).w
 .22	;IDA: loc_B350
 	bne.w	.23
-	tst.b	(word_FFBF06).w
+	tst.b	(bholdtimer).w
 	beq.w	.31
 .23	;IDA: loc_B35C
 	btst	#4,d1
 	beq.w	.25
 	tst.w	d4
 	bne.w	.24
-	move.b	#$11,(word_FFBF06).w
+	move.b	#$11,(bholdtimer).w
 	bra.w	.33
 .24	;IDA: loc_B374
-	move.b	#$11,(word_FFBF06+1).w
+	move.b	#$11,(bholdtimer+1).w
 	bra.w	.33
 .25	;IDA: loc_B37E
 	btst	#4,d2
 	beq.w	.33
 	btst	#4,d3
 	bne.w	.33
-	move.w	(word_FFBF06).w,d0
+	move.w	(bholdtimer).w,d0
 	tst.w	d4
 	beq.w	.28
-	move.b	#$11,(word_FFBF06+1).w
+	move.b	#$11,(bholdtimer+1).w
 	andi.w	#$FF,d0
 	bne.w	changeplayer
 	tst.w	d4
 	beq.w	.26
-	tst.w	(word_FFD05C).w
+	tst.w	(goaliemode2).w
 	bra.w	.27
 .26	;IDA: loc_B3B4
-	tst.w	(word_FFD05A).w
+	tst.w	(goaliemode1).w
 .27	;IDA: loc_B3B8
 	bne.w	changeplayer
 	bra.w	.31
 .28	;IDA: loc_B3C0
-	move.b	#$11,(word_FFBF06).w
+	move.b	#$11,(bholdtimer).w
 	andi.w	#$FF00,d0
 	bne.w	changeplayer
 	tst.w	d4
 	beq.w	.29
-	tst.w	(word_FFD05C).w
+	tst.w	(goaliemode2).w
 	bra.w	.30
 .29	;IDA: loc_B3DC
-	tst.w	(word_FFD05A).w
+	tst.w	(goaliemode1).w
 .30	;IDA: loc_B3E0
 	bne.w	changeplayer
 .31	;IDA: loc_B3E4
-	tst.w	(word_FFD412).w
+	tst.w	(holdreset).w
 	bne.w	changeplayer
 	move.w	#5,d0
 	cmp.w	#5,d6
@@ -255,7 +255,7 @@ doinput	;process controller input: d0 = dpad, d1 = new buttons, d2 = changed but
 	bne.w	doinput_onetimer
 	btst	#6,d1
 	beq.w	doinput_cbut
-	move.w	(word_FFBF12).w,d0
+	move.w	(TempWord1).w,d0
 	cmp.b	#8,d0
 	beq.w	doinput_cbut
 	move.w	d0,$54(a3)
@@ -305,7 +305,7 @@ doinput_cbut	;IDA: loc_B470. Global: doinput branches here across the global rts
 	bsr.w	vtoa
 	move.w	d0,$54(a3)
 	movem.w	(sp)+,d0-d1
-	move.w	(word_FFBF12).w,d0
+	move.w	(TempWord1).w,d0
 	bclr	#0,(BA_PS_flags).w
 	move.w	(gameclock).w,d0
 	andi.w	#7,d0
@@ -432,10 +432,10 @@ doinput_chkanim	;IDA: loc_B616. Global: doinput branches here across ClampTarget
 .4	;IDA: loc_B6A8
 	btst	#1,(BA_PS_flags).w
 	bne.w	rtss15
-	move.w	(word_FFBF12).w,d0
+	move.w	(TempWord1).w,d0
 	bra.w	doplayeracc
 doinput_onetimer	;IDA: loc_B6BA. Global: doinput branches here across doinput_chkanim
-	move.w	(word_FFBF12).w,d0
+	move.w	(TempWord1).w,d0
 	btst	#3,$64(a3)
 	bne.w	rtss7
 	btst	#5,d1
@@ -484,32 +484,32 @@ doinput_ispc	;IDA: loc_B72E. Global: doinput branches here across doinput_onetim
 	beq.w	.3
 	tst.w	d4
 	beq.w	.2
-	move.b	#$F,(word_FFD41E+1).w
+	move.b	#$F,(aholdtimer+1).w
 	bra.w	.3
 .2	;IDA: loc_B782
-	move.b	#$F,(word_FFD41E).w
+	move.b	#$F,(aholdtimer).w
 .3	;IDA: loc_B788
 	btst	#6,d3
 	beq.w	.7
 	tst.w	d4
 	beq.w	.5
-	subq.b	#1,(word_FFD41E+1).w
+	subq.b	#1,(aholdtimer+1).w
 	bpl.w	.4
-	move.b	#0,(word_FFD41E+1).w
+	move.b	#0,(aholdtimer+1).w
 .4	;IDA: loc_B7A4
-	tst.b	(word_FFD41E+1).w
+	tst.b	(aholdtimer+1).w
 	bne.w	.7
-	bset	#3,(word_FFC2F6).w
+	bset	#3,(sflags5).w
 	jsr	(setpassmode).l
 	bra.w	SetLCmode
 .5	;IDA: loc_B7BC
-	subq.b	#1,(word_FFD41E).w
+	subq.b	#1,(aholdtimer).w
 	bpl.w	.6
-	move.b	#0,(word_FFD41E).w
+	move.b	#0,(aholdtimer).w
 .6	;IDA: loc_B7CA
-	tst.b	(word_FFD41E).w
+	tst.b	(aholdtimer).w
 	bne.w	.7
-	bset	#3,(word_FFC2F6).w
+	bset	#3,(sflags5).w
 	jsr	(setpassmode).l
 	bra.w	SetLCmode
 .7	;IDA: loc_B7E2
@@ -517,7 +517,7 @@ doinput_ispc	;IDA: loc_B72E. Global: doinput branches here across doinput_onetim
 	bne.w	.8
 	btst	#6,d2
 	beq.w	.8
-	bset	#3,(word_FFC2F6).w
+	bset	#3,(sflags5).w
 	bra.w	setpassmode
 .8	;IDA: loc_B7FC
 	tst.w	$34(a3)
@@ -534,7 +534,7 @@ doinput_islocked	;IDA: loc_B81A. Global: doinput branches here across doinput_is
 	beq.w	rtss15
 	btst	#4,d1
 	beq.w	rtss7
-	btst	#6,(word_FFC2F6).w
+	btst	#6,(sflags5).w
 	bne.w	rtss7
 	bsr.w	changeplayer
 	movem.l	d0/a0,-(sp)
@@ -574,7 +574,7 @@ getGoalieSCnum
 	movem.l	(sp)+,d1/a0
 	rts
 faceoffinput
-	btst	#6,(word_FFC2F6).w
+	btst	#6,(sflags5).w
 	beq.w	.0
 	rts
 .0
@@ -606,12 +606,12 @@ fightinput
 SetLCmode
 	tst.w	(OptLine).w
 	bne.w	rtss7
-	btst	#4,(byte_FFC2FC).w
+	btst	#4,(sflags7).w
 	bne.w	rtss7
 	bsr.w	loadTeamStruct
 	bset	#1,tmflags(a2)
 	bne.w	rtss7
-	btst	#3,(word_FFC2F6).w
+	btst	#3,(sflags5).w
 	bne.w	.0
 	bclr	#2,(sflags).w
 .0	;IDA: loc_B922
@@ -716,7 +716,7 @@ getlchoice2
 ; process input for line changes
 ; d1 = new button presses
 lineinput
-	btst	#3,(word_FFC2F6).w
+	btst	#3,(sflags5).w
 	beq.w	.0
 	movem.l	d0-d7/a0-a6,-(sp)
 	jsr	(passmode).l
@@ -783,7 +783,7 @@ burst
 	bne.w	.0
 	subi.w	#$CC,d0
 	jsr	(setpde).l	;decrease players energy
-	btst	#4,(byte_FFC2FC).w
+	btst	#4,(sflags7).w
 	beq.w	.0
 	move.w	#$1000,d0
 .0
@@ -835,11 +835,11 @@ setpassmode
 	andi.w	#7,(passdir).w	;Passes first 3 bits of passdir
 	btst	#2,(BA_PS_flags).w
 	beq.w	.0
-	bclr	#2,(word_FFC2FA).w
+	bclr	#2,(gmode2).w
 	bset	#5,(BA_PS_flags).w
 	bne.w	rtss7
-	bclr	#5,(word_FFC2FA).w
-	move.w	#$64,(word_FFC31C).w
+	bclr	#5,(gmode2).w
+	move.w	#$64,(passmodetimer).w
 .0	;IDA: loc_BC38
 	bset	#2,(sflags).w	;#sfspdir - set pass dir mode
 rtss
@@ -848,7 +848,7 @@ rtss
 passmode
 	btst	#4,d2	;has b button changed?
 	bne.w	dopass	;yes
-	btst	#3,(word_FFC2F6).w	;Not in NHL Hockey Source
+	btst	#3,(sflags5).w	;Not in NHL Hockey Source
 	bne.w	dopass
 	btst	#3,d0	;look for dpad
 	bne.s	rtss
@@ -861,13 +861,13 @@ dopass
 	st	(puckc).w	;player is not puck handler anymore
 	move.b	#$10,nopuck(a3)	;$5E = nopuck
 	move.w	SCnum(a3),(lastplayer).w	;$52 = offset of player on ice
-	bclr	#3,(word_FFC2F6).w	;Not in NHL Hockey Source
+	bclr	#3,(sflags5).w	;Not in NHL Hockey Source
 	beq.w	.2
 	jsr	(OneTimerTarget).l
-	move.w	#$12,(word_FFD418).w
-	btst	#2,(word_FFC2F8).w
+	move.w	#$12,(onetimerheight).w
+	btst	#2,(sflags6).w
 	beq.w	.1
-	move.w	#$3A,(word_FFD418).w
+	move.w	#$3A,(onetimerheight).w
 .1	;IDA: loc_BCA4
 	jsr	(OneTimerPass).l
 	bra.w	.exit
@@ -1251,17 +1251,17 @@ restorepl	;IDA: restorep1 (93 restorepl)
 	asl.w	#7,d1
 	btst	#2,(BA_PS_flags).w
 	bne.w	.chkgoalie
-	btst	#0,(word_FFC2FA).w
+	btst	#0,(gmode2).w
 	beq.w	.3
 .chkgoalie	;IDA: chkgoalie. Local: only restorepl uses it, and a global here would split restorepl
 	tst.w	$34(a0,d1.w)
 	bne.w	.3
 	btst	#6,$62(a0,d1.w)	;check if home or away
 	beq.w	.0
-	tst.w	(word_FFD05C).w
+	tst.w	(goaliemode2).w
 	bra.w	.1
 .0	;IDA: loc_C172
-	tst.w	(word_FFD05A).w
+	tst.w	(goaliemode1).w
 .1	;IDA: loc_C176
 	beq.w	.3
 	move.w	#0,d0	;first position of home SCNum
@@ -1290,11 +1290,11 @@ Findhittype
 SetShotMode
 	btst	#2,(BA_PS_flags).w	;check for PS or SO
 	beq.w	.start	;branch if not
-	bclr	#2,(word_FFC2FA).w
+	bclr	#2,(gmode2).w
 	bset	#5,(BA_PS_flags).w
 	bne.w	rtss7
-	bclr	#5,(word_FFC2FA).w
-	move.w	#$64,(word_FFC31C).w
+	bclr	#5,(gmode2).w
+	move.w	#$64,(passmodetimer).w
 .start
 	move.w	#8,(passdir).w	;default shot direction
 	bset	#sfssdir,(sflags).w	;#sfssdir
@@ -1341,7 +1341,7 @@ ShotMode
 	rts
 ; Check certain conditions before shooting
 prepshot
-	bclr	#4,(word_FFC2F6).w
+	bclr	#4,(sflags5).w
 	move.w	#$B,d0
 	btst	#6,$62(a3)	;check if home or away
 	beq.w	.getGoalie	;gets opponents Goalie SCnum
@@ -1372,17 +1372,17 @@ prepshot
 .cmppuck
 	cmp.w	#$D8,d0	;compares location of puck
 	blt.w	.cont
-	bset	#4,(word_FFC2F6).w	;set flag for in-close top shelf shooting
+	bset	#4,(sflags5).w	;set flag for in-close top shelf shooting
 .cont
 	bra.w	*+4
 ; stick is at puck so launch puck toward goal
 ; a3 = shooter
 doshot
 	movem.l	d0-d7/a0-a3,-(sp)
-	bclr	#4,(word_FFC2FA).w
+	bclr	#4,(gmode2).w
 	btst	#1,$64(a3)	;check if player on breakaway
 	beq.w	.cont
-	bset	#4,(word_FFC2FA).w	;set if breakaway
+	bset	#4,(gmode2).w	;set if breakaway
 .cont
 	bsr.w	shotdiradj
 	move.w	#5,-(sp)	;#SFXshotwiff - sound effect
@@ -1464,7 +1464,7 @@ doshot
 	bhi.w	.notperf	;too far away from perfect shot
 	jsr	(ReadGoaliePulled).l	;checks if shooting team's G pulled
 	bmi.w	.perf	;perfect shot with pulled goalie
-	btst	#0,(word_FFC2FA).w	;check if shootout
+	btst	#0,(gmode2).w	;check if shootout
 	bne.w	.perf	;perfect shot in shootout
 	moveq	#$10,d0	;start value for ShA calc
 	add.b	shotacc(a3),d0	;shotacc(a3)
@@ -1545,7 +1545,7 @@ doshot
 	move.w	#$1800,d3	;set max puckvz
 .noup
 	move.w	d3,(puckvz).w	;move into puckvz
-	bclr	#4,(word_FFC2F6).w	;check in-close top shelf bit
+	bclr	#4,(sflags5).w	;check in-close top shelf bit
 	beq.w	.ex	;if bit was cleared, exit
 	btst	#3,$64(a3)	;check if one timer
 	bne.w	.ex	;branch if so
@@ -1641,7 +1641,7 @@ shotdiradj
 	move.w	d0,(passdir).w	;will be 0,2,6, or 8 (no goalie)
 	btst	#2,(BA_PS_flags).w
 	bne.w	.PSorSO	;branch if bit 2 is set
-	btst	#0,(word_FFC2FA).w	;check if shootout
+	btst	#0,(gmode2).w	;check if shootout
 	beq.w	.ex	;branch if not set
 .PSorSO
 	jsr	(PSandSOpassdir).l
@@ -1664,7 +1664,7 @@ shotdirmath
 	divs.w	d2,d4	;divide d2 into d4
 	rts
 ; copy info into pad cont so graphics know which player/number
-setpads	;IDA: sub_C656. Put SCnum of a3 in the d4 nibble of word_FFBE78 (93 PadControlBits); d4 = -2 puck
+setpads	;IDA: sub_C656. Put SCnum of a3 in the d4 nibble of PadControlBits (93 name); d4 = -2 puck
 	;carrier, 0 / 2 pads, 4 replay target. Falls into rtss3
 	movem.l	d0-d1,-(sp)
 	moveq	#2,d0
@@ -1672,10 +1672,10 @@ setpads	;IDA: sub_C656. Put SCnum of a3 in the d4 nibble of word_FFBE78 (93 PadC
 	add.w	d0,d0
 	move.w	#$FFF0,d1
 	rol.w	d0,d1
-	and.w	d1,(word_FFBE78).w
+	and.w	d1,(PadControlBits).w
 	move.w	SCnum(a3),d1
 	asl.w	d0,d1
-	or.w	d1,(word_FFBE78).w
+	or.w	d1,(PadControlBits).w
 	movem.l	(sp)+,d0-d1
 rtss3
 	rts

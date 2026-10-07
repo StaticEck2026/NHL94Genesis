@@ -126,7 +126,7 @@ a2touchpuck
 	move.b	pnum(a2),d0	;move pnum into d0
 	btst	#3,$64(a2)	;check if one timer
 	beq.w	.checklast	;branch if not
-	bset	#7,(byte_FFC2FE).w	;set if one timer
+	bset	#7,(sflags8).w	;set if one timer
 .checklast	;IDA: loc_10176
 	cmp.w	$18(a0),d0	;compare value in C6E6 (home) to d0
 	beq.w	.same	;branch if equal
@@ -805,7 +805,7 @@ goalieacc
 .usevtoa	;IDA: loc_1099E
 	bsr.w	vtoa
 .checkadjust	;IDA: loc_109A2
-	btst	#0,(word_FFC2F4).w
+	btst	#0,(sflags4).w
 	bne.w	.adjustkeepdir
 	bsr.w	AdjustFacingDirection
 	movem.w	(sp)+,d0-d1
@@ -988,9 +988,9 @@ playeracc
 	neg.w	d2	;make it negative
 	addi.w	#$40,d2	;'@'   ; add 40 hex (64 decimal) to d2
 	add.b	legstr(a3),d2	;add agl (legstr) of player to d2
-	btst	#1,(byte_FFC2FE).w
+	btst	#1,(sflags8).w
 	bne.w	.incagl
-	btst	#6,(byte_FFC2FC).w	;check flag for crowd meter record
+	btst	#6,(sflags7).w	;check flag for crowd meter record
 	beq.w	.incaglg	;branch if not set
 .incagl
 	addq.b	#2,d2	;add 2 to d2 (crowd meter boost)
@@ -1026,15 +1026,15 @@ playeracc
 	add.l	d2,d3	;add together
 	movem.w	d0-d1,-(sp)	;push d0 and d1 to stack
 	bsr.w	getpde
-	btst	#4,(byte_FFC2FC).w
+	btst	#4,(sflags7).w
 	beq.w	.noy4
 	move.w	#$1000,d0	;d0 = energy, move 1000 hex into d0
 .noy4
 	clr.w	d2	;clear d2
 	move.b	$69(a3),d2	;add speed (legspd) to d2
-	btst	#1,(byte_FFC2FE).w
+	btst	#1,(sflags8).w
 	bne.w	.incspd
-	btst	#6,(byte_FFC2FC).w	;skip boost if 0
+	btst	#6,(sflags7).w	;skip boost if 0
 	beq.w	.noy5
 .incspd
 	addq.b	#2,d2	;add 2 to d2 (speed)
@@ -1188,9 +1188,9 @@ dirtab	dc.w	0
 	dc.w	$8D
 	dc.w	0
 	dc.w	0
-UnpackNibbles	;IDA: sub_10E88 (93 name). a0 = packed data, d0 = count: unpack 4-bit values into words at dword_FFD036
+UnpackNibbles	;IDA: sub_10E88 (93 name). a0 = packed data, d0 = count: unpack 4-bit values into words at nibblebuffer
 	movem.l	d0-d2/a0-a1,-(sp)
-	movea.w	#(dword_FFD036-M68K_RAM),a1
+	movea.w	#(nibblebuffer-M68K_RAM),a1
 	clr.w	d2
 	bra.w	.next
 .loop	;IDA: loc_10E96
@@ -1206,9 +1206,9 @@ UnpackNibbles	;IDA: sub_10E88 (93 name). a0 = packed data, d0 = count: unpack 4-
 	dbf	d0,.loop
 	movem.l	(sp)+,d0-d2/a0-a1
 	rts
-WeightedRandomSelect	;IDA: sub_10EB4 (93 name). d0 = number of word weights at dword_FFD036: return a weighted random index
+WeightedRandomSelect	;IDA: sub_10EB4 (93 name). d0 = number of word weights at nibblebuffer: return a weighted random index
 	movem.l	d1/a1,-(sp)
-	movea.w	#(dword_FFD036-M68K_RAM),a1
+	movea.w	#(nibblebuffer-M68K_RAM),a1
 	clr.w	d1
 	bra.w	.pick
 .sumloop	;IDA: loc_10EC2

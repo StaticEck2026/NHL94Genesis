@@ -11,8 +11,8 @@
 ;	Bits: disflags 0 dfok, 2 dfng, 3 dfclock, 4 face off; sflags 0 sfpz, 7 sfhor; sflags2 1 sf2refref.
 
 VBlank	;IDA: loc_15D9A (93 name; 93 IDA VBlank_org). Main vblank code for game play (vbint target, set by setupice and sub_16BAC). DumpSprites when
-	;dfok is set, cramfade, then the game clock. 94: word_FFC2FA bit 2 keeps the clock running after the whistle, and with word_FFC2FA bit 1
-	;(penalty shot / shootout) word_FFD454 counts down instead (word_FFD456 jiffies, not while word_FFC2FA bit 7 is set)
+	;dfok is set, cramfade, then the game clock. 94: gmode2 bit 2 keeps the clock running after the whistle, and with gmode2 bit 1
+	;(penalty shot / shootout) shootoutclock counts down instead (shootoutjiffy jiffies, not while gmode2 bit 7 is set)
 	movem.l	d0-d7/a0-a6,-(sp)
 	btst	#dfng,(disflags).w	;dfng: don't touch the vdp
 	bne.w	.nograph
@@ -24,16 +24,16 @@ VBlank	;IDA: loc_15D9A (93 name; 93 IDA VBlank_org). Main vblank code for game p
 .nograph	;IDA: loc_15DBA
 	btst	#sfpz,(sflags).w	;sfpz
 	bne.w	.c
-	btst	#2,(word_FFC2FA).w	;94 only
+	btst	#2,(gmode2).w	;94 only
 	bne.w	.0
 	btst	#0,(gmode).w	;gmclock: game clock stopped
 	bne.w	.c
 .0	;IDA: loc_15DD8
-	btst	#1,(word_FFC2FA).w	;94 only: penalty shot / shootout clock
+	btst	#1,(gmode2).w	;94 only: penalty shot / shootout clock
 	bne.w	.1
 	tst.w	(gameclock).w
 	beq.w	.c
-	subi.w	#$AAA,(word_FFC46A).w	;jiffy ($10000/24). word_FFC46A = gameclock+2
+	subi.w	#$AAA,(gameclock+2).w	;jiffy ($10000/24). gameclock+2 = gameclock+2
 	bcc.w	.c
 	bset	#dfclock,(disflags).w	;dfclock
 	subq.w	#1,(gameclock).w
@@ -49,14 +49,14 @@ VBlank	;IDA: loc_15D9A (93 name; 93 IDA VBlank_org). Main vblank code for game p
 	movem.l	(sp)+,d0-d7/a0-a6
 	rte
 .1	;IDA: loc_15E2A
-	tst.w	(word_FFD454).w
+	tst.w	(shootoutclock).w
 	beq.s	.c
-	subi.w	#$AAA,(word_FFD456).w
+	subi.w	#$AAA,(shootoutjiffy).w
 	bcc.s	.c
 	bset	#3,(disflags).w
-	btst	#7,(word_FFC2FA).w
+	btst	#7,(gmode2).w
 	bne.s	.c
-	subq.w	#1,(word_FFD454).w
+	subq.w	#1,(shootoutclock).w
 	bra.s	.c
 vb2	;IDA: loc_15E4C (93 name). Vblank used for palfades only, no dmas (vbint target). No rte here: falls into IRQ7
 	movem.l	d0-d7/a0-a6,-(sp)
@@ -73,7 +73,7 @@ DumpSprites	;IDA: sub_15E6E (93 name). Transfer (by dma) scroll stuff, sprite ta
 	bsr.w	SetScroll2
 DumpSprites2	;IDA: sub_15E72 (93 name). Transfer sprite table, then the dma list. Falls into DoDMAlist. Also called from VBlank_SetOptions (attract94)
 	movea.w	#(Satt-M68K_RAM),a0
-	move.w	(word_FFC2E8).w,d0	;93 Sattsize: words
+	move.w	(Sattsize).w,d0	;93 Sattsize: words
 	move.w	(VSPRITES).w,d1
 	bsr.w	DoDMA
 DoDMAlist	;IDA name (93 DoDMAList; symbols are case-insensitive). Transfer data from dmalist. Also called from setupice
@@ -124,14 +124,14 @@ setvideo	;this is not vblank code but sets up ram for vblank transfers. Called o
 	move.l	a6,d0
 	subi.l	#Satt,d0
 	lsr.w	#1,d0	;words
-	move.w	d0,(word_FFC2E8).w	;93 Sattsize
+	move.w	d0,(Sattsize).w	;93 Sattsize
 	move.l	a5,(DMAlistend).w
 	bset	#dfok,(disflags).w	;dfok
 	movem.l	(sp)+,d0-d7/a0-a6
 	rts
 updatescroll	;IDA name (92 name; 93 show_rink). Using hpos and vpos set scroll cords; queue rink map rows on the dma list (a5) when vertical
 	;scrolling needs new rows. Called from setvideo. 94 takes the rows from Rinktilelist, or RevRinkTilelist in a reverse angle replay
-	;(word_FFC2F4 bit 4)
+	;(sflags4 bit 4)
 	btst	#7,(sflags).w	;sfhor
 	bne.w	rtss2
 	moveq	#-$40,d0	;-192+128 (IDA #$FFFFFFC0)
@@ -147,7 +147,7 @@ updatescroll	;IDA name (92 name; 93 show_rink). Using hpos and vpos set scroll c
 	cmp.w	d4,d1
 	beq.w	rtss2	;same row as last frame
 	movea.l	#Rinktilelist,a0
-	btst	#4,(word_FFC2F4).w	;94 only: reverse angle replay
+	btst	#4,(sflags4).w	;94 only: reverse angle replay
 	beq.w	.0
 	movea.l	#RevRinkTilelist,a0
 .0	;IDA: loc_15F7C
@@ -223,12 +223,12 @@ showref	;draw ref graphics. a5 = dma list, a6 = sprite table, d6 = link counter.
 	add.w	d1,d0
 	dbf	d2,.0
 	rts
-checkfo	;check for face off sprites (93 checkfo and checkfo2; 94 has no checkfo2 label). 3 entries of dword_FFBDA8 (93 fofdata2): word frame, word flags. Called from setvideo
+checkfo	;check for face off sprites (93 checkfo and checkfo2; 94 has no checkfo2 label). 3 entries of fofdata2 (93 name): word frame, word flags. Called from setvideo
 	btst	#sfpz,(sflags).w	;sfpz
 	bne.w	rtss2
 	btst	#4,(disflags).w	;face off flag
 	beq.w	rtss2
-	movea.w	#(dword_FFBDA8-M68K_RAM),a3
+	movea.w	#(fofdata2-M68K_RAM),a3
 	moveq	#2,d0
 .loop	;IDA: loc_1605E
 	move.w	(a3),d4
@@ -268,7 +268,7 @@ checkfo	;check for face off sprites (93 checkfo and checkfo2; 94 has no checkfo2
 	move.w	2(a3),d1
 	andi.w	#$F800,d1
 	eor.w	d1,d2
-	add.w	(word_FFB01C).w,d2	;93 faceoffvrcset
+	add.w	(faceoffvrcset).w,d2	;93 faceoffvrcset
 	move.w	d2,4(a6)
 	addq.w	#1,d6
 	addq.w	#8,a6
@@ -347,7 +347,7 @@ SetSframe	;draw one sprite frame. a0 = framelist, d0/d1 = x/y cords, d2 = frame 
 	rts
 showcrowd	;draw crowd sprites: up to 3 frames per PBnum nibble, then the two crowdframe frames. a5 = dma list, a6 = sprite table, d6 = link
 	;counter. 94: no crowd in a reverse angle replay. Called from setvideo
-	btst	#4,(word_FFC2F4).w	;check if reverse angle replay
+	btst	#4,(sflags4).w	;check if reverse angle replay
 	bne.w	.x	;branch if so
 	movea.l	#CrowdFrameList,a1	;93 CrowdSprites
 	adda.l	4(a1),a1
@@ -431,7 +431,7 @@ showcrowd	;draw crowd sprites: up to 3 frames per PBnum nibble, then the two cro
 	move.w	6(a0),d5
 	andi.w	#$F800,d5
 	add.w	4(a0),d5
-	add.w	(word_FFB01A).w,d5	;crowd start char
+	add.w	(gamesetuptilesetindex).w,d5	;crowd start char
 	move.w	d5,(a6)+
 	move.w	(a0),d5
 	addi.w	#$70,d5

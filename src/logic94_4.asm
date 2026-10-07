@@ -80,7 +80,7 @@ assbreakaway
 	bmi.s	.notpuckc
 ; this is a special assignment used for the player who is nearest the puck but doesn't have it
 assnearest
-	bclr	#2,(word_FFC2F6).w
+	bclr	#2,(sflags5).w
 	bne.w	.chkpuck
 	bclr	#1,$64(a3)	;clear breakaway bit
 .chkpuck
@@ -136,14 +136,14 @@ assnearest
 	move.b	aioff(a3),temp1(a3)	;move aioff into temp1
 	jsr	(ReadGoaliePulled).l	;check if goalie is pulled
 	bmi.w	.bonus
-	btst	#6,(byte_FFC2FC).w	;check if crowd meter currently broken
+	btst	#6,(sflags7).w	;check if crowd meter currently broken
 	beq.w	.nopc2	;jump if not broken
 	tst.b	$40(a3)	;check if temp1 is 0
 	beq.w	.nopc2	;jump if so
 .bonus
 	subq.b	#1,$40(a3)	;subtract 1 from temp1
 .nopc2
-	btst	#5,(word_FFC2F8).w	;check if slot bit is set (puckc in slot)
+	btst	#5,(sflags6).w	;check if slot bit is set (puckc in slot)
 	beq.w	.nopc3	;branch if not set
 	move.w	(puckc).w,d1	;move puck carrier SCnum
 	cmp.w	#5,d1	;check if its home (5 or less) or away (6-11)
@@ -298,13 +298,13 @@ assnearest
 	bgt.w	.spdboost	;branch if in neutral zone or D zone
 	move.w	#$FFBC,d1	;move FFBC into d1
 .spdboost
-	btst	#5,(word_FFC2F8).w	;check if puckc is in the slot
+	btst	#5,(sflags6).w	;check if puckc is in the slot
 	beq.w	.noslot	;branch if not
 	move.b	$69(a3),(TempLegSpd).w	;legspd into FFBF1E
 	addq.b	#6,$69(a3)	;add 6 to legspd
-	btst	#1,(byte_FFC2FE).w	;check if crowd meter broken (always is)
+	btst	#1,(sflags8).w	;check if crowd meter broken (always is)
 	bne.w	.spdboostex	;jump if set
-	btst	#6,(byte_FFC2FC).w	;check if crowd meter currently broken
+	btst	#6,(sflags7).w	;check if crowd meter currently broken
 	beq.w	.spdlimit	;jump if not set
 .spdboostex
 	addq.b	#2,$69(a3)
@@ -321,7 +321,7 @@ assnearest
 	lea	rtss2(pc),a0
 	bsr.w	skateto
 .chkslot
-	btst	#5,(word_FFC2F8).w
+	btst	#5,(sflags6).w
 	beq.w	.chkcont
 	move.w	(pucky).w,d0
 	move.w	$14(a3),d2	;Ypos into d2
@@ -343,7 +343,7 @@ assnearest
 .exit	;IDA: loc_FDBC
 	rts
 .chkcont
-	btst	#5,(word_FFC2F8).w	;check if puckc is in the slot
+	btst	#5,(sflags6).w	;check if puckc is in the slot
 	beq.w	check4check	;branch if not in slot
 	move.b	$75(a3),d0	;move Chk into d0
 	ext.w	d0	;clear top byte of d0
@@ -403,7 +403,7 @@ check4check
 	bsr.w	vtoa	;determine direction
 	cmp.w	facedir(a3),d0	;compare facedir with vtoa result
 	bne.w	.next	;branch if not facing in that direction
-	btst	#5,(word_FFC2F8).w	;check if puckc in slot
+	btst	#5,(sflags6).w	;check if puckc in slot
 	bne.w	Acheck	;branch if in slot
 	move.w	(VDP_CNTR).l,d0	;move HVcounter into d0
 	andi.w	#3,d0	;pass first 2 bits
@@ -503,12 +503,12 @@ assshoot
 puckshootout
 	bclr	#1,$62(a3)
 	beq.w	.selectskater
-	bset	#7,(byte_FFC2FC).w
+	bset	#7,(sflags7).w
 	clr.l	(padcont).w
-	clr.l	(dword_FFBE7E).w
-	clr.l	(dword_FFBE82).w
-	bclr	#7,(word_FFC2FA).w
-	btst	#0,(word_FFC2FA).w
+	clr.l	(padcont+4).w
+	clr.l	(padcont+8).w
+	bclr	#7,(gmode2).w
+	btst	#0,(gmode2).w
 	beq.w	.startattempt
 	jsr	(NextShooter).l
 	bra.w	.initflags
@@ -527,15 +527,15 @@ puckshootout
 	bclr	#4,(BA_PS_flags).w
 	bclr	#5,(BA_PS_flags).w
 	bclr	#6,(BA_PS_flags).w
-	bset	#1,(word_FFC2F8).w
+	bset	#1,(sflags6).w
 	btst	#3,(gmode).w
 	bne.w	Stop4Pen
 	bclr	#1,$62(a3)
-	btst	#0,(word_FFC2FA).w
+	btst	#0,(gmode2).w
 	beq.w	.selectsong
-	tst.w	(word_FFD594).w
+	tst.w	(shootoutteam).w
 	bne.w	.setstopped
-	tst.w	(word_FFD586).w
+	tst.w	(homeshootnum).w
 	bne.w	.setstopped
 	move.w	(HomeTeam).w,(HmTeam).w
 	move.w	#2,(SongIndex).w
@@ -551,10 +551,10 @@ puckshootout
 	bsr.w	song
 .setstopped	;IDA: loc_ED8A
 	bset	#0,(gmode).w
-	bset	#1,(word_FFC2FA).w
+	bset	#1,(gmode2).w
 	clr.w	(puckvx).w
 	clr.w	(puckvy).w
-	move.w	#$19,(word_FFD454).w
+	move.w	#$19,(shootoutclock).w
 	bsr.w	ReturnGoalies
 	st	$40(a3)
 	st	$42(a3)
@@ -632,7 +632,7 @@ SelectPenaltyShotSkater	;IDA: sub_EE58
 	andi.w	#$F,d0
 	cmp.b	#1,d0
 	ble.w	.nextplayer
-	btst	#0,(word_FFC2FA).w
+	btst	#0,(gmode2).w
 	bne.w	.setskaterscnum
 	cmpi.w	#$FFFE,$66(a0,d7.w)
 	beq.w	.scorecandidate
@@ -760,7 +760,7 @@ puckpenshot
 	move.w	#$18A,6(a0)
 	clr.w	$58(a0)
 	clr.w	4(a0)
-	clr.w	(word_FFB74E).w
+	clr.w	(SortCords+(puckscnum*SCstruct)+attribute).w
 	bclr	#6,(sflags).w
 	moveq	#$64,d4
 .scrollloop	;IDA: loc_F06C
@@ -826,12 +826,12 @@ puckpenshot
 	bsr.w	assinsert
 	bra.w	.nextplayer
 .setupgoalie	;IDA: loc_F150
-	btst	#0,(word_FFC2FA).w
+	btst	#0,(gmode2).w
 	beq.w	.goalieactive
-	move.b	(byte_FFD593).w,$66(a3)
-	tst.w	(word_FFD594).w
+	move.b	(shootoutteam-1).w,$66(a3)
+	tst.w	(shootoutteam).w
 	beq.w	.loadgoalieplayer
-	move.b	(byte_FFD585).w,$66(a3)
+	move.b	(homeshootnum-1).w,$66(a3)
 	bra.w	.loadgoalieplayer
 .goalieactive	;IDA: loc_F172
 	tst.w	$34(a3)
@@ -907,18 +907,18 @@ puckpenshot
 	bsr.w	assreplace
 	bset	#7,(BA_PS_flags).w
 	bset	#2,(sflags2).w
-	move.w	#$190,(word_FFC31A).w
+	move.w	#$190,(msgtimer).w
 	tst.w	(cont1team).w
 	bne.w	.finishsetup
 	tst.w	(cont2team).w
 	bne.w	.finishsetup
-	move.w	#$64,(word_FFC31A).w
+	move.w	#$64,(msgtimer).w
 .finishsetup	;IDA: loc_F29C
 	move.w	#$18,(palcount).w
 	movem.l	(sp)+,d0-d7/a0-a6
 	rts
 .resumeplay	;IDA: loc_F2A8
-	bset	#2,(word_FFC2FA).w
+	bset	#2,(gmode2).w
 	move.w	#$18,d0	;pucknorm
 	bsr.w	assreplace
 	clr.w	$28(a3)
@@ -939,23 +939,23 @@ UpdatePenaltyShotEnd	;IDA: sub_F2F4
 	beq.w	.setended
 	btst	#5,(BA_PS_flags).w
 	beq.w	.checktimer
-	btst	#5,(word_FFC2FA).w
+	btst	#5,(gmode2).w
 	bne.w	.puckloose
 	tst.w	(puckc).w
 	bpl.w	.countdown
-	bset	#5,(word_FFC2FA).w
+	bset	#5,(gmode2).w
 .puckloose	;IDA: loc_F32A
 	tst.w	(puckc).w
 	bpl.w	.setended
 .countdown	;IDA: loc_F684
-	tst.w	(word_FFC31C).w
+	tst.w	(passmodetimer).w
 	bmi.w	.setended
-	subq.w	#1,(word_FFC31C).w
+	subq.w	#1,(passmodetimer).w
 	bra.w	.checktimer
 .setended	;IDA: loc_F342
 	bset	#4,(BA_PS_flags).w
 .checktimer	;IDA: loc_F348
-	tst.w	(word_FFD454).w
+	tst.w	(shootoutclock).w
 	bne.w	.checkended
 	bset	#4,(BA_PS_flags).w
 .checkended	;IDA: loc_F356
@@ -970,13 +970,13 @@ UpdatePenaltyShotEnd	;IDA: sub_F2F4
 	jsr	(AddPenalty2).l
 EndPenaltyShotPlay	;IDA: sub_F37C
 	jsr	(freezewindow).l
-	btst	#0,(word_FFC2FA).w
+	btst	#0,(gmode2).w
 	bne.w	.stopplay
-	move.w	#$A,(word_FFDEF0).w
+	move.w	#$A,(replaydelay).w
 	bset	#2,(sflags2).w
 .stopplay	;IDA: loc_F398
 	bset	#0,(gmode).w
-	bclr	#2,(word_FFC2FA).w
+	bclr	#2,(gmode2).w
 	bclr	#2,(BA_PS_flags).w
 	bclr	#3,(BA_PS_flags).w
 	bclr	#5,(BA_PS_flags).w
@@ -986,15 +986,15 @@ EndPenaltyShotPlay	;IDA: sub_F37C
 	movea.l	#$FFFFB04A,a0
 	move.w	(BA_Sktr_SCnum).w,d0
 	asl.w	#7,d0
-	move.b	(byte_FFC31E).w,$61(a0,d0.w)
+	move.b	(savednewpnum).w,$61(a0,d0.w)
 	movem.l	(sp)+,d0/a0
 	jsr	(CountShootoutGoals).l
 PenaltyShotEndReturn	;IDA: locret_F3E2
 	rts
 ; this is where the action starts
 puckfaceoff
-	bclr	#4,(byte_FFC2FE).w
-	btst	#0,(word_FFC2FA).w
+	bclr	#4,(sflags8).w
+	btst	#0,(gmode2).w
 	beq.w	.normalfaceoff
 	clr.w	(puckvx).w
 	clr.w	(puckvy).w
@@ -1003,21 +1003,21 @@ puckfaceoff
 .normalfaceoff	;IDA: loc_F404
 	bclr	#1,$62(a3)
 	beq.w	WaitForFaceoffLineChanges
-	bclr	#0,(byte_FFC2FE).w
+	bclr	#0,(sflags8).w
 	beq.w	.resetpads
 	clr.w	(fox).w
 	clr.w	(foy).w
 .resetpads	;IDA: loc_F420
-	bclr	#7,(byte_FFC2FC).w
+	bclr	#7,(sflags7).w
 	clr.l	(padcont).w
-	clr.l	(dword_FFBE7E).w
-	clr.l	(dword_FFBE82).w
-	bclr	#6,(byte_FFC2FC).w
-	bclr	#2,(byte_FFC2FC).w
+	clr.l	(padcont+4).w
+	clr.l	(padcont+8).w
+	bclr	#6,(sflags7).w
+	bclr	#2,(sflags7).w
 	jsr	(CheckScoreLeader).l
-	tst.w	(word_FFD6BE).w
+	tst.w	(faceoffanim).w
 	bmi.w	.choosefaceoffspot
-	move.w	(word_FFD6BE).w,d0
+	move.w	(faceoffanim).w,d0
 	bra.w	.handlefaceoffspot
 .choosefaceoffspot	;IDA: loc_F454
 	jsr	(RandomFaceoffAnim).l
@@ -1026,8 +1026,8 @@ puckfaceoff
 .handlefaceoffspot	;IDA: loc_F460
 	jsr	(SetFaceoffAnim).l
 .checkperiod	;IDA: loc_F466
-	bclr	#1,(word_FFC2F8).w
-	bclr	#1,(word_FFC2FA).w
+	bclr	#1,(sflags6).w
+	bclr	#1,(gmode2).w
 	tst.w	(gameclock).w
 	beq.w	PeriodOver
 	btst	#6,(gmode).w
@@ -1050,20 +1050,20 @@ puckfaceoff
 	beq.w	.returngoalies
 	btst	#gmclock,(gmode).w
 	beq.w	.returngoalies
-	btst	#6,(byte_FFC2FE).w
+	btst	#6,(sflags8).w
 	bne.w	.returngoalies
 	move.w	(HomeTeam).w,(HmTeam).w
 	move.w	#2,(SongIndex).w
 	jsr	(ChooseSong).l
-	bset	#4,(byte_FFC2FE).w
+	bset	#4,(sflags8).w
 .returngoalies	;IDA: loc_F4F2
 	bsr.w	ReturnGoalies
 	st	temp1(a3)
 	st	temp2(a3)
 	tst.w	(OptLine).w
 	bne.w	WaitForFaceoffLineChanges
-	bclr	#1,(byte_FFC6FE).w
-	bclr	#1,(byte_FFCA62).w
+	bclr	#1,(HmShots+tmflags).w
+	bclr	#1,(AwShots+tmflags).w
 	movea.w	#(SortCords-M68K_RAM),a0
 	moveq	#$B,d0
 .clearlcmloop	;IDA: loc_F518
@@ -1081,7 +1081,7 @@ puckfaceoff
 	move.w	#$18,(palcount).w
 	tst.w	(OptLine).w
 	bne.w	.checkc1line
-	btst	#4,(byte_FFC2FC).w
+	btst	#4,(sflags7).w
 	beq.w	.checkc1line
 	clr.w	(palcount).w
 .checkc1line	;IDA: loc_F566
@@ -1101,7 +1101,7 @@ puckfaceoff
 SetFaceoffComputerLine	;IDA: sub_F590
 	tst.w	(OptLine).w
 	bne.w	rtss2
-	btst	#4,(byte_FFC2FC).w
+	btst	#4,(sflags7).w
 	bne.w	.dochange
 	cmp.w	(cont1team).w,d0
 	beq.w	rtss2
@@ -1111,7 +1111,7 @@ SetFaceoffComputerLine	;IDA: sub_F590
 	bsr.w	CompLine
 	bsr.w	SetPersonel
 	bsr.w	PrintScores1
-	move.w	#$2710,(word_FFC304).w
+	move.w	#$2710,(crowdnoisedelay).w
 	rts
 StartFaceoffLineChange	;IDA: sub_F5C6
 	exg	a2,a3
@@ -1148,7 +1148,7 @@ WaitForFaceoffLineChanges	;IDA: loc_F612
 	lea	$364(a2),a1
 	moveq	#1,d0
 	bsr.w	SetFaceoffComputerLine
-	move.w	#$FFFF,(word_FFD6C6).w
+	move.w	#$FFFF,(facelcwait).w
 	move.w	#$1C,d0	;puckfaceoff2
 	bra.w	assreplace
 UpdateFaceoffLineChangeTimer	;IDA: sub_F64E
@@ -1354,8 +1354,8 @@ puckfaceoff2
 	beq.w	.nna
 	bclr	#2,(BA_PS_flags).w
 	bclr	#5,(BA_PS_flags).w
-	bclr	#0,(word_FFC2F4).w
-	bclr	#1,(word_FFC2F4).w
+	bclr	#0,(sflags4).w
+	bclr	#1,(sflags4).w
 	bclr	#0,(DelayedPen).w
 	bclr	#1,(DelayedPen).w
 	bclr	#2,(DelayedPen).w
@@ -1365,12 +1365,12 @@ puckfaceoff2
 	btst	#dfok,(disflags).w
 	bne.s	.p
 	move	sr,-(sp)
-	move.w	#$3C,(word_FFD412).w
+	move.w	#$3C,(holdreset).w
 	tst.w	(fox).w
 	bne.w	.lockinterrupts
 	tst.w	(foy).w
 	bne.w	.lockinterrupts
-	move.w	#$FFFF,(word_FFD6BE).w
+	move.w	#$FFFF,(faceoffanim).w
 	bra.w	.limitcrowd
 .lockinterrupts	;IDA: loc_F8F4
 	move	#$2700,sr
@@ -1394,7 +1394,7 @@ puckfaceoff2
 	st	(onetimerplayer).w
 	bset	#4,(disflags).w
 	bsr.w	ClrHor	;vertical ice rink
-	move.w	#$2710,(word_FFC304).w
+	move.w	#$2710,(crowdnoisedelay).w
 	clr.w	(Vpos).w	;clear h/v pos
 	clr.w	(Hpos).w
 	move.w	(fox).w,(puckx).w
@@ -1418,7 +1418,7 @@ puckfaceoff2
 	move.w	#$18A,frame(a0)	;#SPFpuck, Frame
 	clr.w	SPA(a0)	;SPA
 	clr.w	attribute(a0)	;attribute
-	clr.w	(word_FFB74E).w	;clear puck SCnum attribute
+	clr.w	(SortCords+(puckscnum*SCstruct)+attribute).w	;clear puck SCnum attribute
 	bclr	#sfslock,(sflags).w
 	moveq	#$64,d4
 .cw
@@ -1453,7 +1453,7 @@ puckfaceoff2
 .clr
 	clr.w	$18(a2)
 	move.b	pnum(a3),$19(a2)	;66(a3) = player offset on roster 19(a2) = player who touches puck
-	bclr	#7,(byte_FFC2FE).w
+	bclr	#7,(sflags8).w
 	st	$1A(a2)	;clear last player to touch puck (assist 1)
 	st	$1C(a2)	;clear second last player to touch puck (assist 2)
 	bclr	#3,tmflags(a2)
@@ -1522,13 +1522,13 @@ puckfaceoff2
 	move.w	(ExtraChars).w,d4
 	movea.l	#FaceOffMap+8,a2
 	jsr	(DoDMA_clearCallbackPointer).l
-	move.w	d4,(word_FFB01C).w
+	move.w	d4,(faceoffvrcset).w
 	movea.l	#FaceOffSprites+8,a2
 	bsr.w	DoDMA_clearCallbackPointer
-	move.w	#$FFFF,(word_FFD6B4).w
-	btst	#0,(byte_FFC2FC).w
+	move.w	#$FFFF,(arenaanim).w
+	btst	#0,(sflags7).w
 	beq.w	.drawfaceoffwindow
-	move.w	(word_FFD6BE).w,d0
+	move.w	(faceoffanim).w,d0
 	bmi.w	.drawfaceoffwindow
 	jsr	(StartArenaAnim).l
 .drawfaceoffwindow	;IDA: loc_FB54
@@ -1559,9 +1559,9 @@ puckfaceoff2
 	moveq	#$C,d2
 	moveq	#$A,d3
 	moveq	#0,d5
-	bset	#0,(word_FFC2F8).w
+	bset	#0,(sflags6).w
 	bsr.w	dobitmap
-	bclr	#0,(word_FFC2F8).w
+	bclr	#0,(sflags6).w
 	tst.w	(OptLine).w
 	bne.w	.setdroptime
 	bsr.w	printz2
@@ -1569,8 +1569,8 @@ puckfaceoff2
 	moveq	#$C,d0
 	moveq	#3,d1
 	bsr.w	Framer
-	move.w	(word_FFC6E4).w,d0
-	move.w	(word_FFCA48).w,d1
+	move.w	(HmShots+tmline).w,d0
+	move.w	(AwShots+tmline).w,d1
 	btst	#gmdir,(gmode).w
 	bne.w	.printline2
 	exg	d0,d1
@@ -1587,15 +1587,15 @@ puckfaceoff2
 	move.w	#$78,d0
 	bsr.w	randomd0
 	addi.w	#$B4,d0
-	cmpi.w	#0,(word_FFD6B4).w
+	cmpi.w	#0,(arenaanim).w
 	beq.w	.chkmintime
-	cmpi.w	#1,(word_FFD6B4).w
+	cmpi.w	#1,(arenaanim).w
 	beq.w	.chkmintime
-	cmpi.w	#5,(word_FFD6B4).w
+	cmpi.w	#5,(arenaanim).w
 	beq.w	.chkmintime
-	cmpi.w	#4,(word_FFD6B4).w
+	cmpi.w	#4,(arenaanim).w
 	beq.w	.chkmintime
-	cmpi.w	#2,(word_FFD6B4).w
+	cmpi.w	#2,(arenaanim).w
 	bne.w	.time
 .chkmintime
 	cmp.w	#$10E,d0
@@ -1619,12 +1619,12 @@ puckfaceoff2
 	move.w	#$FFFF,(fodir1).w	;-1
 	move.w	#$FFFF,(fodir2).w	;-1
 	jsr	(LeadSong).l
-	bclr	#6,(byte_FFC2FE).w
+	bclr	#6,(sflags8).w
 	bne.w	.playqueuedsong
-	bclr	#4,(byte_FFC2FE).w
+	bclr	#4,(sflags8).w
 	beq.w	.restorestate
 .playqueuedsong	;IDA: loc_FCC0
-	bclr	#4,(byte_FFC2FE).w
+	bclr	#4,(sflags8).w
 	move.w	(SongNum).w,-(sp)
 	bsr.w	song
 .restorestate	;IDA: loc_FCCE
@@ -1704,7 +1704,7 @@ updatefaceoff
 	bgt.w	rtss2
 	neg.w	d0
 	addi.w	#$A,d0
-	move.w	d0,(word_FFBDB0).w
+	move.w	d0,(fofdata).w
 	rts
 .erase	;IDA: loc_FDDE
 	bclr	#4,(disflags).w
@@ -1727,19 +1727,19 @@ Endfaceoff
 	move.w	#$2F,-(sp)
 	bsr.w	sfx
 	bclr	#sf2faceoff,(sflags2).w
-	move.w	#$3C,(word_FFD412).w
+	move.w	#$3C,(holdreset).w
 	move.w	(ExtraChars).w,d4
 	movea.l	#RefsMap+8,a2
 	bsr.w	DoDMA_clearCallbackPointer
 	bclr	#sf2drec,(sflags2).w
 	bclr	#gmclock,(gmode).w
 	bclr	#pf2fight,pflags2(a3)
-	clr.w	(word_FFC304).w
+	clr.w	(crowdnoisedelay).w
 	bset	#4,(sflags3).w
 	move.w	(fodir1).w,d3
 	move.w	#$800,d4
 	movea.l	#$FF06,a0
-	movea.w	#(dword_FFBDA8-M68K_RAM),a1
+	movea.w	#(fofdata2-M68K_RAM),a1
 	moveq	#$10,d2
 	move.w	(a1),d1
 	sub.b	-1(a0,d1.w),d2

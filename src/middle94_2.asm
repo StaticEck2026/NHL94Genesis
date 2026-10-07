@@ -54,7 +54,7 @@ dobitmap
 	addq.w	#1,(printy).w
 	addq.w	#1,d6
 	dbf	d2,.loop2
-	btst	#0,(word_FFC2F8).w
+	btst	#0,(sflags6).w
 	bne.w	.0
 	bsr.w	DoDMA_clearCallbackPointer
 .0	;IDA: loc_1171E
@@ -63,12 +63,12 @@ dobitmap
 	move.w	(sp)+,(printy).w
 	rts
 DecompressGraphicsWithCallback	;IDA: sub_1172C (93 name). DecompressGraphics, then return 8 bytes past the call (callback data)
-	move.l	(sp),(dword_FFCF32).w
+	move.l	(sp),(callbackPtr).w
 	bsr.w	DecompressGraphics
 	addq.l	#8,(sp)
 	rts
-DoDMA_clearCallbackPointer	;IDA: sub_11738 (93 name). Clear dword_FFCF32 (93 callbackPtr), fall into DecompressGraphics
-	clr.l	(dword_FFCF32).w
+DoDMA_clearCallbackPointer	;IDA: sub_11738 (93 name). Clear callbackPtr (93 name), fall into DecompressGraphics
+	clr.l	(callbackPtr).w
 DecompressGraphics	;IDA: sub_1173C (93 name). a2 = graphics data, d4 = start char
 	movem.l	d0-d1/a0-a6,-(sp)
 	movea.l	a2,a0
@@ -80,9 +80,9 @@ DecompressGraphics	;IDA: sub_1173C (93 name). a2 = graphics data, d4 = start cha
 	add.w	d0,d4
 	asl.w	#4,d0
 	pea	(.done).l
-	tst.l	(dword_FFCF32).w
+	tst.l	(callbackPtr).w
 	beq.w	DoDMApro
-	movea.l	(dword_FFCF32).w,a1
+	movea.l	(callbackPtr).w,a1
 	bra.w	remap
 .packed	;IDA: loc_1176A
 	andi.w	#$7FFF,d0
@@ -94,7 +94,7 @@ DecompressGraphics	;IDA: sub_1173C (93 name). a2 = graphics data, d4 = start cha
 DecompressBytecode	;IDA: sub_1177A (93 name). Unpack a0 into the 256 byte ring buffer at ThreeStars (93 DispAttribCtr)
 	movea.w	#(ThreeStars-M68K_RAM),a1
 	movea.w	#(ThreeStars-M68K_RAM),a3
-	movea.w	#(dword_FFCF32-M68K_RAM),a4
+	movea.w	#(callbackPtr-M68K_RAM),a4
 	movea.l	#remap,a5
 	movea.l	#DoDMApro,a6
 	movem.l	d0-d3/a0-a2,-(sp)
@@ -395,9 +395,9 @@ print2	;IDA name (93 printsmall)
 	bset	#2,(disflags).w
 	movem.l	d0-d3/a0/a2-a3,-(sp)
 	movea.w	#(smallfontchars-M68K_RAM),a3
-	btst	#3,(word_FFC2F8).w
+	btst	#3,(sflags6).w
 	beq.w	.start
-	movea.w	#(word_FFBF52-M68K_RAM),a3
+	movea.w	#(setupfontchars-M68K_RAM),a3
 .start
 	bsr.w	xyVmMap
 	move.w	(printa).w,d2
@@ -424,13 +424,13 @@ print2	;IDA name (93 printsmall)
 	beq.w	.6
 	asl.w	#1,d0
 	movea.l	#SmallFontMap,a2
-	btst	#3,(word_FFC2F8).w
+	btst	#3,(sflags6).w
 	beq.w	.4
 	movea.l	#PrintFont2Map,a2
 .4	;IDA: loc_11AC4
 	adda.l	4(a2),a2
 	move.w	4(a2,d0.w),d0
-	move.w	(word_FFB030).w,d1
+	move.w	(printfontset).w,d1
 	add.w	0(a3,d1.w),d0
 .5	;IDA: loc_11AD4
 	add.w	d2,d0
@@ -504,7 +504,7 @@ ControlCode_SetFont	;93: control code -7, next byte = char set index
 	move.b	(a1)+,d0
 	subq.w	#1,d3
 	asl.w	#1,d0
-	move.w	d0,(word_FFB030).w
+	move.w	d0,(printfontset).w
 	rts
 ; see print
 ; string macro should follow jsr to this routine
@@ -568,15 +568,15 @@ print
 	beq.w	.skip
 	asl.w	#1,d0
 	movea.l	#SmallFontMap,a2
-	btst	#3,(word_FFC2F8).w
+	btst	#3,(sflags6).w
 	beq.w	.2
 	movea.l	#PrintFont2Map,a2
 .2	;IDA: loc_11C34
 	adda.l	4(a2),a2
 	move.w	4(a2,d0.w),d0
-	btst	#3,(word_FFC2F8).w
+	btst	#3,(sflags6).w
 	beq.w	.3
-	add.w	(word_FFBF52).w,d0
+	add.w	(setupfontchars).w,d0
 	bra.w	.p
 .3	;IDA: loc_11C4E
 	add.w	(smallfontchars).w,d0
@@ -767,7 +767,7 @@ printbig
 	move.w	(printx).w,d4
 	move.w	(printy).w,d5
 	move.w	(printa).w,d6
-	add.w	(word_FFB010).w,d6
+	add.w	(BigFontChars).w,d6
 	move.w	(a1)+,d3
 	subq.w	#2,d3
 	bra.w	.1
@@ -782,7 +782,7 @@ printbig
 	asl.w	#1,d6
 	andi.w	#$F800,d6
 	move.w	d6,(printa).w
-	add.w	(word_FFB010).w,d6
+	add.w	(BigFontChars).w,d6
 	andi.w	#3,d0
 	asl.w	#2,d0
 	subq.w	#4,d0

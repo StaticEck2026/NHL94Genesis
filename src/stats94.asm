@@ -3,11 +3,11 @@
 ;	Playoff Stats, Crowd Meter, the Timeout and goalie select menu items, and their helpers (SetupScreen, ExitAttributeScreen2,
 ;	ReadAttributeNibble ... _rjoy). The screens are menu item handlers (the hockey94_11 menu lists) run from the pause menu (menu94).
 ;	94 changes from 93: 94 RAM (PenSum, ScoreSum, VertLineScrolling ...), printz2 / print2 for the small text, the OptLine line icon
-;	entries (word_8798, the byte before AttributeMenuTable), the crowd meter arena / league records (save RAM), GetDefenseStart and
+;	entries (MenuIconPosTable-6, the byte before AttributeMenuTable), the crowd meter arena / league records (save RAM), GetDefenseStart and
 ;	ReloadRinkGraphics; the 93 Game Statistics screen is not here.
 ;	Transcribed from lst/nhl94.bin.lst lines 30583-34504. Global names are the 93 stats93 names where IDA has an auto name or no label
 ;	(IDA name in an ;IDA: comment); kept IDA names: PrintAttribHeader, getNameandAttrib, attribjmp, DispAttribValue, Handedlist,
-;	word_8798, _rjoy. 94 only routines are named for what they do (ReloadRinkGraphics, GetDefenseStart). Locals are the 93 stats93
+;	_rjoy. 94 only routines are named for what they do (ReloadRinkGraphics, GetDefenseStart). Locals are the 93 stats93
 ;	locals where the code matches, else named for what they do, with the IDA label in an ;IDA: comment. LineEditorMenu,
 ;	SelectAttributeItem and DisplayPlayerSelectMenu are 93 globals that IDA left as labels inside the routine before. IDA gaps written from the retail bytes:
 ;	the inline Strings after printz / printz2 / printbigz and the remap tables after DecompressGraphicsWithCallback (IDA code), the
@@ -15,7 +15,7 @@
 ;	the data tables in their 93 form. The IDA labels inside Strings (sub_9B4A and others) are not labels.
 
 ShowScores	;no IDA label (93 name). "Scores" screen: the other games of the night in gsstruct (DisplayGameInfo) over the Scores bitmap
-	;(ScoresMap, 93 ScoresMap); up / down scroll, start exits (ExitAttributeScreen2). Menu item handler (hockey94_11 menu lists)
+	;(ScoresMap, 93 name); up / down scroll, start exits (ExitAttributeScreen2). Menu item handler (hockey94_11 menu lists)
 	moveq	#6,d0
 	moveq	#$1A,d1
 	bsr.w	SetupScreen
@@ -171,7 +171,7 @@ LineEditorRedraw	;IDA: loc_82F6 (93 name). Clear the screen and redraw everythin
 	moveq	#$1C,d1
 	move.w	#$7FF,d2
 	jsr	(eraser).l
-	st	(byte_FFC012).w
+	st	(redrawicons).w
 	bsr.w	ClearMenuFlags
 LineEditorMenu	;IDA: loc_831A (93 name). Slot cursor loop: start exits, C picks a player for the slot (SelectAttributeItem), up / down /
 	;left / right move the slot cursor (LineCursorTable). Also entered from SelectAttributeItem when it is done
@@ -225,7 +225,7 @@ SelectAttributeItem	;IDA: loc_838E (93 name). Line editor: C pressed on slot Tes
 	sub.w	d1,d0
 .n	;IDA: loc_83B0
 	subq.w	#1,d0
-	move.w	d0,(word_FFD5B6).w
+	move.w	d0,(screentimer).w
 	clr.w	(PlayerScrollCtr).w
 	clr.w	(VertLineScrolling).w
 	movea.w	#(Satt-M68K_RAM),a0
@@ -283,7 +283,7 @@ SelectAttributeItem	;IDA: loc_838E (93 name). Line editor: C pressed on slot Tes
 .vert	;IDA: loc_8484
 	add.w	(VertLineScrolling).w,d0
 	bmi.s	.loop
-	cmp.w	(word_FFD5B6).w,d0
+	cmp.w	(screentimer).w,d0
 	bgt.s	.loop
 	move.w	d0,(VertLineScrolling).w
 .first	;IDA: loc_8494
@@ -329,7 +329,7 @@ PrintAttribHeader	;IDA name (93 name). Line editor player list: the column heade
 	move.l	(a1),d4
 	movea.w	#(Satt-M68K_RAM),a3
 	move.w	(PlayerScrollCtr).w,d2
-	move.w	(word_FFD5B6).w,d1
+	move.w	(screentimer).w,d1
 	sub.w	d2,d1
 	cmp.w	#5,d1
 	bls.w	.4
@@ -360,12 +360,12 @@ DrawAttributeMenu	;IDA: sub_8566 (93 name). Line editor: draw the line icons for
 	subq.w	#1,a0
 .0	;IDA: loc_857E
 	move.b	(a0),d0
-	cmp.b	(byte_FFC012).w,d0
+	cmp.b	(redrawicons).w,d0
 	beq.w	.1
-	move.b	d0,(byte_FFC012).w
+	move.b	d0,(redrawicons).w
 	bsr.w	ClearAttributeArea
 .1	;IDA: loc_8590
-	btst	d5,(byte_FFC012).w
+	btst	d5,(redrawicons).w
 	beq.w	.2
 	bsr.w	DrawMenuIcon
 .2	;IDA: loc_859C
@@ -384,7 +384,7 @@ DrawAttributeMenu	;IDA: sub_8566 (93 name). Line editor: draw the line icons for
 	sub.w	d0,(printx).w
 	move.w	d7,(printa).w
 	jsr	(print2).l
-	clr.w	(word_FFB030).w
+	clr.w	(printfontset).w
 	rts
 	dc.b	1	;94: the entry before AttributeMenuTable (read with OptLine set)
 AttributeMenuTable	;IDA: unk_85E7 (93 name). Per line: bit mask of the lines drawn together
@@ -425,10 +425,10 @@ DrawMenuIcon	;IDA: sub_85EE (93 name). Line editor: draw line d5 (its name from 
 	bne.w	.2
 	move.w	d0,d6
 	move.w	(printa).w,d7
-	move.w	#2,(word_FFB030).w
+	move.w	#2,(printfontset).w
 .2	;IDA: loc_867A
 	jsr	(print2).l
-	clr.w	(word_FFB030).w
+	clr.w	(printfontset).w
 	addq.w	#1,d4
 	dbf	d3,.1
 	rts
@@ -444,7 +444,7 @@ ClearAttributeArea	;IDA: sub_868C (93 name). Line editor: erase the line area an
 	move.w	(MenuIconPosTable).l,(printx).l
 	tst.w	(OptLine).w
 	beq.w	.0
-	move.w	(word_8798).l,(printx).l
+	move.w	(MenuIconPosTable-6).l,(printx).l
 .0	;IDA: loc_86CE
 	jsr	(printz2).l
 	dc.w	$0022	;String length: too many arguments for the String macro (as 93)
@@ -485,11 +485,11 @@ ClearAttributeArea2	;IDA: sub_8774 (93 name). Erase 40 x 10 at the top of map 2
 	moveq	#$A,d1
 	move.w	#$7FF,d2
 	jmp	eraser
-ClearMenuFlags	;IDA: sub_878E (93 name). Clear word_FFBD82 and word_FFBDA2
-	clr.w	(word_FFBD82).w
-	clr.w	(word_FFBDA2).w
+ClearMenuFlags	;IDA: sub_878E (93 name). Clear palfadenew+$5A and palfadenew+$7A
+	clr.w	(palfadenew+$5A).w
+	clr.w	(palfadenew+$7A).w
 	rts
-word_8798	;IDA name. 94: the line icon entry used with OptLine set (x, y, slot count - 1)
+	;MenuIconPosTable-6 (IDA word_8798; 93 writes MenuIconPosTable-6): the line icon entry used with OptLine set (x, y, slot count - 1)
 	dc.w	$10,$C,4
 MenuIconPosTable	;IDA: word_879E (93 name). Line icons: x, y, slot count - 1 per line. IDA word_87A0 is MenuIconPosTable+2
 	dc.w	4,$C,4
@@ -514,9 +514,9 @@ ExitAttributeScreen	;IDA: loc_8812 (93 name). Line editor: start pressed. Run th
 	;databuffer holds another team), then redraw the editor or leave (ExitAttributeScreen2)
 	bsr.w	ClearMenuFlags
 	move.w	#$18,(palcount).w
-	move.l	(dword_FFCF20).w,-(sp)
-	move.l	(dword_FFCF24).w,-(sp)
-	move.l	(dword_FFCF28).w,-(sp)
+	move.l	(menuitem).w,-(sp)
+	move.l	(menulist).w,-(sp)
+	move.l	(menudraw).w,-(sp)
 	movea.l	#rtss2,a1
 	movea.l	#AttributeScreenText,a0
 	movea.w	#(databuffer-M68K_RAM),a3
@@ -540,10 +540,10 @@ ExitAttributeScreen	;IDA: loc_8812 (93 name). Line editor: start pressed. Run th
 	beq.s	.1
 	jsr	(printz2).l
 	String	$F9
-	move.w	(dword_FFCF20).w,d0
-	move.l	(sp)+,(dword_FFCF28).w
-	move.l	(sp)+,(dword_FFCF24).w
-	move.l	(sp)+,(dword_FFCF20).w
+	move.w	(menuitem).w,d0
+	move.l	(sp)+,(menudraw).w
+	move.l	(sp)+,(menulist).w
+	move.l	(sp)+,(menuitem).w
 	tst.w	d0
 	bne.w	LineEditorRedraw
 	bra.w	ExitAttributeScreen2
@@ -1506,7 +1506,7 @@ DisplayAttributeMenu	;IDA: sub_961A (93 name). Stats screen: column headers (sor
 	moveq	#1,d0
 	add.w	(DispAttribCtr).w,d0
 	jsr	(PrintStringFromList).l
-	clr.w	(word_FFB030).w
+	clr.w	(printfontset).w
 	movea.w	#(Satt-M68K_RAM),a3
 	clr.l	d6
 	tst.w	(DispAttribCtr).w
@@ -1898,7 +1898,7 @@ SetupScreen	;IDA: sub_9BD8 (93 name). Common start of the stats screens: blank, 
 	moveq	#$28,d2
 	moveq	#$D,d5
 	bsr.w	dobitmap
-	move.w	d4,(word_FFB014).w
+	move.w	d4,(smallfont2chars).w
 	movea.l	#SmallFontMap+8,a2
 	bsr.w	DecompressGraphicsWithCallback
 	dc.l	$D1234567,$89ABCDEF	;remap table
@@ -1931,7 +1931,7 @@ ReloadRinkGraphics	;IDA: sub_9CDC. 93 ExitAttributeScreen2 after its forceblack 
 	bset	#1,(disflags).w
 	move.w	(rinkvrcset).w,d4
 	movea.l	#Rinktiles,a2	;load rink address
-	btst	#4,(word_FFC2F4).w	;check if reverse angle replay
+	btst	#4,(sflags4).w	;check if reverse angle replay
 	beq.w	.load	;branch if not
 	movea.l	#RevRinkTiles,a2	;load reverse rink address
 .load	;IDA: loc_9D32
@@ -1950,9 +1950,9 @@ ReloadRinkGraphics	;IDA: sub_9CDC. 93 ExitAttributeScreen2 after its forceblack 
 	jmp	SetTeamColors
 TimeoutMenu	;no IDA label (93 name). Pause menu "Timeout" for team a2: switch the menu to PauseText2, show the team name, rest both teams
 	;(RestoreTeamEnergy, penalty94_2), wait $78 frames (waitx). Menu item handler
-	subq.w	#1,(dword_FFCF20).w
-	subq.w	#1,(dword_FFCF20+2).w
-	move.l	#PauseText2,(dword_FFCF24).l
+	subq.w	#1,(menuitem).w
+	subq.w	#1,(menuitem+2).w
+	move.l	#PauseText2,(menulist).l
 	bset	#2,tmflags(a2)
 	bsr.w	printz
 	String	$BD,5,$C
@@ -1975,22 +1975,22 @@ TimeoutMenu	;no IDA label (93 name). Pause menu "Timeout" for team a2: switch th
 	bra.w	waitx
 SelectGoalieMenu	;no IDA label (93 name; IDA hid it in TimeoutMenu's String). Pick team a2's goalie (or no goalie) from a list (DisplayPlayerSelectMenu, 93
 	;DisplayPlayerSelectMenu) with up / down, C or start; sets $26(a2) and SetPersonel. Menu item handler
-	move.w	(dword_FFCF20).w,-(sp)
-	move.w	(dword_FFCF20+2).w,-(sp)
+	move.w	(menuitem).w,-(sp)
+	move.w	(menuitem+2).w,-(sp)
 	bsr.w	ReadAttributeNibble
-	move.w	d0,(dword_FFCF20+2).w
+	move.w	d0,(menuitem+2).w
 	bsr.w	printz
 	String	$BD,4,$C
 	moveq	#$18,d0
 	moveq	#3,d1
-	add.w	(dword_FFCF20+2).w,d1
+	add.w	(menuitem+2).w,d1
 	bsr.w	Framer
 	move.w	tmgoalie(a2),d0
 	bpl.w	.0
 	moveq	#-1,d0
 .0	;IDA: loc_9E16
 	addq.w	#1,d0
-	move.w	d0,(dword_FFCF20).w
+	move.w	d0,(menuitem).w
 .loop	;IDA: loc_9E1C
 	bsr.w	DisplayPlayerSelectMenu
 .pad	;IDA: loc_9E20
@@ -2001,20 +2001,20 @@ SelectGoalieMenu	;no IDA label (93 name; IDA hid it in TimeoutMenu's String). Pi
 	bne.w	.done
 	btst	#1,d1
 	beq.w	.up
-	move.w	(dword_FFCF20).w,d0
+	move.w	(menuitem).w,d0
 	addq.w	#1,d0
-	cmp.w	(dword_FFCF20+2).w,d0
+	cmp.w	(menuitem+2).w,d0
 	bgt.s	.loop
-	move.w	d0,(dword_FFCF20).w
+	move.w	d0,(menuitem).w
 .up	;IDA: loc_9E4C
 	btst	#0,d1
 	beq.s	.loop
-	subq.w	#1,(dword_FFCF20).w
+	subq.w	#1,(menuitem).w
 	bpl.s	.loop
-	clr.w	(dword_FFCF20).w
+	clr.w	(menuitem).w
 	bra.s	.loop
 .done	;IDA: loc_9E5E
-	move.w	(dword_FFCF20).w,d0
+	move.w	(menuitem).w,d0
 	subq.w	#1,d0
 	bpl.w	.set
 	cmpi.w	#$FFFF,tmgoalie(a2)
@@ -2023,17 +2023,17 @@ SelectGoalieMenu	;no IDA label (93 name; IDA hid it in TimeoutMenu's String). Pi
 	move.w	d0,tmgoalie(a2)
 	jsr	(SetPersonel).l
 .x	;IDA: loc_9E7C
-	move.w	(sp)+,(dword_FFCF20+2).w
-	move.w	(sp)+,(dword_FFCF20).w
+	move.w	(sp)+,(menuitem+2).w
+	move.w	(sp)+,(menuitem).w
 	rts
-DisplayPlayerSelectMenu	;IDA: loc_9E86 (93 name). Draw the goalie list, row dword_FFCF20 highlighted, each goalie with his two digit number
+DisplayPlayerSelectMenu	;IDA: loc_9E86 (93 name). Draw the goalie list, row menuitem highlighted, each goalie with his two digit number
 	move.w	#$D,(printy).w
-	move.w	(dword_FFCF20+2).w,d1
+	move.w	(menuitem+2).w,d1
 	moveq	#0,d0
 .0	;IDA: loc_9E92
 	move.w	#5,(printx).w
 	move.w	#$A000,(printa).w
-	cmp.w	(dword_FFCF20).w,d0
+	cmp.w	(menuitem).w,d0
 	bne.w	.1
 	move.w	#$8000,(printa).w
 .1	;IDA: loc_9EAC

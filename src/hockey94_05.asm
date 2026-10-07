@@ -19,7 +19,7 @@
 ;	>0 penalty box), $16A line sets.
 
 puckstick	;puck collides with stick. a2 = player who collided, a3 = puck, d0 = distance^2 (from checkpuckcoll .ccx). A stick check on the puck
-	;carrier can steal the puck (Stk rolls, smaller ranges when the carrier is in the slot, word_FFC2F8 bit 5), else a slow enough puck is caught
+	;carrier can steal the puck (Stk rolls, smaller ranges when the carrier is in the slot, sflags6 bit 5), else a slow enough puck is caught
 	;(puckglue); a one-timer shoots it (onetimershot). 94 adds the slot ranges and the one-timer path
 	tst.w	position(a2)	;a2 = player who collided
 	;a3 = puck
@@ -38,7 +38,7 @@ puckstick	;puck collides with stick. a2 = player who collided, a3 = puck, d0 = d
 	eor.w	d1,d2	;compare pflags of each player
 	btst	#pfteam,d2	;check if on same team
 	beq.w	rtss2	;no stealing from teammate
-	btst	#5,(word_FFC2F8).w	;check if puckc is in slot
+	btst	#5,(sflags6).w	;check if puckc is in slot
 	beq.w	.noslot	;branch if not
 	cmp.l	#$40,d0
 	bhi.w	rtss2
@@ -66,7 +66,7 @@ puckstick	;puck collides with stick. a2 = player who collided, a3 = puck, d0 = d
 	add.w	(sp)+,d0	;add puckc modified Stk
 	addi.w	#$24,d0	;add 24 hex (36 decimal)
 	bsr.w	randomd0	;RNG
-	btst	#5,(word_FFC2F8).w	;check if puckc is in slot
+	btst	#5,(sflags6).w	;check if puckc is in slot
 	beq.w	.2	;branch if not
 	cmp.w	#4,d0	;compare 4 to d0
 	bhi.w	rtss2	;exit if higher (not losing puck)
@@ -108,7 +108,7 @@ puckstick	;puck collides with stick. a2 = player who collided, a3 = puck, d0 = d
 	cmpi.w	#$18,$5A(a2)
 	bge.w	.nosteal2
 	move.w	#$18,$5A(a2)
-	bset	#7,(byte_FFC2FE).w
+	bset	#7,(sflags8).w
 .nosteal2
 	move.w	(puckvx).w,d0
 	move.w	(puckvy).w,d1
@@ -329,7 +329,7 @@ puckgoalie	;puck hits goalie a2. a3 = puck, d0/d1 = goalie - puck x/y. The save 
 	move.b	0(a0,d0.w),d0	;move value from list2 or list3 at offset to d0
 	lsr.w	d2,d0	;shift d0 by d2
 	andi.w	#3,d0	;pass first 2 bits of d0
-	bclr	#2,(word_FFC2F4).w	;clear bit 2 - this is not used anywhere, might have been a debug flag
+	bclr	#2,(sflags4).w	;clear bit 2 - this is not used anywhere, might have been a debug flag
 	bsr.w	ChkShotStat
 	bsr.w	a2touchpuck
 	cmpi.w	#$3000,(puckvy).w	;compare with puck velocity y
@@ -371,7 +371,7 @@ puckgoalie	;puck hits goalie a2. a3 = puck, d0/d1 = goalie - puck x/y. The save 
 	move.b	d0,Xvel(a3)	;move d0 into puck Xvel
 	move.b	d1,Yvel(a3)	;move d1 into puck Yvel
 	bra.w	puckflip	;flip puck
-	bset	#2,(word_FFC2F4).w	;not reached (after bra.w puckflip)
+	bset	#2,(sflags4).w	;not reached (after bra.w puckflip)
 	rts
 .chkanim
 	cmpi.w	#$2F4,SPA(a2)	;SPAgdive. check for goalie dive animation
@@ -592,13 +592,13 @@ deflect	;random puck direction on deflection, puck = a3. Entered from puckstick
 	bsr.w	randomd0
 	move.w	d0,Zvel(a3)
 	bra.w	puckflip
-makepde	;pass d0 as value to be scaled by player a0's energy level (94: full energy while byte_FFC2FC bit 4 is set). Return d0 as result
+makepde	;pass d0 as value to be scaled by player a0's energy level (94: full energy while sflags7 bit 4 is set). Return d0 as result
 	ext.w	d0
 	move.w	d0,-(sp)
 	movem.l	d1/a2-a3,-(sp)
 	movea.l	a0,a3
 	bsr.w	getpde
-	btst	#4,(byte_FFC2FC).w	;94 only
+	btst	#4,(sflags7).w	;94 only
 	beq.w	.0
 	move.w	#$1000,d0
 .0
@@ -789,7 +789,7 @@ SetupPenaltyShot	;IDA: sub_1592C. 94 only. Penalty shot set up for team a2 (call
 	bra.w	.3
 .0	;IDA: loc_1595C
 	bsr.w	Setplass
-	move.b	$61(a3),(byte_FFC31E).w
+	move.b	$61(a3),(savednewpnum).w
 	move.b	(BA_Skater_Offset+1).w,$61(a3)
 	move.w	#4,$34(a3)
 	bra.w	.2
@@ -901,7 +901,7 @@ Setplass	;set players (a3) initial assignment from .alist by position
 	dc.b	5	;asscenterd
 	dc.b	$FF
 setplayer	;bring player onto the ice and set his attributes. d3 = offset of player on roster, a3 = sortcord of player. Reads the roster bytes
-	;through AttributeCalc (attribute number in word_FFBF14). 94 adds the PP / PK, home / away and third period bonuses (team ScoreOdds bytes) to
+	;through AttributeCalc (attribute number in TempWord2). 94 adds the PP / PK, home / away and third period bonuses (team ScoreOdds bytes) to
 	;some attributes and clamps them with checkattriblimits
 	bclr	#6,pflags2(a3)	;clear line change mode? (I believe pflags2 are 1 off because of fighting missing)
 	movea.w	#(HmShots-M68K_RAM),a0	;Start of Team Struct
@@ -990,17 +990,17 @@ setplayer	;bring player onto the ice and set his attributes. d3 = offset of play
 	move.b	d3,weight(a3)	;store in player struct
 	move.b	1(a0),d3	;move Wgt/Agl byte to d3
 	andi.b	#$F,d3	;mask Agl nibble
-	move.w	#3,(word_FFBF14).w	;move 3 into BF14
+	move.w	#3,(TempWord2).w	;move 3 into BF14
 	jsr	(AttributeCalc).l	;attribute math and add hot/cold
 	move.b	d3,legstr(a3)	;move Agl byte to player struct
 	move.b	2(a0),d3	;load Spd/OfA byte to d3
 	lsr.b	#4,d3	;remove OfA nibble by shifting 4 bits right, moving Spd into lower nibble
-	move.w	#4,(word_FFBF14).w	;move 4 into BF14
+	move.w	#4,(TempWord2).w	;move 4 into BF14
 	jsr	(AttributeCalc).l
 	move.b	d3,legspd(a3)	;move Spd byte into player struct
 	move.b	2(a0),d3	;move Spd/OfA byte to d3
 	andi.b	#$F,d3	;mask d3 and pass only OfA nibble
-	move.w	#5,(word_FFBF14).w	;move 5 into BF14
+	move.w	#5,(TempWord2).w	;move 5 into BF14
 	jsr	(AttributeCalc).l
 	add.b	(PPBonus).w,d3	;add Bonsuses to OfA
 	add.b	(PKBonus).w,d3
@@ -1014,7 +1014,7 @@ setplayer	;bring player onto the ice and set his attributes. d3 = offset of play
 	move.b	d3,aioff(a3)	;OfA byte = (30-((OfA + Bonuses)/2))/2
 	move.b	3(a0),d3	;move DfA/ShP byte to d3
 	lsr.b	#4,d3	;see above
-	move.w	#6,(word_FFBF14).w
+	move.w	#6,(TempWord2).w
 	jsr	(AttributeCalc).l
 	add.b	(HmAwBonus).w,d3
 	bsr.w	checkattriblimits
@@ -1026,12 +1026,12 @@ setplayer	;bring player onto the ice and set his attributes. d3 = offset of play
 	move.b	3(a0),shotspd(a3)
 	andi.b	#$F,shotspd(a3)
 	move.b	$6C(a3),d3
-	move.w	#7,(word_FFBF14).w
+	move.w	#7,(TempWord2).w
 	jsr	(AttributeCalc).l
 	move.b	d3,$6C(a3)	;ShP does not get any bonuses
 	move.b	4(a0),d3	;move Chk/Hnd byte into d3
 	lsr.b	#4,d3
-	move.w	#8,(word_FFBF14).w
+	move.w	#8,(TempWord2).w
 	jsr	(AttributeCalc).l
 	add.b	(ThirdPBonus).w,d3	;Chk gets 3rd P bonus only
 	bsr.w	checkattriblimits
@@ -1048,7 +1048,7 @@ setplayer	;bring player onto the ice and set his attributes. d3 = offset of play
 	andi.b	#$E,$74(a3)	;mask the byte with E, ignoring the Hnd bit - will always be even
 	move.b	5(a0),d3	;move Stk/ShA byte into d3
 	lsr.b	#4,d3
-	move.w	#$A,(word_FFBF14).w
+	move.w	#$A,(TempWord2).w
 	jsr	(AttributeCalc).l
 	add.b	(PPBonus).w,d3
 	add.b	(PKBonus).w,d3
@@ -1057,7 +1057,7 @@ setplayer	;bring player onto the ice and set his attributes. d3 = offset of play
 	move.b	d3,stickhand(a3)	;Stk gets PP/PK/Tm Bonus
 	move.b	5(a0),d3
 	andi.b	#$F,d3
-	move.w	#$B,(word_FFBF14).w
+	move.w	#$B,(TempWord2).w
 	jsr	(AttributeCalc).l
 	add.b	(PPBonus).w,d3
 	add.b	(PKBonus).w,d3
@@ -1066,12 +1066,12 @@ setplayer	;bring player onto the ice and set his attributes. d3 = offset of play
 	move.b	d3,shotacc(a3)	;ShA gets PP/PK/Tm Bonus
 	move.b	6(a0),d3	;move End/PS Bias byte into d3
 	lsr.b	#4,d3
-	move.w	#$C,(word_FFBF14).w
+	move.w	#$C,(TempWord2).w
 	jsr	(AttributeCalc).l
 	move.b	d3,endurance(a3)	;End gets no bonuses
 	move.b	6(a0),d3
 	andi.b	#$F,d3
-	move.w	#$D,(word_FFBF14).w
+	move.w	#$D,(TempWord2).w
 	jsr	(AttributeCalc).l
 	add.b	(ThirdPBonus).w,d3
 	add.b	(ThirdPBonus).w,d3
@@ -1079,7 +1079,7 @@ setplayer	;bring player onto the ice and set his attributes. d3 = offset of play
 	move.b	d3,spodds(a3)	;PS Bias gets a double 3rd P bonus
 	move.b	7(a0),d3	;move Pas/Agr byte into d3
 	lsr.b	#4,d3
-	move.w	#$E,(word_FFBF14).w
+	move.w	#$E,(TempWord2).w
 	jsr	(AttributeCalc).l
 	add.b	(PPBonus).w,d3
 	add.b	(HmAwBonus).w,d3
@@ -1088,7 +1088,7 @@ setplayer	;bring player onto the ice and set his attributes. d3 = offset of play
 	move.b	7(a0),$73(a3)	;moves Pas/Agr into Agr byte in player struct
 	move.b	$73(a3),d3	;moves Pas/Agr byte into d3 (weird way to do it)
 	andi.b	#$F,d3
-	move.w	#$F,(word_FFBF14).w
+	move.w	#$F,(TempWord2).w
 	jsr	(AttributeCalc).l
 	move.b	d3,$73(a3)	;Agr gets no bonus
 	andi.b	#$F,$73(a3)	;mask Agr byte with F, so max is 15 decimal

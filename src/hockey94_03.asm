@@ -412,10 +412,10 @@ CCStart	;IDA name (93 checkcheck .cc). Player a3 is checking player a2. Holds (S
 	bne.w	.down	;branch if bit set
 	bsr.w	randomd0	;d0 is the RNG range.
 	;Result will be in d0 (0 <= d0 < range)
-	clr.w	(word_FFBF12).w
-	move.b	$75(a3),(word_FFBF12+1).w	;$75 is Chk attrib. in player struct
-	lsr.w	(word_FFBF12).w	;Shift right 1 bit
-	cmp.b	(word_FFBF12+1).w,d0	;d0 - Chk rating / 2
+	clr.w	(TempWord1).w
+	move.b	$75(a3),(TempWord1+1).w	;$75 is Chk attrib. in player struct
+	lsr.w	(TempWord1).w	;Shift right 1 bit
+	cmp.b	(TempWord1+1).w,d0	;d0 - Chk rating / 2
 	ble.w	.down	;branch if d0 less than FFBF13
 	bsr.w	checkagr
 	cmp.w	#4,d0
@@ -571,7 +571,7 @@ holdcheck	;player a2 is in hold animation looking to hold opponent a3. Entered f
 	st	(collflag).w
 	rts
 Bcheck	;a2 = player that is B checking (SPAsweepchk), a3 = player being checked. Entered from CCStart. If OptPen is 0 and a2 is joystick controlled,
-	;a2 needs randomd0($20 + a2 Chk - a3 Agl, 2 less when byte_FFC2FE bit 1 or byte_FFC2FC bit 6 is set) >= $18 (93: $10 + Chk - legstr, >= $C).
+	;a2 needs randomd0($20 + a2 Chk - a3 Agl, 2 less when sflags8 bit 1 or sflags7 bit 6 is set) >= $18 (93: $10 + Chk - legstr, >= $C).
 	;If a3 is within 1 direction of where a2 faces, a3 falls and checkagr may call penalty $20 (tripping) on a2. Sets collflag
 	btst	#pfalock,pflags(a3)	;check if locked in animation
 	bne.w	rtss2	;exit if locked
@@ -586,9 +586,9 @@ Bcheck	;a2 = player that is B checking (SPAsweepchk), a3 = player being checked.
 	move.w	#$20,d0	;20 hex starting value
 	add.b	$75(a2),d0	;add Chk of player B checking
 	sub.b	$68(a3),d0	;sub Agl of player being checked
-	btst	#1,(byte_FFC2FE).w	;94 only
+	btst	#1,(sflags8).w	;94 only
 	bne.w	.sub2
-	btst	#6,(byte_FFC2FC).w
+	btst	#6,(sflags7).w
 	beq.w	.rnd
 .sub2
 	subq.b	#2,d0	;sub 2 from d0
@@ -902,7 +902,7 @@ FallDown	;player a2 falls down, player a3 is the hitting player. Skips a2 in som
 	bsr.w	SetSPA
 	exg	a2,a3
 	bsr.w	setInjuryType
-	btst	#5,(byte_FFC2FC).w	;check if game injury
+	btst	#5,(sflags7).w	;check if game injury
 	bne.w	.9	;branch if game injury
 	exg	a2,a3
 	move.w	#$1AF4,d1	;SPAinjury1. set injury animation
@@ -928,7 +928,7 @@ FallDown	;player a2 falls down, player a3 is the hitting player. Skips a2 in som
 	rts
 setInjuryType	;determines if injury will be for period or game. a2 = player injured, a3 = player checking. Marks a2 unavailable, pumps up the crowd,
 	;plays sfx $D, locks the scroll on a2 and sets TempPlOffset (pnum, bit 15 set for the away team). a2's tmpdst becomes $FFFD (injured for the
-	;period) or, from a3's Fgt byte (getFgtbyte, chkFgtBit1), $FFFC (injured for the game, byte_FFC2FC bit 5). Called from FallDown
+	;period) or, from a3's Fgt byte (getFgtbyte, chkFgtBit1), $FFFC (injured for the game, sflags7 bit 5). Called from FallDown
 	move.w	d0,-(sp)
 	bset	#2,pflags2(a2)	;set player unavailable
 	addi.w	#$12C,(crowdlevel).w
@@ -954,18 +954,18 @@ setInjuryType	;determines if injury will be for period or game. a2 = player inju
 	exg	a2,a3	;swap back
 	tst.w	d0	;check if d0 is zero
 	bne.w	.not0	;branch if H/F was more than 3
-	bclr	#5,(byte_FFC2FC).w	;clear injury game bit
+	bclr	#5,(sflags7).w	;clear injury game bit
 	move.w	#$FFFD,$66(a0,d1.w)	;update status of player
 	bra.w	.exit
 .not0
 	cmp.w	#3,d0	;compare d0 to 3 (if H/F was 12, d0 = 3)
 	beq.w	.injurygame
-	bclr	#5,(byte_FFC2FC).w
+	bclr	#5,(sflags7).w
 	move.w	#$FFFD,$66(a0,d1.w)	;update status of player
 	jsr	(chkFgtBit1).l	;check Fgt bit 1 of player.
 	beq.w	.exit	;jump if Fgt not 2,6,A
 .injurygame
-	bset	#5,(byte_FFC2FC).w	;set injury game bit
+	bset	#5,(sflags7).w	;set injury game bit
 	move.w	#$FFFC,$66(a0,d1.w)	;update status of player
 .exit
 	move.w	(sp)+,d0

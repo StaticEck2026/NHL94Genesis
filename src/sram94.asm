@@ -125,7 +125,7 @@ ClearSRAM	;IDA name. Clears first $2000 of RAM and SaveRAM: zero M68K_RAM $0-$1F
 .loop	;IDA: loc_1A1A8
 	move.b	d1,(a0)+
 	dbf	d0,.loop
-	move.b	#$FF,(byte_FF1FFE).l
+	move.b	#$FF,(sramcleared).l
 	moveq	#0,d0
 	move.l	#$2000,d1
 	movea.l	#M68K_RAM,a0
@@ -166,7 +166,7 @@ MakeSRAMChecksum	;IDA name. Read the whole save RAM to M68K_RAM, put the sum of 
 	move.b	d0,1(a0)
 	not.w	d0
 	move.b	d0,(a0)
-	movea.l	#byte_FF1FFE,a0
+	movea.l	#sramcleared,a0
 	moveq	#2,d1
 	move.l	#$1FFE,d0
 	bsr.s	WriteSRAM

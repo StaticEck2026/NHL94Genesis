@@ -29,8 +29,8 @@ wallcollduringcheck	;IDA name (and comments). 94 only: during a check, a skater 
 	movem.l	(sp)+,d0-d7
 .end
 	rts
-setSlotBit	;IDA name (and comments). 94 only: word_FFC2F8 bit 5 (the slot) = the puck carrier is in the slot in front of the goal. Called from DoGameFrame (hockey94_01)
-	bclr	#5,(word_FFC2F8).w	;clears Slot Bit
+setSlotBit	;IDA name (and comments). 94 only: sflags6 bit 5 (the slot) = the puck carrier is in the slot in front of the goal. Called from DoGameFrame (hockey94_01)
+	bclr	#5,(sflags6).w	;clears Slot Bit
 	tst.w	(puckc).w
 	bmi.w	.ex	;exit if no puckc
 	movem.l	d0/a0,-(sp)
@@ -49,7 +49,7 @@ setSlotBit	;IDA name (and comments). 94 only: word_FFC2F8 bit 5 (the slot) = the
 	bgt.w	.restore	;branch if greater than 47
 	cmpi.w	#$FFB9,(a0)	;compare X position to -$47
 	blt.w	.restore	;branch if less than -47
-	bset	#5,(word_FFC2F8).w	;set bit
+	bset	#5,(sflags6).w	;set bit
 .restore
 	movem.l	(sp)+,d0/a0
 .ex
@@ -615,12 +615,12 @@ PrintRecordValue	;IDA: sub_F98C6. 94 only. Record line for a player card (hockey
 	bra.w	.x
 .0	;IDA: loc_F98F4
 	movea.l	#$FFFFBF20,a1
-	move.w	d0,(word_FFBF14).w
+	move.w	d0,(TempWord2).w
 	bsr.w	AppendNumber
 	movea.l	(sp),a3
 	movea.l	#$FFFFBF20,a1
 	jsr	(appstring).l
-	move.w	(word_FFBF14).w,d0
+	move.w	(TempWord2).w,d0
 	movea.l	#RecSavesTxt,a1
 	cmp.w	#1,d0
 	bne.w	.1
@@ -830,7 +830,7 @@ AppendRecordHolder	;IDA: sub_F9AE4. 94 only. Append the user name of the record 
 .0	;IDA: loc_F9B14
 	move.b	1(a0),d2
 	ext.w	d2
-	bset	#7,(word_FFC2F8).w
+	bset	#7,(sflags6).w
 	bsr.w	AppendUserName
 	movem.l	(sp)+,d0-d7/a1-a2
 	rts
@@ -852,7 +852,7 @@ AppendRecordVs	;IDA: sub_F9B2A. 94 only. Append the user name (byte 3 of record 
 	move.b	3(a0),d2
 	ext.w	d2
 	movem.l	d0/a1,-(sp)
-	bset	#7,(word_FFC2F8).w
+	bset	#7,(sflags6).w
 	bsr.w	AppendUserName
 	movea.l	a1,a3
 	movea.l	#RecSpaceTxt,a1
@@ -865,8 +865,8 @@ AppendRecordVs	;IDA: sub_F9B2A. 94 only. Append the user name (byte 3 of record 
 RecSpaceTxt	dc.b	0	;IDA: unk_F9B90. AppendRecordVs text
 	dc.b	4,$20,0
 ReadPlayerRecord	;IDA: sub_F9B94. 94 only. Read the 4 byte player record d1 (PlayerRecordOffsets) of team d0 from save RAM to a0
-	bclr	#6,(word_FFC2F8).w
-PlayerRecordIO	;IDA: loc_F9B9A. IDA label. Read (word_FFC2F8 bit 6 clear) or write a save RAM record block (ReadSRAM / WriteSRAM). Entered from WritePlayerRecord
+	bclr	#6,(sflags6).w
+PlayerRecordIO	;IDA: loc_F9B9A. IDA label. Read (sflags6 bit 6 clear) or write a save RAM record block (ReadSRAM / WriteSRAM). Entered from WritePlayerRecord
 	movem.l	d0-d1/a0-a1,-(sp)
 	asl.l	#2,d0
 	addi.l	#0,d0
@@ -877,7 +877,7 @@ PlayerRecordIO	;IDA: loc_F9B9A. IDA label. Read (word_FFC2F8 bit 6 clear) or wri
 	ext.l	d1
 	add.l	d1,d0
 	moveq	#4,d1
-	btst	#6,(word_FFC2F8).w
+	btst	#6,(sflags6).w
 	beq.w	.0
 	jsr	(WriteSRAM).l
 	bra.w	.x
@@ -887,18 +887,18 @@ PlayerRecordIO	;IDA: loc_F9B9A. IDA label. Read (word_FFC2F8 bit 6 clear) or wri
 	movem.l	(sp)+,d0-d1/a0-a1
 	rts
 WritePlayerRecord	;IDA: sub_F9BDA. 94 only. Write the 4 byte player record (PlayerRecordIO)
-	bset	#6,(word_FFC2F8).w
+	bset	#6,(sflags6).w
 	bra.s	PlayerRecordIO
 clrCrowdRAM	;IDA name (clrCrowdRAM?). 94 only: read the 16 byte crowd record block of team d1 from save RAM ($B60 + team * 16) to a0. Called from
 	;LoadCrowdRec (high94_1) and DisplayGameStats (stats94)
-	bclr	#6,(word_FFC2F8).w
-CrowdRecordIO	;IDA: loc_F9BE8. IDA label. The crowd record block: read or write (word_FFC2F8 bit 6). Entered from clrCrowdRAM and WriteCrowdRecord
+	bclr	#6,(sflags6).w
+CrowdRecordIO	;IDA: loc_F9BE8. IDA label. The crowd record block: read or write (sflags6 bit 6). Entered from clrCrowdRAM and WriteCrowdRecord
 	movem.l	d0-d1/a0-a1,-(sp)
 	move.l	d1,d0
 	asl.w	#4,d0
 	addi.l	#$B60,d0
 	moveq	#$10,d1
-	btst	#6,(word_FFC2F8).w
+	btst	#6,(sflags6).w
 	beq.w	.0
 	jsr	(WriteSRAM).l
 	bra.w	.x
@@ -908,17 +908,17 @@ CrowdRecordIO	;IDA: loc_F9BE8. IDA label. The crowd record block: read or write 
 	movem.l	(sp)+,d0-d1/a0-a1
 	rts
 WriteCrowdRecord	;IDA: sub_F9C18. 94 only. Write the 16 byte crowd record block of team d1 (CrowdRecordIO)
-	bset	#6,(word_FFC2F8).w
+	bset	#6,(sflags6).w
 	bra.s	CrowdRecordIO
 ReadTeamRecord	;IDA: sub_F9C20. 94 only. Read the 16 byte team record block of team d1 ($D20 + team * 16) to a0 (TeamRecordIO)
-	bclr	#6,(word_FFC2F8).w
-TeamRecordIO	;IDA: loc_F9C26. IDA label. A save RAM record block: read or write (word_FFC2F8 bit 6)
+	bclr	#6,(sflags6).w
+TeamRecordIO	;IDA: loc_F9C26. IDA label. A save RAM record block: read or write (sflags6 bit 6)
 	movem.l	d0-d1/a0-a1,-(sp)
 	move.l	d1,d0
 	asl.w	#4,d0
 	addi.l	#$D20,d0
 	moveq	#$10,d1
-	btst	#6,(word_FFC2F8).w
+	btst	#6,(sflags6).w
 	beq.w	.0
 	jsr	(WriteSRAM).l
 	bra.w	.x
@@ -928,19 +928,19 @@ TeamRecordIO	;IDA: loc_F9C26. IDA label. A save RAM record block: read or write 
 	movem.l	(sp)+,d0-d1/a0-a1
 	rts
 WriteTeamRecord	;IDA: sub_F9C56. 94 only. Write the team record block (TeamRecordIO)
-	bset	#6,(word_FFC2F8).w
+	bset	#6,(sflags6).w
 	bra.s	TeamRecordIO
 WriteNameLog	;IDA: sub_F9C5E. 94 only. Write the user name log ($80 bytes at $FFD45A) to save RAM $DA0 (NameLogIO)
-	bset	#6,(word_FFC2F8).w
+	bset	#6,(sflags6).w
 	bra.w	NameLogIO
 ReadNameLog	;IDA: sub_F9C68. 94 only. Read the user name log from save RAM $DA0 to $FFD45A (NameLogIO). Called from GameSetUp (hockey94_08)
-	bclr	#6,(word_FFC2F8).w
-NameLogIO	;IDA: loc_F9C6E. IDA label. A user record block: read or write (word_FFC2F8 bit 6)
+	bclr	#6,(sflags6).w
+NameLogIO	;IDA: loc_F9C6E. IDA label. A user record block: read or write (sflags6 bit 6)
 	movem.l	d0-d7/a0-a6,-(sp)
 	move.l	#$80,d1
 	move.l	#$DA0,d0
 	movea.l	#$FFFFD45A,a0
-	btst	#6,(word_FFC2F8).w
+	btst	#6,(sflags6).w
 	beq.w	.0
 	jsr	(WriteSRAM).l
 	bra.w	.x
@@ -984,47 +984,47 @@ UpdateRecords	;IDA: sub_F9CDE. 94 only. With save RAM (ValidSRAM) and user recor
 	ext.l	d1
 	movea.l	#ThreeStars,a0
 	movea.l	#HmShots,a2
-	move.w	(word_FFD448).w,d5
+	move.w	(homegoalies).w,d5
 	move.w	(VisTeam).w,d6
 	bsr.w	UpdatePlayerRecords
 	move.w	(VisTeam).w,d1
 	ext.l	d1
 	movea.l	#AwShots,a2
-	move.w	(word_FFD44A).w,d5
+	move.w	(awaygoalies).w,d5
 	move.w	(HomeTeam).w,d6
 	bsr.w	UpdatePlayerRecords
 	clr.w	d7
 	movea.l	#HmShots,a1
-	move.w	(word_FFD042).w,d4
-	move.w	(word_FFD044).w,d5
+	move.w	(homeuser).w,d4
+	move.w	(awayuser).w,d5
 	move.w	(HomeTeam).w,d1
 	move.w	(VisTeam).w,d2
-	move.w	(word_FFD448).w,d6
+	move.w	(homegoalies).w,d6
 	ext.l	d1
 	movea.l	#ThreeStars,a0
 	bsr.w	UpdateCrowdRecord
 	movea.l	#AwShots,a1
-	move.w	(word_FFD044).w,d4
-	move.w	(word_FFD042).w,d5
+	move.w	(awayuser).w,d4
+	move.w	(homeuser).w,d5
 	move.w	(VisTeam).w,d1
 	move.w	(HomeTeam).w,d2
-	move.w	(word_FFD44A).w,d6
+	move.w	(awaygoalies).w,d6
 	ext.l	d1
 	movea.l	#ThreeStars,a0
 	bsr.w	UpdateCrowdRecord
 	movea.l	#ThreeStars,a0
-	move.w	(word_FFD042).w,d1
+	move.w	(homeuser).w,d1
 	ext.l	d1
-	move.w	(word_FFD044).w,d2
+	move.w	(awayuser).w,d2
 	move.w	(HomeTeam).w,d3
 	move.w	(VisTeam).w,d4
 	movea.l	#HmShots,a1
 	movea.l	#AwShots,a2
 	bsr.w	UpdateTeamRecord
 	movea.l	#ThreeStars,a0
-	move.w	(word_FFD044).w,d1
+	move.w	(awayuser).w,d1
 	ext.l	d1
-	move.w	(word_FFD042).w,d2
+	move.w	(homeuser).w,d2
 	move.w	(VisTeam).w,d3
 	move.w	(HomeTeam).w,d4
 	movea.l	#AwShots,a1
@@ -1118,13 +1118,13 @@ UpdateCrowdRecord	;IDA: sub_F9EAA. 94 only. Update the crowd records (clrCrowdRA
 .loop	;IDA: loc_F9ED0
 	move.w	d6,d0
 	addi.w	#$E8,d0
-	move.b	0(a1,d0.w),(word_FFBF12).w
+	move.b	0(a1,d0.w),(TempWord1).w
 	addi.w	#-$34,d0
 	move.b	0(a1,d0.w),d0
-	sub.b	d0,(word_FFBF12).w
-	cmp.b	(word_FFBF12).w,d3
+	sub.b	d0,(TempWord1).w
+	cmp.b	(TempWord1).w,d3
 	bge.w	.1
-	move.b	(word_FFBF12).w,d3
+	move.b	(TempWord1).w,d3
 .1	;IDA: loc_F9EF4
 	dbf	d6,.loop
 	cmp.b	4(a0),d3
@@ -1179,12 +1179,12 @@ UpdatePlayerRecords	;IDA: sub_F9F50. 94 only. After a game: for the 26 players o
 	cmp.b	d3,d4
 	ble.w	.3
 	move.b	d4,(a0)
-	move.b	(word_FFD042+1).w,1(a0)
-	move.b	(word_FFD044+1).w,3(a0)
+	move.b	(homeuser+1).w,1(a0)
+	move.b	(awayuser+1).w,3(a0)
 	cmpa.l	#HmShots,a2
 	beq.w	.2
-	move.b	(word_FFD044+1).w,1(a0)
-	move.b	(word_FFD042+1).w,3(a0)
+	move.b	(awayuser+1).w,1(a0)
+	move.b	(homeuser+1).w,3(a0)
 .2	;IDA: loc_F9FB0
 	move.b	d6,2(a0)
 	bsr.w	WritePlayerRecord
@@ -1192,24 +1192,24 @@ UpdatePlayerRecords	;IDA: sub_F9F50. 94 only. After a game: for the 26 players o
 	addq.w	#1,d0
 	dbf	d2,.loop
 	rts
-CountGoalies	;IDA: sub_F9FC0. 94 only. word_FFD448 / word_FFD44A = goalies of the home / away team (ReadAttributeNibble). Called from hockey94_10 and PlayerCards
+CountGoalies	;IDA: sub_F9FC0. 94 only. homegoalies / awaygoalies = goalies of the home / away team (ReadAttributeNibble). Called from hockey94_10 and PlayerCards
 	movem.l	d0-d7/a0-a6,-(sp)
 	movea.l	#HmShots,a2
 	jsr	(ReadAttributeNibble).l
-	move.w	d0,(word_FFD448).w
+	move.w	d0,(homegoalies).w
 	movea.l	#AwShots,a2
 	jsr	(ReadAttributeNibble).l
-	move.w	d0,(word_FFD44A).w
+	move.w	d0,(awaygoalies).w
 	movem.l	(sp)+,d0-d7/a0-a6
 	rts
-CountPlayers	;IDA: sub_F9FEA. 94 only. word_FFD44C / word_FFD44E = players of the home / away team (GetPlayerCount)
+CountPlayers	;IDA: sub_F9FEA. 94 only. homeplayers / awayplayers = players of the home / away team (GetPlayerCount)
 	movem.l	d0-d7/a0-a6,-(sp)
 	movea.l	#HmShots,a2
 	jsr	(GetPlayerCount).l
-	move.w	d0,(word_FFD44C).w
+	move.w	d0,(homeplayers).w
 	movea.l	#AwShots,a2
 	jsr	(GetPlayerCount).l
-	move.w	d0,(word_FFD44E).w
+	move.w	d0,(awayplayers).w
 	movem.l	(sp)+,d0-d7/a0-a6
 	rts
 AppendUserName	;IDA: sub_FA014. 94 only. Append user name d2 (12 bytes of the name log at $FFD45A, spaces for 0) to a1, or NoNameTxt when d2 is 0; trailing spaces trimmed (TrimSpaces)
@@ -1232,7 +1232,7 @@ AppendUserName	;IDA: sub_FA014. 94 only. Append user name d2 (12 bytes of the na
 	addq.w	#1,d3
 	dbf	d0,.loop
 	move.w	#$E,(a2)
-	btst	#7,(word_FFC2F8).w
+	btst	#7,(sflags6).w
 	beq.w	.1
 	bsr.w	TrimSpaces
 .1	;IDA: loc_FA05C
@@ -1291,9 +1291,9 @@ PlayerCards	;no IDA label (was sub_FA07E) (93 has no counterpart). "Player Cards
 	moveq	#$D,d5
 	move.w	#1,d4
 	jsr	(dobitmap).l
-	move.w	d4,(word_FFD450).w
+	move.w	d4,(cardlogochars1).w
 	addi.w	#$24,d4
-	move.w	d4,(word_FFD452).w
+	move.w	d4,(cardlogochars2).w
 	addi.w	#$24,d4
 	move.w	d4,-(sp)
 	jsr	(printz).l
@@ -1331,11 +1331,11 @@ PlayerCards	;no IDA label (was sub_FA07E) (93 has no counterpart). "Player Cards
 	jsr	(dobitmap).l
 	bsr.w	BuildCardPlayerLists
 	move.w	#$18,(palcount).w
-	clr.w	(word_FFD4F0).w
-	clr.w	(word_FFD4F2).w
+	clr.w	(homecardidx).w
+	clr.w	(awaycardidx).w
 	tst.w	(FourWayPlay).w
 	beq.w	.1
-	cmpi.w	#3,(word_FFC316).w
+	cmpi.w	#3,(pausepad).w
 	beq.w	.3
 	bra.w	.2
 .1	;IDA: loc_FA1DA
@@ -1352,10 +1352,10 @@ PlayerCards	;no IDA label (was sub_FA07E) (93 has no counterpart). "Player Cards
 	clr.w	d0
 .5	;IDA: loc_FA1F8
 	andi.w	#1,d0
-	movea.l	#word_FFD4F2,a0
-	move.w	d0,(word_FFD4F6).w
+	movea.l	#awaycardidx,a0
+	move.w	d0,(cardvis).w
 	bne.w	.6
-	movea.l	#word_FFD4F0,a0
+	movea.l	#homecardidx,a0
 .6	;IDA: loc_FA210
 	bsr.w	DrawPlayerCard
 .loop	;IDA: loc_FA214
@@ -1366,7 +1366,7 @@ PlayerCards	;no IDA label (was sub_FA07E) (93 has no counterpart). "Player Cards
 	bne.w	.10
 	btst	#6,d1
 	beq.w	.7
-	eori.w	#1,(word_FFD4F6).w
+	eori.w	#1,(cardvis).w
 	clr.w	d0
 	bra.w	.8
 .7	;IDA: loc_FA242
@@ -1382,12 +1382,12 @@ PlayerCards	;no IDA label (was sub_FA07E) (93 has no counterpart). "Player Cards
 	bne.w	.8
 	bra.s	.loop
 .8	;IDA: loc_FA26A
-	movea.l	#word_FFD4F0,a0
-	move.w	(word_FFD44C).w,(word_FFD4F8).w
-	tst.w	(word_FFD4F6).w
+	movea.l	#homecardidx,a0
+	move.w	(homeplayers).w,(cardcount).w
+	tst.w	(cardvis).w
 	beq.w	.9
-	movea.l	#word_FFD4F2,a0
-	move.w	(word_FFD44E).w,(word_FFD4F8).w
+	movea.l	#awaycardidx,a0
+	move.w	(awayplayers).w,(cardcount).w
 .9	;IDA: loc_FA28A
 	add.w	d0,(a0)
 	bsr.w	WrapCardIndex
@@ -1396,9 +1396,9 @@ PlayerCards	;no IDA label (was sub_FA07E) (93 has no counterpart). "Player Cards
 .10	;IDA: loc_FA298
 	movem.l	(sp)+,d0-d7/a0-a6
 	jmp	ExitAttributeScreen2
-WrapCardIndex	;IDA: sub_FA2A2. 94 only. Wrap the card index (a0) into 0 ... word_FFD4F8 - 1
+WrapCardIndex	;IDA: sub_FA2A2. 94 only. Wrap the card index (a0) into 0 ... cardcount - 1
 	move.w	d0,-(sp)
-	move.w	(word_FFD4F8).w,d0
+	move.w	(cardcount).w,d0
 	addq.w	#1,d0
 	cmp.w	(a0),d0
 	bne.w	.0
@@ -1416,13 +1416,13 @@ DrawPlayerCard	;IDA: sub_FA2C0. 94 only. Draw a player card: picture (DrawPictur
 	movem.l	d0-d7/a1-a6,-(sp)
 	move.l	a0,-(sp)
 	move.w	(HomeTeam).w,d0
-	tst.w	(word_FFD4F6).w
+	tst.w	(cardvis).w
 	beq.w	.0
 	move.w	(VisTeam).w,d0
 .0	;IDA: loc_FA2D6
 	asl.w	#6,d0
 	movea.l	#TeamPalettes,a6
-	move.l	$26(a6,d0.w),(dword_FFBD4A).w
+	move.l	$26(a6,d0.w),(palfadenew+$22).w
 	move.w	#$64,(palcount).w
 	jsr	(printz).l
 	String	$BE,0,7
@@ -1445,7 +1445,7 @@ DrawPlayerCard	;IDA: sub_FA2C0. 94 only. Draw a player card: picture (DrawPictur
 	rts
 .3	;IDA: loc_FA330
 	movem.l	d0-d7/a0-a6,-(sp)
-	move.w	(a0),(word_FFD4F4).w
+	move.w	(a0),(cardindex).w
 	bsr.w	DrawPictureBox
 	move.w	#$21,d0
 	move.w	#8,d1
@@ -1454,11 +1454,11 @@ DrawPlayerCard	;IDA: sub_FA2C0. 94 only. Draw a player card: picture (DrawPictur
 	jsr	(printz).l
 	String	$BE,0,0
 	move.w	(HomeTeam).w,d0	;IDA hid this
-	tst.w	(word_FFD4F6).w	;IDA hid this
+	tst.w	(cardvis).w	;IDA hid this
 	beq.w	.4	;IDA hid this
 	move.w	(VisTeam).w,d0
 .4
-	move.w	d0,(word_FFBF14).w
+	move.w	d0,(TempWord2).w
 	movea.l	#$30E,a2
 	asl.w	#2,d0
 	movea.l	0(a2,d0.w),a2
@@ -1492,7 +1492,7 @@ DrawPlayerCard	;IDA: sub_FA2C0. 94 only. Draw a player card: picture (DrawPictur
 	jsr	(print2).l
 	bsr.w	GetCardPlayer
 	movea.l	#HmShots,a2
-	tst.w	(word_FFD4F6).w
+	tst.w	(cardvis).w
 	beq.w	.6
 	movea.l	#AwShots,a2
 .6	;IDA: loc_FA3F0
@@ -1521,7 +1521,7 @@ DrawPlayerCard	;IDA: sub_FA2C0. 94 only. Draw a player card: picture (DrawPictur
 	jsr	(printz2).l
 	String	'-----------'
 	move.w	(HomeTeam).w,d1
-	tst.w	(word_FFD4F6).w
+	tst.w	(cardvis).w
 .7	;IDA: loc_FA4A4
 	beq.w	.8
 	move.w	(VisTeam).w,d1
@@ -1537,14 +1537,14 @@ DrawPlayerCard	;IDA: sub_FA2C0. 94 only. Draw a player card: picture (DrawPictur
 	move.b	3(a0),d4
 	move.b	2(a0),d5
 	move.w	#$E,d1
-	move.w	(word_FFD448).w,d0
-	tst.w	(word_FFD4F6).w
+	move.w	(homegoalies).w,d0
+	tst.w	(cardvis).w
 .9	;IDA: loc_FA4DE
 	beq.w	.11
 .10	;IDA: loc_FA4E2
-	move.w	(word_FFD44A).w,d0
+	move.w	(awaygoalies).w,d0
 .11	;IDA: loc_FA4E6
-	cmp.w	(word_FFD52E).w,d0
+	cmp.w	(cardplayer).w,d0
 	ble.w	.12
 	move.w	#$15,d0
 	bsr.w	PrintSaveRecordLine
@@ -1552,7 +1552,7 @@ DrawPlayerCard	;IDA: sub_FA2C0. 94 only. Draw a player card: picture (DrawPictur
 	move.w	#$15,d1
 	move.w	#$14,d2
 	bsr.w	PrintSaves
-	st	(word_FFD598).w
+	st	(matchup).w
 	bra.w	.13
 .12	;IDA: loc_FA50E
 	move.w	#$15,d0
@@ -1561,7 +1561,7 @@ DrawPlayerCard	;IDA: sub_FA2C0. 94 only. Draw a player card: picture (DrawPictur
 	move.w	#$15,d1
 	move.w	#$14,d2
 	bsr.w	PrintGoalsAssists
-	clr.w	(word_FFD598).w
+	clr.w	(matchup).w
 .13	;IDA: loc_FA52A
 	move.w	#3,d1
 	move.w	#$11,d2
@@ -1580,9 +1580,9 @@ PrintCardRecords	;IDA: sub_FA550. 94 only. Player card "Records" column
 	jsr	(ClearCardText).l
 	move.w	#1,d0
 	move.w	#8,d1
-	bset	#0,(word_FFC2F8).w
+	bset	#0,(sflags6).w
 	jsr	(ClearCardText).l
-	bclr	#0,(word_FFC2F8).w
+	bclr	#0,(sflags6).w
 	move.w	#$64,(palcount).w
 	jsr	(printz).l
 	String	$BE,0,0
@@ -1604,7 +1604,7 @@ PrintCardRecords	;IDA: sub_FA550. 94 only. Player card "Records" column
 	jsr	(printz2).l	;IDA hid this
 	String	'-----------'
 	move.w	(HomeTeam).w,d1
-	tst.w	(word_FFD4F6).w
+	tst.w	(cardvis).w
 	beq.w	.0
 	move.w	(VisTeam).w,d1
 .0	;IDA: loc_FA602
@@ -1644,9 +1644,9 @@ ClearCardText	;IDA: sub_FA66E. 94 only. Player card: erase the text area and red
 	String	$BE,0,0
 	move.w	d0,(printx).w	;IDA hid this
 	move.w	d1,(printy).w
-	move.w	(word_FFD450).w,d4
+	move.w	(cardlogochars1).w,d4
 	move.w	(HomeTeam).w,d3
-	tst.w	(word_FFD4F6).w
+	tst.w	(cardvis).w
 	beq.w	.0
 	move.w	(VisTeam).w,d3
 .0	;IDA: loc_FA69A
@@ -1665,12 +1665,12 @@ ClearCardText	;IDA: sub_FA66E. 94 only. Player card: erase the text area and red
 	move.w	#6,d2
 	clr.w	d0
 	clr.w	d1
-	move.l	(dword_FFBD4A).w,-(sp)
-	move.l	(dword_FFBD4E).w,-(sp)
+	move.l	(palfadenew+$22).w,-(sp)
+	move.l	(palfadenew+$26).w,-(sp)
 	move.w	#2,d5
 	jsr	(dobitmap).l
-	move.l	(sp)+,(dword_FFBD4E).w
-	move.l	(sp)+,(dword_FFBD4A).w
+	move.l	(sp)+,(palfadenew+$26).w
+	move.l	(sp)+,(palfadenew+$22).w
 	movem.l	(sp)+,d0-d7/a0-a6
 	rts
 PrintCrowdRecordLine	;IDA: sub_FA6E8. 94 only. Player card record line: the arena crowd record (CrowdLevelTxt, PrintCardRecordLine)
@@ -1807,7 +1807,7 @@ PrintCardRecordLine	;IDA: loc_FA7B0. IDA label. Print a player card record line:
 	movea.l	#mesarea,a1
 	move.w	d3,d2
 	ext.w	d2
-	bset	#7,(word_FFC2F8).w
+	bset	#7,(sflags6).w
 	jsr	(AppendUserName).l
 	movea.l	a1,a3
 	movea.l	#CardVsTxt,a1
@@ -1820,7 +1820,7 @@ PrintCardRecordLine	;IDA: loc_FA7B0. IDA label. Print a player card record line:
 	move.w	d4,d2
 	ext.w	d2
 	movea.l	#mesarea,a1
-	bset	#7,(word_FFC2F8).w
+	bset	#7,(sflags6).w
 	jsr	(AppendUserName).l
 	movea.l	a1,a3
 	movea.l	#CardEmptyTxt,a1
@@ -1865,12 +1865,12 @@ PrintOverallRating	;IDA: sub_FA8AC. 94 only. Player card "Overall Rating" (CalcA
 	jsr	(printz2).l	;IDA hid this
 	String	'Rating   '
 	movea.l	#HmShots,a2
-	tst.w	(word_FFD4F6).w
+	tst.w	(cardvis).w
 	beq.w	.0
 	movea.l	#AwShots,a2
 .0	;IDA: loc_FA8F8
 	move.l	(PAttribOverallMask).l,d4
-	tst.w	(word_FFD598).w
+	tst.w	(matchup).w
 	beq.w	.1
 	move.l	(GAttribOverallMask).l,d4
 .1	;IDA: loc_FA90C
@@ -1889,7 +1889,7 @@ PrintStartingLine	;IDA: loc_FA936. IDA label. Player card "Starting Line": the l
 	movem.l	d0-d7/a0-a6,-(sp)
 	move.w	(HomeTeam).w,d2
 	bsr.w	GetTeamStruct
-	tst.w	(word_FFD4F6).w
+	tst.w	(cardvis).w
 .0	;IDA: loc_FA946
 	beq.w	.1
 	move.w	(VisTeam).w,d2
@@ -2061,7 +2061,7 @@ PrintCardPosition	;IDA: loc_FAB4C. IDA label. Player card position: Goalie, Forw
 	move.w	d2,(printy).w
 	jsr	(print2).l
 	movea.l	#HmShots,a2
-	tst.w	(word_FFD4F6).w
+	tst.w	(cardvis).w
 	beq.w	.0
 	movea.l	#AwShots,a2
 .0	;IDA: loc_FAB7C
@@ -2100,7 +2100,7 @@ PrintTeamRating	;IDA: sub_FABDC. 94 only. Player card "Team Rating" (GetTeamRati
 	String	'Rating  '
 .0	;IDA: loc_FAC0E
 	movea.l	#HmShots,a0
-	tst.w	(word_FFD4F6).w
+	tst.w	(cardvis).w
 	beq.w	.1
 	movea.l	#AwShots,a0
 .1	;IDA: loc_FAC22
@@ -2114,11 +2114,11 @@ PrintTeamRating	;IDA: sub_FABDC. 94 only. Player card "Team Rating" (GetTeamRati
 	movem.l	(sp)+,d0-d7/a0-a6
 .x	;IDA: locret_FAC3C
 	rts
-PrintCardTeam	;IDA: sub_FAC3E. 94 only. Player card: the city and nickname of the card's team (GetCardTeam word_FFD4F6), each centred (PrintCentered) on rows d1 and d1 + 1
+PrintCardTeam	;IDA: sub_FAC3E. 94 only. Player card: the city and nickname of the card's team (GetCardTeam cardvis), each centred (PrintCentered) on rows d1 and d1 + 1
 	movem.l	d0-d7/a0-a6,-(sp)
 	move.w	d1,(printy).w
 	movea.l	#HmShots,a0
-	tst.w	(word_FFD4F6).w
+	tst.w	(cardvis).w
 	beq.w	.0
 	movea.l	#AwShots,a0
 .0	;IDA: loc_FAC5A
@@ -2144,7 +2144,7 @@ PrintCentered	;IDA: sub_FAC78. 94 only. print2 String a0 centred on column $14
 GetJerseyString	;IDA: sub_FAC90. 94 only. Player d0 of the card's team: his jersey number as a 2 digit String at a1 (space for a leading 0)
 	movem.l	d0-d7/a0-a6,-(sp)
 	movea.l	#HmShots,a0
-	tst.w	(word_FFD4F6).w
+	tst.w	(cardvis).w
 	beq.w	.0
 	movea.l	#AwShots,a0
 .0	;IDA: loc_FACA8
@@ -2312,14 +2312,14 @@ DrawPictureBox	;IDA: sub_FAEBC. 94 only. Player card picture box (DrawPlayerPict
 	movem.l	d0-d7/a0-a6,-(sp)
 	bsr.w	GetCardPlayer
 	move.w	(HomeTeam).w,d1
-	tst.w	(word_FFD4F6).w
+	tst.w	(cardvis).w
 	beq.w	.0
 	move.w	(VisTeam).w,d1
 .0	;IDA: loc_FAED4
 	bsr.w	DrawPlayerPicture
 	jsr	(printz).l
 	String	$8E,1,8
-	move.w	(word_FFD452).w,d4	;IDA hid this
+	move.w	(cardlogochars2).w,d4	;IDA hid this
 	movea.l	a0,a1
 	movea.l	a0,a2
 	adda.l	(a2)+,a0
@@ -2342,7 +2342,7 @@ DrawPictureBox	;IDA: sub_FAEBC. 94 only. Player card picture box (DrawPlayerPict
 	clr.w	d1
 	movem.l	d0/a0-a1,-(sp)
 	adda.w	#$20,a0
-	movea.l	#CardPalette,a1
+	movea.l	#palfadenew+$40,a1
 	move.w	#7,d0
 .loop	;IDA: loc_FAF36
 	move.l	(a0)+,(a1)+
@@ -2352,9 +2352,9 @@ DrawPictureBox	;IDA: sub_FAEBC. 94 only. Player card picture box (DrawPlayerPict
 	jsr	(dobitmap).l
 	movem.l	(sp)+,d0-d7/a0-a6
 	rts
-GetCardTeam	;IDA: sub_FAF50. 94 only. a0 = HmShots, or AwShots when word_FFD4F6 is set (the card's team)
+GetCardTeam	;IDA: sub_FAF50. 94 only. a0 = HmShots, or AwShots when cardvis is set (the card's team)
 	movea.l	#HmShots,a0
-	tst.w	(word_FFD4F6).w
+	tst.w	(cardvis).w
 	beq.w	.x
 	movea.l	#AwShots,a0
 .x	;IDA: locret_FAF64
@@ -2375,18 +2375,18 @@ TrimSpaces	;IDA: sub_FAF66. 94 only. Trim the trailing spaces of String a2 and p
 	andi.w	#$FE,(a2)
 	movem.l	(sp)+,a3
 	rts
-GetCardPlayer	;IDA: sub_FAF8C. 94 only. word_FFD52E = the roster index of card word_FFD4F4 from the card's team list ($FFD4FA home, $FFD514 away)
+GetCardPlayer	;IDA: sub_FAF8C. 94 only. cardplayer = the roster index of card cardindex from the card's team list ($FFD4FA home, $FFD514 away)
 	movem.l	d1/a0,-(sp)
 	movea.l	#$FFFFD4FA,a0
-	tst.w	(word_FFD4F6).w
+	tst.w	(cardvis).w
 	beq.w	.0
 	movea.l	#$FFFFD514,a0
 .0	;IDA: loc_FAFA4
-	move.w	(word_FFD4F4).w,d1
+	move.w	(cardindex).w,d1
 	subq.w	#1,d1
 	move.b	0(a0,d1.w),d0
 	ext.w	d0
-	move.w	d0,(word_FFD52E).w
+	move.w	d0,(cardplayer).w
 	movem.l	(sp)+,d1/a0
 	rts
 BuildCardPlayerLists	;IDA: sub_FAFBA. 94 only. Build the player card order of both teams: home at $FFD4FA, away at $FFD514 (BuildCardPlayerList)
@@ -2447,7 +2447,7 @@ NameEntryScreen	;IDA: loc_FB018. IDA label. "NAME ENTRY" screen for the user rec
 	movea.l	#framermap+8,a2
 	jsr	(DecompressGraphicsWithCallback).l
 	dc.l	$91234567,$89ABCDEF	;remap table (IDA: code)
-	move.w	d4,(word_FFD530).w
+	move.w	d4,(nameframechars).w
 	movea.l	#framermap+8,a2
 	jsr	(DecompressGraphicsWithCallback).l
 	dc.l	$91234560,$89ABCDEF	;remap table (IDA: code)
@@ -2473,19 +2473,19 @@ NameEntryScreen	;IDA: loc_FB018. IDA label. "NAME ENTRY" screen for the user rec
 	moveq	#$1C,d3
 	moveq	#$D,d5
 	jsr	(dobitmap).l
-	move.w	d4,(word_FFD430).w
+	move.w	d4,(homepicchars).w
 	addi.w	#$24,d4
-	move.w	d4,(word_FFD436).w
+	move.w	d4,(logobox1chars).w
 	movea.l	#LogoBoxMap+8,a2
 	jsr	(DoDMA_clearCallbackPointer).l
-	move.w	d4,(word_FFB010).w
+	move.w	d4,(BigFontChars).w
 	movea.l	#BigFontMap+8,a2
 	jsr	(DecompressGraphicsWithCallback).l
 	dc.l	$71234567,$89ABCDEF	;remap table
 	jsr	(printz).l
 	String	$BF,$1F,6
 	move.w	(HomeTeam).w,d0
-	tst.w	(word_FFD4EE).w
+	tst.w	(nameentryvis).w
 	beq.w	.0
 	move.w	(VisTeam).w,d0
 .0
@@ -2506,7 +2506,7 @@ NameEntryScreen	;IDA: loc_FB018. IDA label. "NAME ENTRY" screen for the user rec
 	jsr	(printz).l
 	String	$8F,$1C,8
 	move.w	(HomeTeam).w,d3
-	tst.w	(word_FFD4EE).w
+	tst.w	(nameentryvis).w
 	beq.w	.1
 	move.w	(VisTeam).w,d3
 .1
@@ -2526,7 +2526,7 @@ NameEntryScreen	;IDA: loc_FB018. IDA label. "NAME ENTRY" screen for the user rec
 	clr.w	d0
 	clr.w	d1
 	move.w	#4,d5
-	move.w	(word_FFD430).w,d4
+	move.w	(homepicchars).w,d4
 	jsr	(dobitmap).l
 	jsr	(printz).l
 	String	$BF,2,0
@@ -2536,11 +2536,11 @@ NameEntryScreen	;IDA: loc_FB018. IDA label. "NAME ENTRY" screen for the user rec
 	jsr	(printbigz).l
 	String	$BF,$A,2,'NAME  ENTRY'
 	bsr.w	ReadNameLog
-	clr.w	(word_FFD4EC).w
-	move.w	#1,(word_FFD4EA).w
+	clr.w	(namelogarrows).w
+	move.w	#1,(namelogsel).w
 	clr.w	d0
 	bsr.w	SkipOtherUserName
-	movea.l	#word_FFD4DA,a1
+	movea.l	#nameentrybuf,a1
 	bsr.w	GetLogName
 	bsr.w	PrintNameLog
 	jsr	(printz).l
@@ -2560,7 +2560,7 @@ NameEntryScreen	;IDA: loc_FB018. IDA label. "NAME ENTRY" screen for the user rec
 	move.w	(sp)+,(printx).w
 	addq.w	#1,(printx).w
 	bsr.w	PrintCurLetter
-	move.w	#1,(word_FFD6C4).w
+	move.w	#1,(cursoron).w
 	bsr.w	NameLetterGrid
 	clr.w	d0
 	bra.w	.11
@@ -2568,9 +2568,9 @@ NameEntryScreen	;IDA: loc_FB018. IDA label. "NAME ENTRY" screen for the user rec
 	bsr.w	GetNameLength
 	jsr	(printz).l
 	String	$BF,5,$12
-	tst.w	(word_FFD6C4).w
+	tst.w	(cursoron).w
 	beq.w	.3
-	movea.l	#word_FFD4DA,a1
+	movea.l	#nameentrybuf,a1
 	bsr.w	PrintNameField
 	bsr.w	PrintNamePrompt
 .3	;IDA: loc_FB2BC
@@ -2583,7 +2583,7 @@ NameEntryScreen	;IDA: loc_FB018. IDA label. "NAME ENTRY" screen for the user rec
 	movem.w	d1,-(sp)
 	move.w	(cont1team).w,d1
 	subq.w	#1,d1
-	cmp.w	(word_FFD4EE).w,d1
+	cmp.w	(nameentryvis).w,d1
 	movem.w	(sp)+,d1
 	beq.w	.4
 	jsr	(ReadJoy2).l
@@ -2597,7 +2597,7 @@ NameEntryScreen	;IDA: loc_FB018. IDA label. "NAME ENTRY" screen for the user rec
 .5	;IDA: loc_FB2F8
 	btst	#7,d1
 	bne.w	.14
-	tst.w	(word_FFD6C4).w
+	tst.w	(cursoron).w
 	bne.w	.6
 	move.w	#1,d0
 	btst	#1,d1
@@ -2633,21 +2633,21 @@ NameEntryScreen	;IDA: loc_FB018. IDA label. "NAME ENTRY" screen for the user rec
 	bsr.w	NameLetterGrid
 	bra.w	.loop
 .7	;IDA: loc_FB37C
-	add.w	d0,(word_FFD4EA).w
+	add.w	d0,(namelogsel).w
 .loop4	;IDA: loc_FB380
-	cmpi.w	#7,(word_FFD4EA).w
+	cmpi.w	#7,(namelogsel).w
 	ble.w	.8
-	move.w	#1,(word_FFD4EA).w
+	move.w	#1,(namelogsel).w
 .8	;IDA: loc_FB390
-	tst.w	(word_FFD4EA).w
+	tst.w	(namelogsel).w
 	bne.w	.9
-	move.w	#7,(word_FFD4EA).w
+	move.w	#7,(namelogsel).w
 .9	;IDA: loc_FB39E
 	bsr.w	SkipOtherUserName
 	beq.s	.loop4
-	movea.l	#word_FFD4DA,a1
+	movea.l	#nameentrybuf,a1
 	bsr.w	GetLogName
-	tst.w	(word_FFD6C4).w
+	tst.w	(cursoron).w
 	bne.w	.10
 	jsr	(NameEntryHelp).l
 	bra.w	.loop
@@ -2677,7 +2677,7 @@ NameEntryScreen	;IDA: loc_FB018. IDA label. "NAME ENTRY" screen for the user rec
 	bhi.w	.loop
 	move.w	d0,d4
 	bsr.w	PrintNameCursor
-	movea.l	#word_FFD4DA,a0
+	movea.l	#nameentrybuf,a0
 	clr.w	d0
 	cmpi.b	#$2D,0(a0,d4.w)
 	beq.w	.12
@@ -2704,7 +2704,7 @@ NameEntryScreen	;IDA: loc_FB018. IDA label. "NAME ENTRY" screen for the user rec
 	bsr.w	LetterGridPos
 	move.w	(printx).w,-(sp)
 	move.w	(printy).w,-(sp)
-	tst.w	(word_FFD6C4).w
+	tst.w	(cursoron).w
 	beq.w	.13
 	jsr	(NameEntryFramer).l
 .13	;IDA: loc_FB48E
@@ -2713,7 +2713,7 @@ NameEntryScreen	;IDA: loc_FB018. IDA label. "NAME ENTRY" screen for the user rec
 	move.w	(sp)+,(printx).w
 	addq.w	#1,(printx).w
 	bsr.w	PrintCurLetter
-	movea.l	#word_FFD4DA,a0
+	movea.l	#nameentrybuf,a0
 	movea.l	#LetterGrid,a1
 	move.b	0(a1,d5.w),d0
 	move.b	d0,0(a0,d4.w)
@@ -2730,7 +2730,7 @@ NameLetterGrid	;IDA: sub_FB4C4. 94 only. Name entry: the letter grid ("D-Pad to 
 	move.w	#7,d1
 	move.w	#$7FF,d2
 	jsr	(eraser).l
-	bchg	#0,(word_FFD6C4+1).w
+	bchg	#0,(cursoron+1).w
 	bne.w	.1
 	jsr	(printz).l
 	String	$BF,$19,$11
@@ -2779,7 +2779,7 @@ NameLetterGrid	;IDA: sub_FB4C4. 94 only. Name entry: the letter grid ("D-Pad to 
 .x2	;IDA: locret_FB5EE
 	rts
 .1	;IDA: loc_FB5F0
-	movea.l	#word_FFD4DA,a1
+	movea.l	#nameentrybuf,a1
 .2	;IDA: loc_FB5F6
 	bsr.w	GetLogName
 	move.w	#0,(printx).w
@@ -2821,9 +2821,9 @@ NameEntryHelp	;IDA: sub_FB634. 94 only. Name entry help text ("D-Pad up/down to 
 	String	'Press B to edit.    '
 	movem.l	(sp)+,d0-d7/a0-a6
 	rts
-PrintNamePrompt	;IDA: sub_FB6F0. 94 only. Name entry: "Enter new name:" for an empty name log slot word_FFD4EA, else "Select or replace:"
+PrintNamePrompt	;IDA: sub_FB6F0. 94 only. Name entry: "Enter new name:" for an empty name log slot namelogsel, else "Select or replace:"
 	movem.l	d0-d7/a0-a6,-(sp)
-	move.w	(word_FFD4EA).w,d0
+	move.w	(namelogsel).w,d0
 	mulu.w	#$C,d0
 	movea.l	#$FFFFD45A,a0
 	movea.l	#EnterNameTxt,a1
@@ -2836,7 +2836,7 @@ PrintNamePrompt	;IDA: sub_FB6F0. 94 only. Name entry: "Enter new name:" for an e
 	rts
 SyncLetterCursor	;IDA: sub_FB722. 94 only. Name entry: the letter grid cursor d5 = the grid index of the current letter (FindLetter), 0 when it is not in the grid
 	movem.l	d0-d4/a0-a6,-(sp)
-	move.b	(word_FFD4DA).w,d0
+	move.b	(nameentrybuf).w,d0
 	bsr.w	FindLetter
 	cmp.w	#$1E,d0
 	blt.w	.0
@@ -2845,7 +2845,7 @@ SyncLetterCursor	;IDA: sub_FB722. 94 only. Name entry: the letter grid cursor d5
 .0	;IDA: loc_FB73C
 	move.w	d0,d5
 	movea.l	#LetterGrid,a0
-	move.b	0(a0,d5.w),(word_FFD4DA).w
+	move.b	0(a0,d5.w),(nameentrybuf).w
 .x	;IDA: loc_FB74A
 	movem.l	(sp)+,d0-d4/a0-a6
 	rts
@@ -2868,14 +2868,14 @@ PrintNameCursor	;IDA: sub_FB77A. 94 only. Name entry: the " < " cursor
 	jsr	(printz).l
 	String	$BF,4,$13
 	add.w	d4,(printx).w
-	tst.w	(word_FFD6C4).w
+	tst.w	(cursoron).w
 	beq.w	rtsNameCursor
 	jsr	(printz).l
 	String	' < '
 rtsNameCursor	;IDA: locret_FB79E. IDA label. The shared rts of PrintNameCursor
 	rts
-PrintCurLetter	;IDA: sub_FB7A0. 94 only. Name entry: print grid letter d5 (with the cursor on, word_FFD6C4)
-	tst.w	(word_FFD6C4).w
+PrintCurLetter	;IDA: sub_FB7A0. 94 only. Name entry: print grid letter d5 (with the cursor on, cursoron)
+	tst.w	(cursoron).w
 	beq.s	rtsNameCursor
 	movea.l	#ThreeStars,a1
 	move.w	#4,(a1)
@@ -2939,12 +2939,12 @@ SelectNameTxt	dc.b	0	;IDA: unk_FB80A. PrintNamePrompt table
 	dc.b	0
 PrintNameLog	;IDA: sub_FB822. 94 only. Name entry: the "Name Log" list (PrintNameField, GetLogName)
 	movem.l	d0-d7/a0-a6,-(sp)
-	move.w	(word_FFD4E8).w,-(sp)
-	move.w	(word_FFD4EA).w,-(sp)
+	move.w	(namelength).w,-(sp)
+	move.w	(namelogsel).w,-(sp)
 	jsr	(printz).l
 	String	$BF,5,8
 	move.w	#6,d7	;IDA hid this
-	move.w	#1,(word_FFD4EA).w	;IDA hid this
+	move.w	#1,(namelogsel).w	;IDA hid this
 	movea.l	#$FFFFBF20,a1
 .loop	;IDA: loc_FB84A
 	bsr.w	GetLogName
@@ -2952,16 +2952,16 @@ PrintNameLog	;IDA: sub_FB822. 94 only. Name entry: the "Name Log" list (PrintNam
 	bsr.w	PrintNameField
 	move.w	(sp)+,(printx).w
 	addq.w	#1,(printy).w
-	addq.w	#1,(word_FFD4EA).w
+	addq.w	#1,(namelogsel).w
 	dbf	d7,.loop
-	move.w	(sp)+,(word_FFD4EA).w
-	move.w	(sp)+,(word_FFD4E8).w
+	move.w	(sp)+,(namelogsel).w
+	move.w	(sp)+,(namelength).w
 	movem.l	(sp)+,d0-d7/a0-a6
 	rts
-MoveLogArrows	;IDA: sub_FB874. 94 only. Name entry: when the name log selection word_FFD4EA changed, erase the old ] [ arrows and print them at the new row (PrintLogArrows)
+MoveLogArrows	;IDA: sub_FB874. 94 only. Name entry: when the name log selection namelogsel changed, erase the old ] [ arrows and print them at the new row (PrintLogArrows)
 	movem.l	d0-d7/a0-a6,-(sp)
-	move.w	(word_FFD4EA).w,d0
-	cmp.w	(word_FFD4EC).w,d0
+	move.w	(namelogsel).w,d0
+	cmp.w	(namelogarrows).w,d0
 	beq.w	.x
 	movea.l	#LogArrowsClrTxt,a1
 	bsr.w	PrintLogArrows
@@ -2970,12 +2970,12 @@ MoveLogArrows	;IDA: sub_FB874. 94 only. Name entry: when the name log selection 
 .x	;IDA: loc_FB898
 	movem.l	(sp)+,d0-d7/a0-a6
 	rts
-PrintLogArrows	;IDA: sub_FB89E. 94 only. Name entry: print the two arrow Strings at a1 on name log row word_FFD4EC, then word_FFD4EC = word_FFD4EA
-	tst.w	(word_FFD4EC).w
+PrintLogArrows	;IDA: sub_FB89E. 94 only. Name entry: print the two arrow Strings at a1 on name log row namelogarrows, then namelogarrows = namelogsel
+	tst.w	(namelogarrows).w
 	beq.w	.0
 	jsr	(printz).l
 	String	$BF,3,8
-	move.w	(word_FFD4EC).w,d0	;IDA hid this
+	move.w	(namelogarrows).w,d0	;IDA hid this
 	subq.w	#1,d0
 	add.w	d0,(printy).w
 	move.l	a1,-(sp)
@@ -2985,7 +2985,7 @@ PrintLogArrows	;IDA: sub_FB89E. 94 only. Name entry: print the two arrow Strings
 	move.w	#$12,(printx).w
 	jsr	(print).l
 .0	;IDA: loc_FB8D4
-	move.w	(word_FFD4EA).w,(word_FFD4EC).w
+	move.w	(namelogsel).w,(namelogarrows).w
 	rts
 LogArrowsTxt	dc.b	0	;IDA: unk_FB8DC. MoveLogArrows data
 	dc.b	4
@@ -2995,30 +2995,30 @@ LogArrowsTxt	dc.b	0	;IDA: unk_FB8DC. MoveLogArrows data
 	dc.b	0
 LogArrowsClrTxt	dc.b	0	;IDA: unk_FB8E4. MoveLogArrows data
 	dc.b	4,$20,0,0,4,$20,0
-GetNameLength	;IDA: sub_FB8EC. 94 only. word_FFD4E8 = length of the name being entered (up to '-' or 0, at most 12)
+GetNameLength	;IDA: sub_FB8EC. 94 only. namelength = length of the name being entered (up to '-' or 0, at most 12)
 	movem.l	d0-d7/a0-a6,-(sp)
 	move.w	#$B,d3
-	movea.l	#word_FFD4DA,a0
-	clr.w	(word_FFD4E8).w
+	movea.l	#nameentrybuf,a0
+	clr.w	(namelength).w
 .loop	;IDA: loc_FB8FE
 	cmpi.b	#$2D,(a0)
 	beq.w	.x
 	tst.b	(a0)+
 	beq.w	.x
-	addq.w	#1,(word_FFD4E8).w
+	addq.w	#1,(namelength).w
 	dbf	d3,.loop
 .x	;IDA: loc_FB914
 	movem.l	(sp)+,d0-d7/a0-a6
 	rts
-PrintNameField	;IDA: sub_FB91A. 94 only. Name entry: print the 12 character name field from a1, '-' past the length word_FFD4E8
+PrintNameField	;IDA: sub_FB91A. 94 only. Name entry: print the 12 character name field from a1, '-' past the length namelength
 	movem.l	d0-d7/a0-a6,-(sp)
 	movea.l	#ThreeStars,a0
-	move.w	(word_FFD4E8).w,d0
+	move.w	(namelength).w,d0
 	move.w	#0,d3
 	move.w	#$E,(a0)+
 .loop	;IDA: loc_FB930
 	move.b	0(a1,d3.w),d1
-	cmp.w	(word_FFD4E8).w,d3
+	cmp.w	(namelength).w,d3
 	blt.w	.0
 	move.b	#$2D,d1
 .0	;IDA: loc_FB940
@@ -3062,18 +3062,18 @@ LetterGrid	dc.b	$41	;IDA: unk_FB95C. Name entry data
 	dc.b	$20
 	dc.b	$2D	;-
 	dc.b	0
-NameEntryFramer	;IDA: sub_FB97C. 94 only. Framer with the name entry frame tiles (word_FFD530 as framercset)
+NameEntryFramer	;IDA: sub_FB97C. 94 only. Framer with the name entry frame tiles (nameframechars as framercset)
 	move.w	(framercset).w,-(sp)
-	move.w	(word_FFD530).w,(framercset).w
+	move.w	(nameframechars).w,(framercset).w
 	jsr	(Framer).l
 	move.w	(sp)+,(framercset).w
 	rts
-GetLogName	;IDA: sub_FB992. 94 only. Copy name log entry word_FFD4EA to a1 ('-' for empty), word_FFD4E8 = its length
+GetLogName	;IDA: sub_FB992. 94 only. Copy name log entry namelogsel to a1 ('-' for empty), namelength = its length
 	movem.l	d0-d7/a0-a6,-(sp)
 	movea.l	#$FFFFD45A,a0
-	move.w	(word_FFD4EA).w,d2
+	move.w	(namelogsel).w,d2
 	mulu.w	#$C,d2
-	move.w	#0,(word_FFD4E8).w
+	move.w	#0,(namelength).w
 	move.w	#$B,d3
 .loop	;IDA: loc_FB9AE
 	move.b	0(a0,d2.w),d0
@@ -3081,10 +3081,10 @@ GetLogName	;IDA: sub_FB992. 94 only. Copy name log entry word_FFD4EA to a1 ('-' 
 	bra.w	.1
 .0	;IDA: loc_FB9BA
 	move.b	#$2D,d0
-	subq.w	#1,(word_FFD4E8).w
+	subq.w	#1,(namelength).w
 .1	;IDA: loc_FB9C2
 	move.b	d0,(a1)+
-	addq.w	#1,(word_FFD4E8).w
+	addq.w	#1,(namelength).w
 	addq.w	#1,d2
 	dbf	d3,.loop
 	movem.l	(sp)+,d0-d7/a0-a6
@@ -3092,10 +3092,10 @@ GetLogName	;IDA: sub_FB992. 94 only. Copy name log entry word_FFD4EA to a1 ('-' 
 StoreUserName	;IDA: sub_FB9D4. 94 only. Name entry: store the name in save RAM (WriteNameRecord, MakeSRAMChecksum)
 	movem.l	d0-d7/a0-a6,-(sp)
 	movea.l	#$FFFFD45A,a0
-	move.w	(word_FFD4EA).w,d0
+	move.w	(namelogsel).w,d0
 	mulu.w	#$C,d0
 	adda.w	d0,a0
-	movea.l	#word_FFD4DA,a1
+	movea.l	#nameentrybuf,a1
 	move.w	#$B,d4
 .loop	;IDA: loc_FB9F2
 	cmpi.b	#$2D,(a1)
@@ -3109,10 +3109,10 @@ StoreUserName	;IDA: sub_FB9D4. 94 only. Name entry: store the name in save RAM (
 	bra.w	.3
 .1	;IDA: loc_FBA0E
 	movea.l	#$FFFFD45A,a0
-	move.w	(word_FFD4EA).w,d0
+	move.w	(namelogsel).w,d0
 	mulu.w	#$C,d0
 	adda.w	d0,a0
-	movea.l	#word_FFD4DA,a1
+	movea.l	#nameentrybuf,a1
 	move.w	#$B,d4
 .loop2	;IDA: loc_FBA28
 	move.b	(a1)+,d1
@@ -3126,16 +3126,16 @@ StoreUserName	;IDA: sub_FB9D4. 94 only. Name entry: store the name in save RAM (
 	jsr	(WriteNameRecord).l
 	jsr	(MakeSRAMChecksum).l
 .3	;IDA: loc_FBA4C
-	movea.l	#word_FFD042,a5
-	tst.w	(word_FFD4EE).w
+	movea.l	#homeuser,a5
+	tst.w	(nameentryvis).w
 	beq.w	.4
-	movea.l	#word_FFD044,a5
+	movea.l	#awayuser,a5
 .4	;IDA: loc_FBA60
-	tst.b	(word_FFD4DA).w
+	tst.b	(nameentrybuf).w
 	bne.w	.5
-	clr.w	(word_FFD4EA).w
+	clr.w	(namelogsel).w
 .5	;IDA: loc_FBA6C
-	move.w	(word_FFD4EA).w,(a5)
+	move.w	(namelogsel).w,(a5)
 	movem.l	(sp)+,d0-d7/a0-a6
 	rts
 WriteNameRecord	;IDA: sub_FBA76. 94 only. Write the name record (ReadSRAM / WriteSRAM)
@@ -3144,7 +3144,7 @@ WriteNameRecord	;IDA: sub_FBA76. 94 only. Write the name record (ReadSRAM / Writ
 	moveq	#0,d0
 	moveq	#4,d1
 	movea.l	#ThreeStars,a0
-	move.w	(word_FFD4EA).w,d6
+	move.w	(namelogsel).w,d6
 .loop	;IDA: loc_FBA8C
 	clr.w	d5
 	jsr	(ReadSRAM).l
@@ -3168,7 +3168,7 @@ WriteNameRecord	;IDA: sub_FBA76. 94 only. Write the name record (ReadSRAM / Writ
 	move.l	#$B60,d0
 	moveq	#$10,d1
 	movea.l	#ThreeStars,a0
-	move.w	(word_FFD4EA).w,d6
+	move.w	(namelogsel).w,d6
 .loop2	;IDA: loc_FBAD8
 	clr.w	d5
 	jsr	(ReadSRAM).l
@@ -3209,7 +3209,7 @@ WriteNameRecord	;IDA: sub_FBA76. 94 only. Write the name record (ReadSRAM / Writ
 	addi.l	#$10,d0
 	dbf	d7,.loop2
 	move.l	#$D20,d0
-	move.w	(word_FFD4EA).w,d3
+	move.w	(namelogsel).w,d3
 	asl.w	#4,d3
 	ext.l	d3
 	add.l	d3,d0
@@ -3229,12 +3229,12 @@ WriteNameRecord	;IDA: sub_FBA76. 94 only. Write the name record (ReadSRAM / Writ
 UserNameEntry	;IDA: sub_FBB88. 94 only. With user records on (OptUserRec 0): the name entry (NameEntryScreen) for the pads in use. Called from PeriodOver (hockey94_06)
 	tst.w	(OptUserRec).w
 	bne.w	.x
-	clr.w	(word_FFD042).w
-	clr.w	(word_FFD044).w
+	clr.w	(homeuser).w
+	clr.w	(awayuser).w
 	tst.w	(cont1team).w
 	beq.w	.0
-	move.w	(cont1team).w,(word_FFD4EE).w
-	subq.w	#1,(word_FFD4EE).w
+	move.w	(cont1team).w,(nameentryvis).w
+	subq.w	#1,(nameentryvis).w
 	jsr	(NameEntryScreen).l
 .0	;IDA: loc_FBBB0
 	tst.w	(cont2team).w
@@ -3244,26 +3244,26 @@ UserNameEntry	;IDA: sub_FBB88. 94 only. With user records on (OptUserRec 0): the
 	cmp.w	(cont2team).w,d0
 	movem.w	(sp)+,d0
 	beq.w	.x
-	move.w	(cont2team).w,(word_FFD4EE).w
-	subq.w	#1,(word_FFD4EE).w
+	move.w	(cont2team).w,(nameentryvis).w
+	subq.w	#1,(nameentryvis).w
 	jsr	(NameEntryScreen).l
 .x	;IDA: locret_FBBDC
 	rts
-SkipOtherUserName	;IDA: sub_FBBDE. 94 only. Name entry: step the selection word_FFD4EA past the name the other pad picked (word_FFD042 / word_FFD044), in the direction on the stack
+SkipOtherUserName	;IDA: sub_FBBDE. 94 only. Name entry: step the selection namelogsel past the name the other pad picked (homeuser / awayuser), in the direction on the stack
 	movem.w	d0,-(sp)
-	move.w	(word_FFD044).w,d0
-	tst.w	(word_FFD4EE).w
+	move.w	(awayuser).w,d0
+	tst.w	(nameentryvis).w
 	beq.w	.0
-	move.w	(word_FFD042).w,d0
+	move.w	(homeuser).w,d0
 .0	;IDA: loc_FBBF2
-	cmp.w	(word_FFD4EA).w,d0
+	cmp.w	(namelogsel).w,d0
 	bne.w	.x
 	move.w	#1,d0
 	tst.w	(sp)
 	bpl.w	.1
 	move.w	#$FFFF,d0
 .1	;IDA: loc_FBC08
-	add.w	d0,(word_FFD4EA).w
+	add.w	d0,(namelogsel).w
 	clr.w	d0
 .x	;IDA: loc_FBC0E
 	movem.w	(sp)+,d0
@@ -3309,10 +3309,10 @@ RecordHoldersScreen	;no IDA label (was sub_FBC14). "Record Holders" menu item (h
 	jsr	(printz2).l	;IDA hid this
 	String	$F8,6,3,5,8,$F9,1,'Name',$F9,0
 	bsr.w	ReadNameLog	;IDA hid this
-	clr.w	(word_FFBF12).w
-	bclr	#6,(word_FFC2F8).w
+	clr.w	(TempWord1).w
+	bclr	#6,(sflags6).w
 	bsr.w	ReadTeamRecords
-	bset	#6,(word_FFC2F8).w
+	bset	#6,(sflags6).w
 	bsr.w	ReadTeamRecords
 	bsr.w	CalcWinPercents
 	bsr.w	PrintRecordTitles
@@ -3325,7 +3325,7 @@ RecordHoldersScreen	;no IDA label (was sub_FBC14). "Record Holders" menu item (h
 	beq.w	.1
 	jmp	ExitAttributeScreen2
 .1	;IDA: loc_FBD10
-	tst.w	(word_FFBF12).w
+	tst.w	(TempWord1).w
 .2	;IDA: loc_FBD14
 	bne.w	.5
 	btst	#6,d3
@@ -3341,35 +3341,35 @@ RecordHoldersScreen	;no IDA label (was sub_FBC14). "Record Holders" menu item (h
 .5	;IDA: loc_FBD36
 	btst	#3,d1
 	beq.w	.6
-	cmpi.w	#2,(word_FFBF12).w
+	cmpi.w	#2,(TempWord1).w
 	beq.s	.loop
 	bsr.w	ClearRecordArea
-	addq.w	#1,(word_FFBF12).w
+	addq.w	#1,(TempWord1).w
 	bsr.w	PrintRecordTitles
 	bsr.w	PrintRecordPage
 	bra.s	.loop
 .6	;IDA: loc_FBD58
 	btst	#2,d1
 	beq.s	.loop
-	tst.w	(word_FFBF12).w
+	tst.w	(TempWord1).w
 	beq.s	.loop
 	bsr.w	ClearRecordArea
-	subq.w	#1,(word_FFBF12).w
+	subq.w	#1,(TempWord1).w
 	bsr.w	PrintRecordTitles
 	bsr.w	PrintRecordPage
 	bra.w	.loop
 	dc.b	$4E	;N
 	dc.b	$75	;u
-PrintRecordPage	;IDA: sub_FBD7A. 94 only. Record Holders: print page word_FFBF12 (0: PrintWinRecords, else PrintPlayerRecords)
-	tst.w	(word_FFBF12).w
+PrintRecordPage	;IDA: sub_FBD7A. 94 only. Record Holders: print page TempWord1 (0: PrintWinRecords, else PrintPlayerRecords)
+	tst.w	(TempWord1).w
 	beq.w	PrintWinRecords
 	bra.w	PrintPlayerRecords
 PrintRecordTitles	;IDA: sub_FBD86. 94 only. Record Holders: the record titles (WinRecTitles, GoalRecTitles, SaveRecTitles)
 	movea.l	#WinRecTitles,a1
-	tst.w	(word_FFBF12).w
+	tst.w	(TempWord1).w
 	beq.w	.0
 	movea.l	#SaveRecTitles,a1
-	cmpi.w	#2,(word_FFBF12).w
+	cmpi.w	#2,(TempWord1).w
 	beq.w	.0
 	movea.l	#GoalRecTitles,a1
 .0	;IDA: loc_FBDAA
@@ -3554,15 +3554,15 @@ PrintWinRecords	;IDA: sub_FBEA4. 94 only. Record Holders: the rows (PrintRecordN
 	move.b	$C(a5,d0.w),d4
 	lsl.w	#8,d4
 	move.b	$D(a5,d0.w),d4
-	move.w	d4,(word_FFBF4A).w
+	move.w	d4,(recties).w
 	move.b	8(a5,d0.w),d4
 	lsl.w	#8,d4
 	move.b	9(a5,d0.w),d4
-	move.w	d4,(word_FFBF4E).w
-	add.w	(word_FFBF4A).w,d4
+	move.w	d4,(recwins).w
+	add.w	(recties).w,d4
 	sub.w	(sp),d4
 	neg.w	d4
-	move.w	d4,(word_FFBF4C).w
+	move.w	d4,(reclosses).w
 	move.w	(sp)+,d4
 	tst.w	d4
 	beq.w	.0
@@ -3574,17 +3574,17 @@ PrintWinRecords	;IDA: sub_FBEA4. 94 only. Record Holders: the rows (PrintRecordN
 	jsr	(PushNumberWidth).l
 	jsr	(print2).l
 	move.w	#$1A,(printx).w
-	move.w	(word_FFBF4E).w,d0
+	move.w	(recwins).w,d0
 	move.w	#4,d1
 	jsr	(PushNumberWidth).l
 	jsr	(print2).l
 	move.w	#$1F,(printx).w
-	move.w	(word_FFBF4C).w,d0
+	move.w	(reclosses).w,d0
 	move.w	#4,d1
 	jsr	(PushNumberWidth).l
 	jsr	(print2).l
 	move.w	#$24,(printx).w
-	move.w	(word_FFBF4A).w,d0
+	move.w	(recties).w,d0
 	move.w	#3,d1
 	jsr	(PushNumberWidth).l
 	move.w	(sp)+,d0
@@ -3618,7 +3618,7 @@ PrintPlayerRecords	;IDA: loc_FBFDE. IDA label. Record Holders: the rows of the o
 	String	$F8,4,2,2,$A,$F9,0
 	move.w	#6,d7	;IDA hid this
 	movea.l	#$FFFFD532,a0	;IDA hid this
-	cmpi.w	#1,(word_FFBF12).w
+	cmpi.w	#1,(TempWord1).w
 	beq.w	.0
 	movea.l	#$FFFFD53A,a0
 .0	;IDA: loc_FC00C
@@ -3629,7 +3629,7 @@ PrintPlayerRecords	;IDA: loc_FBFDE. IDA label. Record Holders: the rows of the o
 	ext.w	d0
 	asl.w	#4,d0
 	move.b	0(a2,d0.w),d5
-	cmpi.w	#1,(word_FFBF12).w
+	cmpi.w	#1,(TempWord1).w
 	beq.w	.1
 	move.b	4(a2,d0.w),d5
 .1	;IDA: loc_FC030
@@ -3638,7 +3638,7 @@ PrintPlayerRecords	;IDA: loc_FBFDE. IDA label. Record Holders: the rows of the o
 	bsr.w	PrintRecordName
 	move.w	#$12,(printx).w
 	move.w	d0,-(sp)
-	cmpi.w	#1,(word_FFBF12).w
+	cmpi.w	#1,(TempWord1).w
 	bne.w	.2
 	move.b	0(a2,d0.w),d0
 	bra.w	.3
@@ -3655,7 +3655,7 @@ PrintPlayerRecords	;IDA: loc_FBFDE. IDA label. Record Holders: the rows of the o
 	movea.l	#mesarea,a3
 	bsr.w	StartText
 	move.w	d0,-(sp)
-	cmpi.w	#1,(word_FFBF12).w
+	cmpi.w	#1,(TempWord1).w
 	bne.w	.4
 	move.b	1(a2,d0.w),d0
 	bra.w	.5
@@ -3670,7 +3670,7 @@ PrintPlayerRecords	;IDA: loc_FBFDE. IDA label. Record Holders: the rows of the o
 	jsr	(appstring).l
 	movea.l	#mesarea,a1
 	move.w	(sp)+,d0
-	cmpi.w	#1,(word_FFBF12).w
+	cmpi.w	#1,(TempWord1).w
 	bne.w	.6
 	move.b	2(a2,d0.w),d0
 	bra.w	.7
@@ -3720,7 +3720,7 @@ PrintRecordName	;IDA: sub_FC136. 94 only. Record Holders: print a value (AppendU
 	move.b	-1(a0),d2
 	ext.w	d2
 	movea.l	#mesarea,a1
-	bclr	#7,(word_FFC2F8).w
+	bclr	#7,(sflags6).w
 	bsr.w	AppendUserName
 	jmp	print2
 CalcWinPercents	;IDA: sub_FC184. 94 only. Record Holders: for the 8 user record blocks at ThreeStars, the win % ($FFD54A), games ($FFD562) and ties ($FFD552), then sort the rows ($FFD542)
@@ -3814,7 +3814,7 @@ ReadTeamRecords	;IDA: sub_FC282. 94 only. Record Holders: read the records (Read
 	movea.l	#ThreeStars,a0
 	jsr	(ReadSRAM).l
 	movea.l	#$FFFFD532,a1
-	btst	#6,(word_FFC2F8).w
+	btst	#6,(sflags6).w
 	beq.w	.0
 	movea.l	#$FFFFD53A,a1
 .0	;IDA: loc_FC2B4
@@ -3840,7 +3840,7 @@ ReadTeamRecords	;IDA: sub_FC282. 94 only. Record Holders: read the records (Read
 	asl.w	#4,d2
 	move.b	0(a0,d1.w),d0
 	move.b	0(a0,d2.w),d3
-	btst	#6,(word_FFC2F8).w
+	btst	#6,(sflags6).w
 	beq.w	.1
 	move.b	4(a0,d1.w),d0
 	move.b	4(a0,d2.w),d3
@@ -3904,7 +3904,7 @@ PlayoffRoundScreen	;IDA: loc_FC320. IDA label. Playoff round screen: the two tea
 	adda.w	4(a1),a1
 	jsr	(print).l
 	move.w	#$15,(printx).w
-	move.w	(word_FFD574).w,d0
+	move.w	(homeshootgoals).w,d0
 	move.w	#3,d1
 	jsr	(PushNumberWidth).l
 	jsr	(print).l
@@ -3915,13 +3915,13 @@ PlayoffRoundScreen	;IDA: loc_FC320. IDA label. Playoff round screen: the two tea
 	adda.w	4(a1),a1	;IDA hid this
 	jsr	(print).l	;IDA hid this
 	move.w	#$15,(printx).w	;IDA hid this
-	move.w	(word_FFD576).w,d0
+	move.w	(awayshootgoals).w,d0
 	move.w	#3,d1	;IDA hid this
 	jsr	(PushNumberWidth).l	;IDA hid this
 	jsr	(print).l	;IDA hid this
 	jsr	(printz).l	;IDA hid this
 	String	$BF,4,$C,'Round '
-	move.w	(word_FFD578).w,d0
+	move.w	(playoffround).w,d0
 	move.w	#2,d1
 	jsr	(PushNumberWidth).l
 	jsr	(print).l
@@ -3949,71 +3949,71 @@ ClearShootout	;IDA: sub_FC47C. 94 only. Clear the player structs (SortCords) and
 .loop	;IDA: loc_FC486
 	clr.w	(a0)+
 	dbf	d0,.loop
-	clr.w	(word_FFDED0).w
-	move.w	#1,(word_FFD578).w
-	bclr	#3,(word_FFC2FA).w
-	clr.w	(word_FFD574).w
-	clr.w	(word_FFD576).w
-	clr.w	(word_FFD586).w
-	clr.w	(word_FFD594).w
+	clr.w	(shootoutdelay).w
+	move.w	#1,(playoffround).w
+	bclr	#3,(gmode2).w
+	clr.w	(homeshootgoals).w
+	clr.w	(awayshootgoals).w
+	clr.w	(homeshootnum).w
+	clr.w	(shootoutteam).w
 .0	;IDA: loc_FC4AC
 	bsr.w	InitShooters
-	move.w	#1,(word_FFD594).w
+	move.w	#1,(shootoutteam).w
 	bsr.w	InitShooters
-	clr.w	(word_FFD594).w
+	clr.w	(shootoutteam).w
 	rts
 NextShooter	;IDA: sub_FC4C0. 94 only. Shootout: the next shooter (BA_Team, BA_Goalie_SCnum, StartShootoutPath), or the end (ExitToOpening). Called from logic94_4
-	btst	#3,(word_FFC2FA).w
+	btst	#3,(gmode2).w
 	beq.w	.0
 	jmp	ExitToOpening
 .0	;IDA: loc_FC4D0
 	movem.l	d0-d7/a0-a6,-(sp)
 	bsr.w	StartShootoutPath
-	move.w	(word_FFD594).w,(BA_Team).w
+	move.w	(shootoutteam).w,(BA_Team).w
 	move.w	#$B,(BA_Goalie_SCnum).w
 	movea.l	#$FFFFD57A,a0
-	tst.w	(word_FFD594).w
+	tst.w	(shootoutteam).w
 	beq.w	.1
 	move.w	#5,(BA_Goalie_SCnum).w
 	movea.l	#$FFFFD588,a0
 .1	;IDA: loc_FC4FE
-	move.w	(word_FFD586).w,d0
+	move.w	(homeshootnum).w,d0
 	add.w	d0,d0
 	move.w	0(a0,d0.w),(BA_Skater_Offset).w
-	bclr	#2,(byte_FFB7AC).w
+	bclr	#2,(SortCords+(puckscnum*SCstruct)+pflags).w
 	movem.l	(sp)+,d0-d7/a0-a6
 	rts
 CountShootoutGoals	;IDA: sub_FC516. 94 only. Shootout: count the goals and end it when one team cannot catch up (EndShootout, high ROM). Called from sub_F37C (logic94_4)
 	movem.l	d0-d7/a0-a6,-(sp)
-	btst	#0,(word_FFD594+1).w
+	btst	#0,(shootoutteam+1).w
 	beq.w	.0
-	cmpi.w	#5,(word_FFD578).w
+	cmpi.w	#5,(playoffround).w
 	blt.w	.0
-	move.w	(word_FFD574).w,d0
-	cmp.w	(word_FFD576).w,d0
+	move.w	(homeshootgoals).w,d0
+	cmp.w	(awayshootgoals).w,d0
 	beq.w	.0
-	bset	#3,(word_FFC2FA).w
+	bset	#3,(gmode2).w
 	jsr	(EndShootout).l
 	bra.w	.x
 .0	;IDA: loc_FC54A
-	eori.w	#1,(word_FFD594).w
+	eori.w	#1,(shootoutteam).w
 	bne.w	.x
-	addq.w	#1,(word_FFD586).w
-	cmpi.w	#5,(word_FFD586).w
+	addq.w	#1,(homeshootnum).w
+	cmpi.w	#5,(homeshootnum).w
 	blt.w	.1
-	clr.w	(word_FFD586).w
+	clr.w	(homeshootnum).w
 .1	;IDA: loc_FC566
-	addq.w	#1,(word_FFD578).w
+	addq.w	#1,(playoffround).w
 .x	;IDA: loc_FC56A
 	movem.l	(sp)+,d0-d7/a0-a6
 	rts
-InitShooters	;IDA: sub_FC570. 94 only. Shootout: the 6 starters of the home (word_FFD594 0) or away team as the shooter list below word_FFD586 / word_FFD594
-	movea.l	#word_FFD586,a0
+InitShooters	;IDA: sub_FC570. 94 only. Shootout: the 6 starters of the home (shootoutteam 0) or away team as the shooter list below homeshootnum / shootoutteam
+	movea.l	#homeshootnum,a0
 	move.w	(HomeTeam).w,d0
-	tst.w	(word_FFD594).w
+	tst.w	(shootoutteam).w
 	beq.w	.0
 	move.w	(VisTeam).w,d0
-	movea.l	#word_FFD594,a0
+	movea.l	#shootoutteam,a0
 .0	;IDA: loc_FC58C
 	movea.l	#$30E,a1
 	asl.w	#2,d0
@@ -4038,8 +4038,8 @@ ShootoutWonBy	;IDA: sub_FC5AE. 94 only. Shootout: "SHOOTOUT WON BY" (printbig). 
 	String	$BF,2,$E,'SHOOTOUT WON BY'
 	addq.w	#2,(printy).w
 	move.w	(HomeTeam).w,d1
-	move.w	(word_FFD574).w,d0
-	cmp.w	(word_FFD576).w,d0
+	move.w	(homeshootgoals).w,d0
+	cmp.w	(awayshootgoals).w,d0
 	bgt.w	.0
 	move.w	(VisTeam).w,d1
 .0	;IDA: loc_FC5FE
@@ -4052,7 +4052,7 @@ ShootoutWonBy	;IDA: sub_FC5AE. 94 only. Shootout: "SHOOTOUT WON BY" (printbig). 
 	movem.l	(sp)+,d0-d7/a0-a6
 	rts
 ShootoutShooters	;no IDA label (was sub_FC620). Shootout shooters menu item (hockey94_11 menu lists): pick the 3 shooters of each team
-	btst	#0,(word_FFC2FA).w
+	btst	#0,(gmode2).w
 	beq.w	ShootersExit
 	moveq	#0,d0
 	moveq	#$1C,d1
@@ -4116,7 +4116,7 @@ ShooterSelectList	;IDA: loc_FC6CC. IDA label. Shootout shooters: "{Select Player
 	subq.w	#1,d0
 	clr.w	d1
 .1	;IDA: loc_FC712
-	move.w	d0,(word_FFD5B6).w
+	move.w	d0,(screentimer).w
 	clr.w	(PlayerScrollCtr).w
 	clr.w	(VertLineScrolling).w
 	movea.w	#(Satt-M68K_RAM),a0
@@ -4175,7 +4175,7 @@ ShooterSelectList	;IDA: loc_FC6CC. IDA label. Shootout shooters: "{Select Player
 .6	;IDA: loc_FC7EE
 	add.w	(VertLineScrolling).w,d0
 	bmi.s	.loop2
-	cmp.w	(word_FFD5B6).w,d0
+	cmp.w	(screentimer).w,d0
 	bgt.s	.loop2
 .7	;IDA: loc_FC7FA
 	move.w	d0,(VertLineScrolling).w
@@ -4237,7 +4237,7 @@ PrintShooterList	;IDA: sub_FC850. 94 only. Shootout shooters: the player list ro
 	move.l	(a1),d4
 	movea.w	#(Satt-M68K_RAM),a3
 	move.w	(PlayerScrollCtr).w,d2
-	move.w	(word_FFD5B6).w,d1
+	move.w	(screentimer).w,d1
 	sub.w	d2,d1
 	cmp.w	#5,d1
 	bls.w	.5
@@ -4339,9 +4339,9 @@ ClearShooterScreen	;IDA: sub_FCA04. 94 only. Shootout shooters: erase the screen
 	moveq	#$A,d1
 	move.w	#$7FF,d2
 	jmp	eraser
-ResetShooterScroll	;IDA: sub_FCA1E. 94 only. Shootout shooters: clear the list scroll words word_FFBD82 and word_FFBDA2
-	clr.w	(word_FFBD82).w
-	clr.w	(word_FFBDA2).w
+ResetShooterScroll	;IDA: sub_FCA1E. 94 only. Shootout shooters: clear the list scroll words palfadenew+$5A and palfadenew+$7A
+	clr.w	(palfadenew+$5A).w
+	clr.w	(palfadenew+$7A).w
 	rts
 PrintShooterSlots	;IDA: sub_FCA28. 94 only. Shootout shooters: "Shooters" 1. 2. 3.
 	jsr	(printz2).l
@@ -4385,7 +4385,7 @@ PrintShooterBox	;IDA: sub_FCAB8. 94 only. Shootout shooters: the selected player
 	lsr.w	#1,d0
 	sub.w	d0,(printx).w
 	jsr	(print2).l
-	clr.w	(word_FFB030).w
+	clr.w	(printfontset).w
 	rts
 PrintShooterNames	;IDA: sub_FCB1A. 94 only. Shootout shooters: the shooters' names (FormatPlayerNameShort)
 	movem.l	d0-d7/a0-a6,-(sp)
@@ -4405,7 +4405,7 @@ PrintShooterNames	;IDA: sub_FCB1A. 94 only. Shootout shooters: the shooters' nam
 	move.w	(printx).w,-(sp)
 	cmp.w	(TestList).w,d1
 	bne.w	.1
-	move.w	#2,(word_FFB030).w
+	move.w	#2,(printfontset).w
 .1	;IDA: loc_FCB66
 	cmp.w	#5,d1
 	bne.w	.2
@@ -4413,7 +4413,7 @@ PrintShooterNames	;IDA: sub_FCB1A. 94 only. Shootout shooters: the shooters' nam
 	move.w	#$E,(printy).w
 .2	;IDA: loc_FCB7A
 	jsr	(print2).l
-	clr.w	(word_FFB030).w
+	clr.w	(printfontset).w
 	move.w	(sp)+,(printx).w
 	addq.w	#2,(printy).w
 	addq.w	#1,d1

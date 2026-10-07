@@ -278,7 +278,7 @@ assgoaliebreakwait	;94 only (asstab entry $18DFC)
 	bne.w	.exit	;exit if so
 	btst	#2,(BA_PS_flags).w	;check if pen shot
 	bne.w	.1	;branch if so
-	btst	#0,(word_FFC2FA).w	;check for shootout
+	btst	#0,(gmode2).w	;check for shootout
 	bne.w	.1	;branch if so
 	nop
 	bra.w	assexit
@@ -335,7 +335,7 @@ assfaceoffp1	;IDA: assfaceoffpl (93 assfaceoffp1). Face off player
 	bset	#pf2aip,pflags2(a3)
 	bne.w	.exit2
 	move.w	#$FEA,d1
-	cmpi.w	#$10,(word_FFB78A).w
+	cmpi.w	#$10,(SortCords+(puckscnum*SCstruct)+temp1).w
 	bls.w	.d
 	moveq	#8,d0
 	bsr.w	randomd0
@@ -405,11 +405,11 @@ assscore
 	movea.l	#rtss2,a0
 	move.w	temp3(a3),d0
 	move.w	temp4(a3),d1
-	btst	#0,(word_FFC2FA).w	;start of code not in 92
+	btst	#0,(gmode2).w	;start of code not in 92
 	beq.w	.4
-	tst.w	(word_FFDED0).w
+	tst.w	(shootoutdelay).w
 	beq.w	.2
-	subq.w	#1,(word_FFDED0).w
+	subq.w	#1,(shootoutdelay).w
 	bne.w	.2
 	bset	#2,(sflags2).w
 .2	;IDA: loc_CCB0
@@ -459,7 +459,7 @@ assdefo
 	move.b	aioff(a3),temp1(a3)	;Loads aioff into temp1
 	jsr	(ReadGoaliePulled).l
 	bmi.w	.boost	;branch if goalie is pulled
-	btst	#6,(byte_FFC2FC).w	;check if crowd meter broken
+	btst	#6,(sflags7).w	;check if crowd meter broken
 	beq.w	.noboost	;branch if not
 	tst.b	$40(a3)	;check if temp1 is 0
 	beq.w	.noboost	;branch if so
@@ -523,7 +523,7 @@ assdefd
 	sub.b	d7,temp1(a3)	;sub frames elapsed from temp1
 	bpl.w	.nodec	;branch if not 0
 	move.b	aidef(a3),temp1(a3)	;move DfA into temp1
-	btst	#6,(byte_FFC2FC).w	;check if crowd meter currently broken
+	btst	#6,(sflags7).w	;check if crowd meter currently broken
 	beq.w	.noboost	;branch if not
 	tst.b	$40(a3)	;check if temp1 is 0
 	beq.w	.noboost	;branch if so
@@ -655,7 +655,7 @@ asswingd
 	sub.b	d7,temp1(a3)	;sub frames elapsed from temp1
 	bpl.w	.nodec	;branch if not 0
 	move.b	aidef(a3),temp1(a3)	;move DfA into temp1
-	btst	#6,(byte_FFC2FC).w	;check if crowd meter currently broken
+	btst	#6,(sflags7).w	;check if crowd meter currently broken
 	beq.w	.noboost	;branch if not
 	tst.b	$40(a3)	;check if temp1 is 0
 	beq.w	.noboost	;branch if 0

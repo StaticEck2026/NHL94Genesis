@@ -1,7 +1,7 @@
 ;	NHL 94 (retail) segment $9FD0-$B0E7
 ;	92 hockey.asm part 1, second half, as 93 hockey93_02.asm: ReplayMode, getpzjoy, suba4 / adda4,
 ;	UpdateCameraPos, RestoreReplayFrame, updatereplay, rtss8, updateplayers, updateanim, freezewindow, checkwindow.
-;	94 adds the reverse angle replay (word_FFC2F4 bits 4, 6, 7), the replay icon timer (ShowReplayIcon ... EraseReplayBanner),
+;	94 adds the reverse angle replay (sflags4 bits 4, 6, 7), the replay icon timer (ShowReplayIcon ... EraseReplayBanner),
 ;	4 way play pads and the fall-down position fixes in updateplayers. doinput (logic94_1) follows at $B0E8.
 ;	Transcribed from lst/nhl94.bin.lst lines 34505-35879. Global names are the 93 names where 93 has the
 ;	routine (IDA name in an ;IDA: comment); 94-only routines keep the IDA name. Local labels are the IDA
@@ -14,11 +14,11 @@
 
 ReplayMode	;no IDA label ($9FD0). Instant replay play-back control and display code. Called from the pause menu.
 	;As 93: a d-pad press picks the nearest object in that direction and the camera follows it
-	bclr	#0,(word_FFC2F6).w
+	bclr	#0,(sflags5).w
 	bsr.w	forceblack
 	move.w	(disflags).w,-(sp)
 	bset	#sf2replay,(sflags2).w
-	bclr	#4,(word_FFC2F4).w
+	bclr	#4,(sflags4).w
 	jsr	(ClrHor).l
 	move.w	#$400,d0
 	move.w	(VmMap3).w,d1
@@ -30,7 +30,7 @@ ReplayMode	;no IDA label ($9FD0). Instant replay play-back control and display c
 	jsr	(ShowReplayIcon).l
 	bclr	#sfscrl,(sflags).w
 	bclr	#5,(sflags3).w
-	st	(byte_FFBE1E).w
+	st	(replayactive).w
 	movea.l	(recbpr).w,a4
 .rwd	;IDA: loc_A02A
 	bsr.w	suba4
@@ -40,8 +40,8 @@ ReplayMode	;no IDA label ($9FD0). Instant replay play-back control and display c
 	jsr	(setvideo).l
 	bclr	#1,(sflags3).w
 	clr.l	(padcont).w
-	clr.l	(dword_FFBE7E).w
-	clr.l	(dword_FFBE82).w
+	clr.l	(padcont+4).w
+	clr.l	(padcont+8).w
 	move.w	#$18,(palcount).w
 	moveq	#1,d7
 .top	;IDA: loc_A058
@@ -50,11 +50,11 @@ ReplayMode	;no IDA label ($9FD0). Instant replay play-back control and display c
 	cmp.w	d0,d7
 	bhi.s	.top
 	move.w	(vcount).w,(oldvcount).w
-	tst.w	(word_FFDEB4).w
+	tst.w	(replayicontimer).w
 	bmi.w	.0
-	sub.w	d7,(word_FFDEB4).w
+	sub.w	d7,(replayicontimer).w
 	bpl.w	.0
-	clr.w	(word_FFDEB4).w
+	clr.w	(replayicontimer).w
 	jsr	(EraseReplayIcon).l
 .0	;IDA: loc_A084
 	movem.l	d0/a3,-(sp)
@@ -65,7 +65,7 @@ ReplayMode	;no IDA label ($9FD0). Instant replay play-back control and display c
 	movem.l	(sp)+,d0/a3
 	moveq	#1,d7
 	bsr.w	getpzjoy
-	btst	#0,(word_FFC2F6).w
+	btst	#0,(sflags5).w
 	beq.w	.2
 	andi.w	#$FFF0,d0
 	ori.w	#8,d0
@@ -174,8 +174,8 @@ ReplayMode	;no IDA label ($9FD0). Instant replay play-back control and display c
 .noy	;IDA: loc_A21E
 	movea.w	a5,a3
 	clr.w	$18(a5)
-	andi.w	#$FFF,(word_FFBE78).w
-	ori.w	#$E000,(word_FFBE78).w
+	andi.w	#$FFF,(PadControlBits).w
+	ori.w	#$E000,(PadControlBits).w
 	bsr.w	UpdateCameraPos
 	jsr	(setvideo).l
 	bra.w	.top
@@ -188,13 +188,13 @@ ReplayMode	;no IDA label ($9FD0). Instant replay play-back control and display c
 	st	$18(a5)
 	btst	#5,d1
 	beq.w	.00
-	btst	#0,(word_FFC2F6).w
+	btst	#0,(sflags5).w
 	bne.w	.00
 	bchg	#sf3rmplay,(sflags3).w
 .00	;IDA: loc_A27A
 	btst	#6,d3
 	beq.w	.5
-	btst	#0,(word_FFC2F6).w
+	btst	#0,(sflags5).w
 	bne.w	.5
 	bsr.w	suba4
 	bsr.w	suba4
@@ -205,7 +205,7 @@ ReplayMode	;no IDA label ($9FD0). Instant replay play-back control and display c
 	moveq	#1,d7
 	bclr	#1,(sflags3).w
 .5	;IDA: loc_A2B0
-	btst	#0,(word_FFC2F6).w
+	btst	#0,(sflags5).w
 	bne.w	.1
 	btst	#4,d3
 	beq.w	.1
@@ -214,10 +214,10 @@ ReplayMode	;no IDA label ($9FD0). Instant replay play-back control and display c
 	bclr	#5,(sflags3).w
 	bclr	#5,(sflags).w
 	move.w	d0,-(sp)
-	move.w	(word_FFBE78).w,d0
+	move.w	(PadControlBits).w,d0
 	andi.w	#$FFF,d0
 	ori.w	#$E000,d0
-	move.w	d0,(word_FFBE78).w
+	move.w	d0,(PadControlBits).w
 	move.w	(sp)+,d0
 	bra.w	.top
 .f1	;IDA: loc_A2EE
@@ -236,13 +236,13 @@ ReplayMode	;no IDA label ($9FD0). Instant replay play-back control and display c
 	jsr	(SprSort).l
 .noplay	;IDA: loc_A326
 	jsr	(setvideo).l
-	btst	#0,(word_FFC2F6).w
+	btst	#0,(sflags5).w
 	bne.w	.6
 	btst	#7,d1
 	beq.w	.top
 	jsr	(ShowReplayBanner).l
 	bclr	#1,(sflags3).w
-	bset	#0,(word_FFC2F6).w
+	bset	#0,(sflags5).w
 	bne.w	.6
 	bra.w	.top
 .6	;IDA: loc_A358
@@ -254,8 +254,8 @@ ReplayMode	;no IDA label ($9FD0). Instant replay play-back control and display c
 	bne.w	.9
 	btst	#5,d1
 	beq.w	.top
-	bset	#6,(word_FFC2F4).w
-	bclr	#0,(word_FFC2F6).w
+	bset	#6,(sflags4).w
+	bclr	#0,(sflags5).w
 	jsr	(EraseReplayBanner).l
 	bsr.w	adda4
 	jsr	(SprSort).l
@@ -263,14 +263,14 @@ ReplayMode	;no IDA label ($9FD0). Instant replay play-back control and display c
 .7	;IDA: loc_A398
 	jmp	.top
 .8	;IDA: loc_A39E
-	clr.w	(dword_FFCF20).w
-	bset	#1,(word_FFC2F6).w
+	clr.w	(menuitem).w
+	bset	#1,(sflags5).w
 .9	;IDA: loc_A3A8
 	bsr.w	forceblack
-	ori.w	#$F000,(word_FFBE78).w
+	ori.w	#$F000,(PadControlBits).w
 	bclr	#5,(sflags).w
 	movea.l	(recbpr).w,a4
-	bclr	#4,(word_FFC2F4).w
+	bclr	#4,(sflags4).w
 	bsr.w	RestoreReplayFrame
 	jsr	(SprSort).l
 	bclr	#3,(sflags2).w
@@ -289,7 +289,7 @@ ReplayMode	;no IDA label ($9FD0). Instant replay play-back control and display c
 	jsr	(setvideo).l
 	move.w	#$18,(palcount).w
 	rts
-getpzjoy	;read the joystick of the pad that paused. 94: pads 3 and 4 when FourWayPlay (word_FFC316 = 3 or 4)
+getpzjoy	;read the joystick of the pad that paused. 94: pads 3 and 4 when FourWayPlay (pausepad = 3 or 4)
 	tst.w	(FourWayPlay).w
 	bne.w	.0
 .loop	;IDA: loc_A426
@@ -297,13 +297,13 @@ getpzjoy	;read the joystick of the pad that paused. 94: pads 3 and 4 when FourWa
 	bne.w	ReadJoy2
 	bra.w	ReadJoy1
 .0	;IDA: loc_A434
-	tst.w	(word_FFC316).w
+	tst.w	(pausepad).w
 	beq.s	.loop
-	cmpi.w	#3,(word_FFC316).w
+	cmpi.w	#3,(pausepad).w
 	beq.w	ReadJoy3
 	bra.w	ReadJoy4
-ShowReplayIcon	;IDA: sub_A448. 94 only. Show the replay icon (93 ReplayMode does this inline) and start the $F0 frame word_FFDEB4 timer
-	move.w	#$F0,(word_FFDEB4).w
+ShowReplayIcon	;IDA: sub_A448. 94 only. Show the replay icon (93 ReplayMode does this inline) and start the $F0 frame replayicontimer timer
+	move.w	#$F0,(replayicontimer).w
 	bsr.w	printz
 	String	$BD,2,2			;IDA hid this and moveq #$20,d0 in ori.b / andi.b
 	moveq	#$20,d0
@@ -313,22 +313,22 @@ ShowReplayIcon	;IDA: sub_A448. 94 only. Show the replay icon (93 ReplayMode does
 	move.w	(rinkvrcset).w,d4
 	move.w	#0,d5
 	movea.l	#Rinktilelist,a1
-	btst	#4,(word_FFC2F4).w	;check if reverse angle replay
+	btst	#4,(sflags4).w	;check if reverse angle replay
 	beq.w	.0	;branch if not
 	movea.l	#RevRinkTilelist,a1
 .0	;IDA: loc_A47E
 	adda.l	4(a1),a1
 	movea.w	#$30A,a2
 	bra.w	dobitmap
-EraseReplayIcon	;IDA: sub_A48A. 94 only. Erase the 8 x 4 replay icon (word_FFDEB4 timer ran out)
+EraseReplayIcon	;IDA: sub_A48A. 94 only. Erase the 8 x 4 replay icon (replayicontimer timer ran out)
 	jsr	(printz).l
 	String	$BD,2,2			;IDA hid this and the three moves in ori.b / andi.b
 	move.w	#8,d0			;8 wide
 	move.w	#4,d1			;4 high
 	move.w	#$7FF,d2
 	jmp	eraser
-ShowReplayBanner	;IDA: sub_A4A8. 94 only. Show ReplayMap at 0,0 (16 x 11) and stop the word_FFDEB4 timer
-	st	(word_FFDEB4).w
+ShowReplayBanner	;IDA: sub_A4A8. 94 only. Show ReplayMap at 0,0 (16 x 11) and stop the replayicontimer timer
+	st	(replayicontimer).w
 	bsr.w	printz
 	String	$BD,2,0			;IDA hid this and moveq #0,d0 in ori.b
 	moveq	#0,d0
@@ -364,11 +364,11 @@ suba4	;IDA: sub_A4F6. a4 = current replay frame. Back up 1 frame and set video p
 	bsr.w	RestoreReplayFrame
 	clr.w	d7
 	rts
-adda4	;IDA: sub_A528. Step forward 1 frame (93 adda4). 94 first handles a reverse angle switch (word_FFC2F4 bit 6)
-	bclr	#6,(word_FFC2F4).w
+adda4	;IDA: sub_A528. Step forward 1 frame (93 adda4). 94 first handles a reverse angle switch (sflags4 bit 6)
+	bclr	#6,(sflags4).w
 	beq.w	.1
 	movem.l	d0-d7/a0-a6,-(sp)
-	bchg	#4,(word_FFC2F4).w
+	bchg	#4,(sflags4).w
 	move.w	(Hpos).w,-(sp)
 	move.w	(Vpos).w,-(sp)
 	bsr.w	forceblack2
@@ -426,13 +426,13 @@ adda43	;IDA: sub_A600. a4 += replay frame size ($62), wrapping from $FFFFAF54 (r
 UpdateCameraPos	;IDA: sub_A616. Camera struct a5 = object a3 x/y (negated for the reverse angle), Hpos/Vpos clamped
 	movem.l	d0-d2,-(sp)
 	move.w	(a3),d0
-	btst	#7,(word_FFC2F4).w
+	btst	#7,(sflags4).w
 	beq.w	.0
 	neg.w	d0
 .0	;IDA: loc_A628
 	move.w	d0,(a5)
 	move.w	$14(a3),d1
-	btst	#7,(word_FFC2F4).w
+	btst	#7,(sflags4).w
 	beq.w	.2
 	neg.w	d1
 .2	;IDA: loc_A63A
@@ -458,10 +458,10 @@ UpdateCameraPos	;IDA: sub_A616. Camera struct a5 = object a3 x/y (negated for th
 	movem.l	(sp)+,d0-d2
 	rts
 ; set flag for reverse replay setup if needed
-RevReplayAdj	;94 only. Set word_FFC2F4 bit 7 for a reverse angle replay, then fall into RestoreReplayFrame
-	btst	#4,(word_FFC2F4).w	;check if reverse angle replay
+RevReplayAdj	;94 only. Set sflags4 bit 7 for a reverse angle replay, then fall into RestoreReplayFrame
+	btst	#4,(sflags4).w	;check if reverse angle replay
 	beq.w	RestoreReplayFrame	;branch if not
-	bset	#7,(word_FFC2F4).w	;set bit 7
+	bset	#7,(sflags4).w	;set bit 7
 ; a4 = current replay frame address to convert into normal coordinates
 RestoreReplayFrame	;IDA: SetRCords (92 name). a4 = current replay frame address to convert into normal cordinates (92
 	;SetRCords), then the other replay variables (92 nonshift). 94 flips x/y and frames for the reverse angle
@@ -477,7 +477,7 @@ RestoreReplayFrame	;IDA: SetRCords (92 name). a4 = current replay frame address 
 	beq.w	.chkrevx
 	ori.w	#$FC00,d2
 .chkrevx
-	btst	#4,(word_FFC2F4).w	;check if reverse angle
+	btst	#4,(sflags4).w	;check if reverse angle
 	beq.w	.p	;branch if not
 	neg.w	d2
 .p
@@ -489,7 +489,7 @@ RestoreReplayFrame	;IDA: SetRCords (92 name). a4 = current replay frame address 
 	beq.w	.chkrevy
 	ori.w	#$FC00,d2
 .chkrevy
-	btst	#4,(word_FFC2F4).w	;check if reverse angle
+	btst	#4,(sflags4).w	;check if reverse angle
 	beq.w	.p1	;branch if not
 	neg.w	d2
 	cmp.w	#0,d1	;check if last object (puck shadow)
@@ -500,7 +500,7 @@ RestoreReplayFrame	;IDA: SetRCords (92 name). a4 = current replay frame address 
 	move.w	(a0),d2
 	asr.w	#4,d2
 	andi.w	#$3FF,d2
-	btst	#4,(word_FFC2F4).w	;check if reverse angle
+	btst	#4,(sflags4).w	;check if reverse angle
 	beq.w	.2	;branch if not
 	asl.w	#1,d2
 	move.w	0(a6,d2.w),d2	;look up table to adjust d2
@@ -525,7 +525,7 @@ RestoreReplayFrame	;IDA: SetRCords (92 name). a4 = current replay frame address 
 	blt.w	.3	;branch if so
 	cmp.w	#$292,d2	;check if frame is after glass shatter frames
 	bge.w	.3	;branch if so
-	btst	#4,(word_FFC2F4).w
+	btst	#4,(sflags4).w
 	beq.w	.3
 	move.w	#$190,$14(a3)
 .3	;IDA: loc_A75C
@@ -534,7 +534,7 @@ RestoreReplayFrame	;IDA: SetRCords (92 name). a4 = current replay frame address 
 	andi.w	#$1800,d2
 	andi.w	#$E7FF,attribute(a3)
 	or.w	d2,attribute(a3)
-	btst	#4,(word_FFC2F4).w	;check if reverse angle replay
+	btst	#4,(sflags4).w	;check if reverse angle replay
 	beq.w	.4	;branch if not
 	move.w	6(a3),d2	;move frame into d2
 	cmp.w	#$162,d2	;check if frame is before old fight frames
@@ -587,8 +587,8 @@ RestoreReplayFrame	;IDA: SetRCords (92 name). a4 = current replay frame address 
 	move.b	(a0)+,d7
 	move.w	(a0)+,d0
 	andi.w	#$FFF,d0
-	andi.w	#$F000,(word_FFBE78).w
-	or.w	d0,(word_FFBE78).w
+	andi.w	#$F000,(PadControlBits).w
+	or.w	d0,(PadControlBits).w
 	move.w	(a0)+,(crowdframe).w
 	move.w	(a0)+,(glovecords).w
 	move.b	(a0)+,(PBnum).w
@@ -596,7 +596,7 @@ RestoreReplayFrame	;IDA: SetRCords (92 name). a4 = current replay frame address 
 	move.b	(a0)+,d0
 	lsl.w	#4,d0
 	ori.w	#$F00F,d0
-	move.w	d0,(word_FFBE86).w
+	move.w	d0,(PadControlBits34).w
 	btst	#sfscrl,(sflags).w
 	beq.w	.pos
 	movea.w	a5,a3
@@ -613,13 +613,13 @@ RestoreReplayFrame	;IDA: SetRCords (92 name). a4 = current replay frame address 
 .pos	;IDA: loc_A860
 	move.w	(a0)+,(Hpos).w
 	move.w	(a0)+,(Vpos).w
-	btst	#4,(word_FFC2F4).w
+	btst	#4,(sflags4).w
 	beq.w	.7
 	neg.w	(Hpos).w
 	neg.w	(Vpos).w
 	jsr	(ClampReplayView).l
 .7	;IDA: loc_A880
-	bclr	#7,(word_FFC2F4).w
+	bclr	#7,(sflags4).w
 	movem.l	(sp)+,d0-d2/a0/a6
 	rts
 ClampReplayView	;IDA: sub_A88C. 94 only. Clamp Hpos to -$3C..$3C and Vpos to -$C8..$100
@@ -651,11 +651,11 @@ updatereplay	;called every frame to save replay events, d7 = elapsed frames
 	bne.w	rtss8	;exit if so
 	btst	#sf2drec,(sflags2).w	;check if replay record disabled
 	beq.w	.0	;branch if not
-	tst.w	(word_FFDEF0).w
+	tst.w	(replaydelay).w
 	beq.w	.rec
-	subq.w	#1,(word_FFDEF0).w
+	subq.w	#1,(replaydelay).w
 	bpl.w	.0
-	clr.w	(word_FFDEF0).w
+	clr.w	(replaydelay).w
 	bra.w	.rec
 .0	;IDA: loc_A8F6
 	addi.l	#$62,(recbpr).w
@@ -713,16 +713,16 @@ updatereplay	;called every frame to save replay events, d7 = elapsed frames
 	adda.w	#SCstruct,a3
 	dbf	d2,.loop
 	move.b	(puckz+1).w,(a0)+
-	move.b	(byte_FFB7E3).w,(a0)+
+	move.b	(SortCords+((puckscnum+1)*SCstruct)+Zpos+1).w,(a0)+
 	move.b	(lastsfx+1).w,(a0)+
 	bset	#7,(lastsfx+1).w
 	move.b	d7,(a0)+
-	move.w	(word_FFBE78).w,(a0)+
+	move.w	(PadControlBits).w,(a0)+
 	move.w	(crowdframe).w,(a0)+
 	move.w	(glovecords).w,(a0)+
 	move.b	(PBnum).w,(a0)+
 	move.w	d0,-(sp)
-	move.w	(word_FFBE86).w,d0
+	move.w	(PadControlBits34).w,d0
 	lsr.w	#4,d0
 	move.b	d0,(a0)+
 	move.w	(sp)+,d0
@@ -735,7 +735,7 @@ rtss8	;IDA name (93 rtss2; 94 rtss2 is the rts at $15464)
 updateplayers	;this routine calls all collision/animation/assignment code for all players. d7 = elapsed frames
 	btst	#sfhor,(sflags).w	;check if screen is in horiz mode
 	bne.w	.checkcrowd	;jump if horiz mode
-	ori.w	#$F,(word_FFBE78).w
+	ori.w	#$F,(PadControlBits).w
 	cmpi.w	#5,(puckz).w	;check puckz with 5
 	bgt.w	.gt	;branch if greater
 .clrcnt
@@ -754,24 +754,24 @@ updateplayers	;this routine calls all collision/animation/assignment code for al
 	clr.w	(PuckZCntr).w	;clear counter
 	subq.w	#1,(puckz).w	;subtract 1 from puckz
 .checkcrowd
-	bclr	#6,(byte_FFC2FC).w	;Bit 6 = Crowd Meter bit
+	bclr	#6,(sflags7).w	;Bit 6 = Crowd Meter bit
 	move.w	(CurCrowdMeter).w,d0	;Move cur crowd meter to d0
 	cmp.w	(CrowdRecord).w,d0	;compare with crowd record
 	blt.w	.nobreak	;branch if less than
-	bset	#6,(byte_FFC2FC).w	;set Crowd Meter bit
+	bset	#6,(sflags7).w	;set Crowd Meter bit
 .nobreak
 	jsr	(set_bit1_C2FE).l	;jump to turn on bit 1 of C2FE
 	tst.w	(puckc).w
 	bmi.w	.scload	;branch if no puck carrier
-	bclr	#7,(byte_FFC2FE).w
-	bclr	#1,(word_FFC2F8).w
+	bclr	#7,(sflags8).w
+	bclr	#1,(sflags6).w
 	move.w	(puckc).w,d0	;move puckc SCnum into d0
 	asl.w	#7,d0
 	movea.l	#$FFFFB04A,a3	;start of player SCstructs (SortCords)
 	adda.w	d0,a3	;add offset to a3
 	btst	#1,$64(a3)	;checks if there is a breakaway
 	beq.w	.scload	;branch if no breakaway
-	bclr	#4,(word_FFC2FA).w	;clear if breakaway
+	bclr	#4,(gmode2).w	;clear if breakaway
 .scload
 	movea.w	#(SortCords-M68K_RAM),a3
 .top
@@ -878,7 +878,7 @@ updateplayers	;this routine calls all collision/animation/assignment code for al
 	cmpi.w	#$1AF4,$58(a3)	;SPAinjury1 (frames94). check animation
 	beq.w	.done
 	moveq	#$11,d4
-	tst.w	(word_FFD06E).w
+	tst.w	(music_global_tick_counter).w
 	beq.w	.notoside
 	moveq	#$16,d4
 .notoside
@@ -957,15 +957,15 @@ updateplayers	;this routine calls all collision/animation/assignment code for al
 .tp
 	btst	#0,(sflags2).w	;sf2faceoff- check for faceoff
 	bne.w	.tp2	;branch if faceoff
-	tst.w	(word_FFD412).w
+	tst.w	(holdreset).w
 	beq.w	.tp2
-	subq.w	#1,(word_FFD412).w
+	subq.w	#1,(holdreset).w
 	beq.w	.12
 	bpl.w	.tp2
 .12	;IDA: loc_ACFE
-	clr.w	(word_FFD412).w
-	move.w	#$1111,(word_FFBF06).w
-	move.w	#$1111,(word_FFBF08).w
+	clr.w	(holdreset).w
+	move.w	#$1111,(bholdtimer).w
+	move.w	#$1111,(bholdtimer34).w
 .tp2
 	cmp.w	(c1playernum).w,d6	;check if cont 1 is puck carrier
 	bne.w	.t0
@@ -995,23 +995,23 @@ updateplayers	;this routine calls all collision/animation/assignment code for al
 	move.w	(cont3team).w,(cont1team).w
 	move.w	(c1playernum).w,-(sp)
 	move.w	(c3playernum).w,(c1playernum).w
-	move.w	(word_FFBF06).w,-(sp)
-	move.w	(word_FFBF08).w,(word_FFBF06).w
-	move.w	(word_FFBF0E).w,-(sp)
-	move.w	(word_FFBF0A).w,(word_FFBF0E).w
-	move.w	(word_FFD41E).w,-(sp)
-	move.w	(word_FFD420).w,(word_FFD41E).w
-	move.w	(word_FFBE78).w,-(sp)
-	move.w	(word_FFBE86).w,(word_FFBE78).w
+	move.w	(bholdtimer).w,-(sp)
+	move.w	(bholdtimer34).w,(bholdtimer).w
+	move.w	(padword1).w,-(sp)
+	move.w	(padword3).w,(padword1).w
+	move.w	(aholdtimer).w,-(sp)
+	move.w	(aholdtimer34).w,(aholdtimer).w
+	move.w	(PadControlBits).w,-(sp)
+	move.w	(PadControlBits34).w,(PadControlBits).w
 	bsr.w	doinput	;B button
-	move.w	(word_FFBE78).w,(word_FFBE86).w
-	move.w	(sp)+,(word_FFBE78).w
-	move.w	(word_FFD41E).w,(word_FFD420).w
-	move.w	(sp)+,(word_FFD41E).w
-	move.w	(word_FFBF0E).w,(word_FFBF0A).w
-	move.w	(sp)+,(word_FFBF0E).w
-	move.w	(word_FFBF06).w,(word_FFBF08).w
-	move.w	(sp)+,(word_FFBF06).w
+	move.w	(PadControlBits).w,(PadControlBits34).w
+	move.w	(sp)+,(PadControlBits).w
+	move.w	(aholdtimer).w,(aholdtimer34).w
+	move.w	(sp)+,(aholdtimer).w
+	move.w	(padword1).w,(padword3).w
+	move.w	(sp)+,(padword1).w
+	move.w	(bholdtimer).w,(bholdtimer34).w
+	move.w	(sp)+,(bholdtimer).w
 	move.w	(c1playernum).w,(c3playernum).w
 	move.w	(sp)+,(c1playernum).w
 	move.w	(cont1team).w,(cont3team).w
@@ -1028,23 +1028,23 @@ updateplayers	;this routine calls all collision/animation/assignment code for al
 	move.w	(cont4team).w,(cont2team).w
 	move.w	(c2playernum).w,-(sp)
 	move.w	(c4playernum).w,(c2playernum).w
-	move.w	(word_FFBF06).w,-(sp)
-	move.w	(word_FFBF08).w,(word_FFBF06).w
-	move.w	(word_FFBF10).w,-(sp)
-	move.w	(word_FFBF0C).w,(word_FFBF10).w
-	move.w	(word_FFD41E).w,-(sp)
-	move.w	(word_FFD420).w,(word_FFD41E).w
-	move.w	(word_FFBE78).w,-(sp)
-	move.w	(word_FFBE86).w,(word_FFBE78).w
+	move.w	(bholdtimer).w,-(sp)
+	move.w	(bholdtimer34).w,(bholdtimer).w
+	move.w	(padword2).w,-(sp)
+	move.w	(padword4).w,(padword2).w
+	move.w	(aholdtimer).w,-(sp)
+	move.w	(aholdtimer34).w,(aholdtimer).w
+	move.w	(PadControlBits).w,-(sp)
+	move.w	(PadControlBits34).w,(PadControlBits).w
 	bsr.w	doinput	;B button
-	move.w	(word_FFBE78).w,(word_FFBE86).w
-	move.w	(sp)+,(word_FFBE78).w
-	move.w	(word_FFD41E).w,(word_FFD420).w
-	move.w	(sp)+,(word_FFD41E).w
-	move.w	(word_FFBF10).w,(word_FFBF0C).w
-	move.w	(sp)+,(word_FFBF10).w
-	move.w	(word_FFBF06).w,(word_FFBF08).w
-	move.w	(sp)+,(word_FFBF06).w
+	move.w	(PadControlBits).w,(PadControlBits34).w
+	move.w	(sp)+,(PadControlBits).w
+	move.w	(aholdtimer).w,(aholdtimer34).w
+	move.w	(sp)+,(aholdtimer).w
+	move.w	(padword2).w,(padword4).w
+	move.w	(sp)+,(padword2).w
+	move.w	(bholdtimer).w,(bholdtimer34).w
+	move.w	(sp)+,(bholdtimer).w
 	move.w	(c2playernum).w,(c4playernum).w
 	move.w	(sp)+,(c2playernum).w
 	move.w	(cont2team).w,(cont4team).w

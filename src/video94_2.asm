@@ -15,11 +15,11 @@
 ;	92 ffosize = $1C, ssosize = $14. DMA list entries (a5): long source, word length in words, word vram.
 
 showclock	;put the game clock on screen. Called from setvideo and PauseMode. 94: on the horizontal rink the clock is printed (printz / print
-	;with .digits; not in a shootout, word_FFC2FA bit 0). On the vertical rink (.3, the 93 showclock body) it goes in the dma list, only when
-	;dfclock is set; with word_FFC2FA bit 1 (penalty shot / shootout) word_FFD454 is shown instead of gameclock. a5 = dma list
+	;with .digits; not in a shootout, gmode2 bit 0). On the vertical rink (.3, the 93 showclock body) it goes in the dma list, only when
+	;dfclock is set; with gmode2 bit 1 (penalty shot / shootout) shootoutclock is shown instead of gameclock. a5 = dma list
 	btst	#7,(sflags).w	;sfhor
 	beq.w	.3
-	btst	#0,(word_FFC2FA).w	;94 only: shootout
+	btst	#0,(gmode2).w	;94 only: shootout
 	bne.w	.x
 	move.l	a1,-(sp)
 	jsr	(printz).l
@@ -81,17 +81,17 @@ showclock	;put the game clock on screen. Called from setvideo and PauseMode. 94:
 	bne.w	rtss2
 	cmpi.w	#4,(gsp).w	;no clock update when gsp = 4
 	beq.w	rtss2
-	movea.w	#(clockramend-M68K_RAM),a0	;end of the 5 word clock buffer (92 clockram+(5*2)); written backward
+	movea.w	#(clockram+6-M68K_RAM),a0	;end of the 5 word clock buffer (92 clockram+(5*2)); written backward
 	movea.l	#SmallFontMap,a1	;93 smallfontmap
 	adda.l	4(a1),a1
 	move.w	$78(a1),d0	;4+(':'*2)
 	add.w	(smallfontchars).w,d0	;93 smallfontchars
 	ori.w	#$8000,d0
-	move.w	d0,(word_FFBF86).w	;colon (93 clockram)
+	move.w	d0,(clockram).w	;colon (93 clockram)
 	move.w	(gameclock).w,d0
-	btst	#1,(word_FFC2FA).w	;94 only: penalty shot / shootout clock
+	btst	#1,(gmode2).w	;94 only: penalty shot / shootout clock
 	beq.w	.4
-	move.w	(word_FFD454).w,d0
+	move.w	(shootoutclock).w,d0
 .4	;IDA: loc_1640C
 	ext.l	d0
 	divu.w	#$A,d0
@@ -165,7 +165,7 @@ checksso	;do graphics for sso structure: arrows for the players when they are of
 	bmi.w	rtss2	;not on the ice
 	st	frame(a3)
 	move.w	(a0),d0
-	btst	#0,(word_FFC2FA).w
+	btst	#0,(gmode2).w
 	bne.w	.0
 	btst	#3,(sflags2).w
 	bne.w	.0
@@ -273,7 +273,7 @@ setffo	;draw the 7 objects tied to icerink scrolling (gloves and pads), moving e
 	dbf	d0,.top
 	rts
 uppads	;update the gloves object and the 6 pad objects, and queue new pad labels (FormatControllerDisplay). The pad players
-	;come from the word_FFBE78 / word_FFBE86 nibbles ($E = no change, $F = none)
+	;come from the PadControlBits / PadControlBits34 nibbles ($E = no change, $F = none)
 	movea.w	#(glovestruct-M68K_RAM),a0
 	st	Zpos(a0)	;set Zpos
 	move.b	(glovecords).w,d0
@@ -291,11 +291,11 @@ uppads	;update the gloves object and the 6 pad objects, and queue new pad labels
 	movea.w	#(pads-M68K_RAM),a0
 	movea.w	#(padcont-M68K_RAM),a1
 	movea.w	#(SortCords-M68K_RAM),a2
-	move.w	(word_FFBE78).w,d3
+	move.w	(PadControlBits).w,d3
 .top
 	cmp.w	#1,d4
 	bne.w	.nibble
-	move.w	(word_FFBE86).w,d3
+	move.w	(PadControlBits34).w,d3
 	lsr.w	#4,d3
 	bra.w	*+4	;to the next instruction
 .nibble	;IDA: loc_16694
@@ -326,7 +326,7 @@ uppads	;update the gloves object and the 6 pad objects, and queue new pad labels
 	dbf	d4,.top
 	rts
 FormatControllerDisplay	;IDA: sub_166E6 (93 name). Queue the 3 character label of a pad object. d1 = label code: bits 7-4 and 3-0 are digits ($F =
-	;blank), bits 10-8 index ButtonLabelCharTable (94: none while byte_FFC2FC bit 7 is set). a0 = pad object, a5 = dma list. Falls into
+	;blank), bits 10-8 index ButtonLabelCharTable (94: none while sflags7 bit 7 is set). a0 = pad object, a5 = dma list. Falls into
 	;RenderSmallFontChar for the last char
 	lea	ButtonLabelCharTable(pc),a4
 	clr.w	2(a0)	;x offset (setffo adds it to the sprites)
@@ -350,7 +350,7 @@ FormatControllerDisplay	;IDA: sub_166E6 (93 name). Queue the 3 character label o
 	moveq	#1,d0
 	bsr.w	RenderSmallFontChar
 	move.w	d1,d2
-	btst	#7,(byte_FFC2FC).w	;94 only
+	btst	#7,(sflags7).w	;94 only
 	beq.w	.0
 	clr.w	d2
 .0	;IDA: loc_16736

@@ -106,9 +106,9 @@ ResolveGames	;IDA: sub_18380 (93 name). Compute winners and losers for playoff m
 	moveq	#1,d1
 	asl.w	d2,d1
 	subq.w	#1,d1
-	and.w	d1,(word_FFCEF2).w	;clear this round's winbits (93 WinBits)
+	and.w	d1,(WinBits).w	;clear this round's winbits (93 WinBits)
 	asl.w	d2,d3
-	or.w	d3,(word_FFCEF2).w
+	or.w	d3,(WinBits).w
 	addq.w	#1,(gamelevel).w
 	rts
 .notbos	;IDA: loc_184D0
@@ -128,9 +128,9 @@ ResolveGames	;IDA: sub_18380 (93 name). Compute winners and losers for playoff m
 	moveq	#1,d1
 	asl.w	d2,d1
 	subq.w	#1,d1
-	and.w	d1,(word_FFCEF2).w
+	and.w	d1,(WinBits).w
 	asl.w	d2,d3
-	or.w	d3,(word_FFCEF2).w
+	or.w	d3,(WinBits).w
 	addq.w	#1,(gamelevel).w
 	rts
 DisplayPeriodOver	;IDA: sub_1850A (93 name). End of game Stars of the Game box. Called from UpdatePA (penalty94_1) while RefPen is the game over
@@ -304,7 +304,7 @@ CalculateTeamAttributeValues	;IDA: sub_1867E (93 name). Star scores of team a2 (
 	dbf	d4,.loop
 	rts
 ShowInjuryBox	;IDA: loc_1871C (93 name). Injury box: 'Injury to:' player TempPlOffset (GetPlayerNameWithAttrib), 'Out for period', or 'Out for game'
-	;when byte_FFC2FC bit 5 is set (94), and 'the game' over 'period' when puck_pflags2 bit 0 (93 pf2fight) is set. Jumped to from CheckInjury
+	;when sflags7 bit 5 is set (94), and 'the game' over 'period' when puck_pflags2 bit 0 (93 pf2fight) is set. Jumped to from CheckInjury
 	;(hockey94_01), so global
 	movem.l	d0-d2/a0-a4,-(sp)
 	bsr.w	printz
@@ -312,7 +312,7 @@ ShowInjuryBox	;IDA: loc_1871C (93 name). Injury box: 'Injury to:' player TempPlO
 	moveq	#$12,d0	;framer size
 	moveq	#5,d1
 	bsr.w	Framer
-	btst	#5,(byte_FFC2FC).w
+	btst	#5,(sflags7).w
 	bne.w	.0
 	bsr.w	printz
 	String	$BF,$C,4,'Injury to:',$BF,$C,6,'Out for period',$BF,$C,5	;IDA: code
@@ -330,11 +330,11 @@ ShowInjuryBox	;IDA: loc_1871C (93 name). Injury box: 'Injury to:' player TempPlO
 .ex
 	movem.l	(sp)+,d0-d2/a0-a4	;IDA: bcs.w / move.b (IDA hid this in the string)
 	rts
-PenaltyShotBox	;IDA: sub_187B8. 94 only. Penalty shot box, called from chkprogress (penalty94_1). Sets word_FFC2FA bit 7; in Shootout (bit 0) jumps to PlayoffRoundScreen
-	;instead. Otherwise: printbig 'PENALTY SHOT!', the shooter (BA_Sktr_SCnum, BA_Team), the penalty name (PenaltyList, word_FFD410) and ' by' the
+PenaltyShotBox	;IDA: sub_187B8. 94 only. Penalty shot box, called from chkprogress (penalty94_1). Sets gmode2 bit 7; in Shootout (bit 0) jumps to PlayoffRoundScreen
+	;instead. Otherwise: printbig 'PENALTY SHOT!', the shooter (BA_Sktr_SCnum, BA_Team), the penalty name (PenaltyList, pspenalty) and ' by' the
 	;player BA_Checker_Offset of the other team
-	bset	#7,(word_FFC2FA).w
-	btst	#0,(word_FFC2FA).w
+	bset	#7,(gmode2).w
+	btst	#0,(gmode2).w
 .0	;IDA: loc_187C4
 	beq.w	.1
 	jmp	PlayoffRoundScreen
@@ -369,7 +369,7 @@ PenaltyShotBox	;IDA: sub_187B8. 94 only. Penalty shot box, called from chkprogre
 	bsr.w	printz
 	String	$BF,4,7	;IDA: ori.b / btst
 	movem.l	a1/a3,-(sp)
-	move.w	(word_FFD410).w,d0
+	move.w	(pspenalty).w,d0
 	movea.l	#PenaltyList,a1
 	adda.w	0(a1,d0.w),a1
 	lea	2(a1),a1
@@ -389,8 +389,8 @@ PenaltyShotBox	;IDA: sub_187B8. 94 only. Penalty shot box, called from chkprogre
 	rts
 PenShotBigTxt	String	$BF,4,3,'PENALTY SHOT!',$BF,4,5	;IDA: unk_18884. printbig String for PenaltyShotBox
 DisplayPlayerAttributeMenu	;IDA: loc_1889A (93 name). Goal box. Closes both line change boxes, then printbig 'GOAL!' ('PP GOAL!' when DelayedPen
-	;bit 0 is set, cleared here), or 'HAT TRICK!' on the scorer's third goal when the scorer's slot is at least word_FFBF48 (word_FFD448 home /
-	;word_FFD44A visitors), then the scorer and up to two assists of the last goal entry (FormatPlayerName). 94 calls CountGoalies, StartArenaAnim (home
+	;bit 0 is set, cleared here), or 'HAT TRICK!' on the scorer's third goal when the scorer's slot is at least scorergoalies (homegoalies home /
+	;awaygoalies visitors), then the scorer and up to two assists of the last goal entry (FormatPlayerName). 94 calls CountGoalies, StartArenaAnim (home
 	;hat trick), PrintPlayerGoals and PrintPlayerAssists (not matched yet); BA_PS_flags bit 2 sets sflags2 bit 2. Called from SetPA (penalty94_1)
 	movem.l	d0-d2/a0-a4,-(sp)
 	btst	#2,(BA_PS_flags).w
@@ -417,11 +417,11 @@ DisplayPlayerAttributeMenu	;IDA: loc_1889A (93 name). Goal box. Closes both line
 	bsr.w	Framer
 	jsr	(CountGoalies).l
 	movea.w	#(HmShots-M68K_RAM),a2
-	move.w	(word_FFD448).w,(word_FFBF48).w
+	move.w	(homegoalies).w,(scorergoalies).w
 	btst	#7,2(a4)
 	beq.w	.1	;home team scored
 	adda.w	#tmsize,a2
-	move.w	(word_FFD44A).w,(word_FFBF48).w
+	move.w	(awaygoalies).w,(scorergoalies).w
 .1	;IDA: loc_18916
 	lea	GoalBigTxt(pc),a1
 	bclr	#0,(DelayedPen).w
@@ -436,7 +436,7 @@ DisplayPlayerAttributeMenu	;IDA: loc_1889A (93 name). Goal box. Closes both line
 	movem.w	d1,-(sp)
 	clr.w	d1
 	move.b	3(a4),d1
-	cmp.w	(word_FFBF48).w,d1
+	cmp.w	(scorergoalies).w,d1
 	movem.w	(sp)+,d1
 	blt.w	.4
 	adda.w	(a1),a1	;HAT TRICK!
@@ -460,7 +460,7 @@ DisplayPlayerAttributeMenu	;IDA: loc_1889A (93 name). Goal box. Closes both line
 	movem.w	d1,-(sp)
 	clr.w	d1
 	move.b	3(a4),d1
-	cmp.w	(word_FFBF48).w,d1
+	cmp.w	(scorergoalies).w,d1
 	movem.w	(sp)+,d1
 	blt.w	.5
 	jsr	(PrintPlayerGoals).l
@@ -468,8 +468,8 @@ DisplayPlayerAttributeMenu	;IDA: loc_1889A (93 name). Goal box. Closes both line
 	clr.w	d0
 	move.b	4(a4),d0	;first assist
 	bmi.w	.6
-	bclr	#5,(word_FFC2F4).w
-	bne.w	.6	;word_FFC2F4 bit 5 set: no assists
+	bclr	#5,(sflags4).w
+	bne.w	.6	;sflags4 bit 5 set: no assists
 	bsr.w	printz
 	String	$BF,$E,6,'Assist by:',$BF,$C,7	;IDA: code
 	move.w	d0,-(sp)	;IDA hid this in the string
@@ -488,7 +488,7 @@ DisplayPlayerAttributeMenu	;IDA: loc_1889A (93 name). Goal box. Closes both line
 	move.w	(sp)+,d0
 	jsr	(PrintPlayerAssists).l
 .6	;IDA: loc_18A08
-	bclr	#5,(word_FFC2F4).w
+	bclr	#5,(sflags4).w
 	movem.l	(sp)+,d0-d2/a0-a4
 	rts
 GoalBigTxt	String	$BF,$F,3,'GOAL!',$BF,$C,5	;IDA: unk_18A14. printbig Strings for DisplayPlayerAttributeMenu (93 attrText): GOAL!, then HAT TRICK!

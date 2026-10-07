@@ -14,8 +14,8 @@
 ;	dc.b, written as instructions; the tables are written as in 93.
 ;	RAM (ram_addrs.inc IDA names, 93 names): fm_track_slots (8 x 6 bytes), fm_channel_structs (94: 6 x 8 bytes:
 ;	+0 key, +1 note, +2 volume, +3 patch, +4 output channel, +5 age, +6 bit 0 on), fm_voice_usage_table (8 bytes per key:
-;	word +0 pitch bend, +3 patch, word +4 volume), dword_FFD182 Z80_command_buffer (33 bytes, copied to Z80 RAM $02), per_channel_attenuation_table
-;	per_channel_attenuation_table, byte_FFD180 music_needs_z80_update.
+;	word +0 pitch bend, +3 patch, word +4 volume), Z80_command_buffer (33 bytes, copied to Z80 RAM $02), per_channel_attenuation_table
+;	per_channel_attenuation_table, music_needs_z80_update.
 ;	EA's compiler emits cmp #imm,Dn as CMP (Bxxx), SNASM emits CMPI (0Cxx). The source has the real cmp / cmpi;
 ;	fixopcodes.js patches the cmp encoding after assembly.
 
@@ -23,8 +23,8 @@ AllSndOff	;IDA name (93 p_turnoff, 92 audio stop). Silence everything: free all 
 	;and stop the PCM channel. Called from Begin and the game screens
 	movem.l	d0-d7/a0-a2,-(sp)
 	bsr.w	ClearAllTrackAndSFXSlots
-	move.b	#$77,(dword_FFD182).w	;93 Z80_command_buffer: key off channels 0-2, 4-6
-	move.b	#$77,(dword_FFD182+2).w	;volume change on 0-2, 4-6
+	move.b	#$77,(Z80_command_buffer).w	;93 Z80_command_buffer: key off channels 0-2, 4-6
+	move.b	#$77,(Z80_command_buffer+2).w	;volume change on 0-2, 4-6
 	moveq	#6,d0
 	movea.w	#(per_channel_attenuation_table-M68K_RAM),a0	;93 per_channel_attenuation_table: 7 volume bytes
 .loop	;IDA: loc_1A27E
@@ -91,8 +91,8 @@ play_new_song	;IDA: sub_1A304 (93 name). Stop the song in progress: free the fir
 	addq.w	#6,a1
 	dble	d3,.find
 	bgt.w	.0	;none: no song playing
-	clr.l	(dword_FFD182).w
-	clr.b	(byte_FFD186).w
+	clr.l	(Z80_command_buffer).w
+	clr.b	(Z80_command_buffer+4).w
 	move.l	#-1,-6(a1)	;free the slot
 	moveq	#5,d1
 	lea	(fm_channel_structs).w,a2	;93 fm_channel_structs (94: 6 x 8 bytes)
@@ -105,7 +105,7 @@ play_new_song	;IDA: sub_1A304 (93 name). Stop the song in progress: free the fir
 	move.b	4(a2),d0
 	lea	(per_channel_attenuation_table).w,a1
 	move.b	#$7F,0(a1,d0.w)
-	bset	d0,(dword_FFD182+2).w
+	bset	d0,(Z80_command_buffer+2).w
 .next	;IDA: loc_1A35E
 	addq.w	#8,a2
 	dbf	d1,.kill
@@ -115,24 +115,24 @@ play_new_song	;IDA: sub_1A304 (93 name). Stop the song in progress: free the fir
 	movem.l	(sp)+,d0-d3/a0-a3
 	rts
 ReadJoyData	;IDA name. 94 only: read the pads every vblank (MusicVB). With FourWayPlay, pads 1-4 through the 4 way adaptor (ReadPad4Way1 ...
-	;ReadPad4Way4) to byte_FFBEF6-byte_FFBEF9, else pads 1 and 2 (ReadPad1, ReadPad2)
+	;ReadPad4Way4) to pad4way1-pad4way4, else pads 1 and 2 (ReadPad1, ReadPad2)
 	movem.l	d1/a0,-(sp)
 	tst.w	(FourWayPlay).w
 	beq.w	.0
 	bsr.s	ReadPad4Way1
-	move.b	d0,(byte_FFBEF6).w
+	move.b	d0,(pad4way1).w
 	bsr.s	ReadPad4Way2
-	move.b	d0,(byte_FFBEF7).w
+	move.b	d0,(pad4way2).w
 	bsr.w	ReadPad4Way3
-	move.b	d0,(byte_FFBEF8).w
+	move.b	d0,(pad4way3).w
 	bsr.w	ReadPad4Way4
-	move.b	d0,(byte_FFBEF9).w
+	move.b	d0,(pad4way4).w
 	bra.w	.x
 .0	;IDA: loc_1A39C
 	bsr.w	ReadPad1
-	move.b	d0,(byte_FFBEF6).w
+	move.b	d0,(pad4way1).w
 	bsr.w	ReadPad2
-	move.b	d0,(byte_FFBEF7).w
+	move.b	d0,(pad4way2).w
 .x	;IDA: loc_1A3AC
 	movem.l	(sp)+,d1/a0
 	rts
@@ -232,12 +232,12 @@ ResetZ80Bus	;IDA: sub_1A4EE. 94 only. Reset the Z80 and wait for its bus
 	bne.s	.loop
 	rts
 MusicVB	;IDA name (93 p_music_vblank, 92 vblank handler). Read the pads (ReadJoyData, 94), clear the change bits, run the 8 track slots (d7 = track
-	;7-0), send the buffer if anything changed and age the channels. 94 keeps the Rev A 93 50 Hz block: with word_FFDEF2 bit 0 set the slots run
-	;again every 6th frame (word_FFD070). Called from the vblank handlers
+	;7-0), send the buffer if anything changed and age the channels. 94 keeps the Rev A 93 50 Hz block: with PALflag bit 0 set the slots run
+	;again every 6th frame (music_tick_divider). Called from the vblank handlers
 	bsr.w	ReadJoyData
-	clr.b	(byte_FFD180).w	;93 music_needs_z80_update
-	clr.l	(dword_FFD182).w	;key off/on, volume, frequency bits
-	clr.b	(byte_FFD186).w	;patch bits
+	clr.b	(music_needs_z80_update).w	;93 music_needs_z80_update
+	clr.l	(Z80_command_buffer).w	;key off/on, volume, frequency bits
+	clr.b	(Z80_command_buffer+4).w	;patch bits
 .loop	;IDA: loc_1A51A
 	lea	(fm_track_slots).w,a5
 	moveq	#7,d7
@@ -245,14 +245,14 @@ MusicVB	;IDA name (93 p_music_vblank, 92 vblank handler). Read the pads (ReadJoy
 	bsr.w	ProcessOneMusicTrack
 	addq.w	#6,a5
 	dbf	d7,.loop2
-	btst	#0,(word_FFDEF2).w
+	btst	#0,(PALflag).w
 	beq.w	.0
-	subq.w	#1,(word_FFD070).w
+	subq.w	#1,(music_tick_divider).w
 	bpl.w	.0
-	addq.w	#6,(word_FFD070).w
+	addq.w	#6,(music_tick_divider).w
 	bra.s	.loop
 .0	;IDA: loc_1A542
-	tst.b	(byte_FFD180).w
+	tst.b	(music_needs_z80_update).w
 	beq.w	.1	;nothing changed
 	bsr.w	UploadCommandBufferToZ80
 .1	;IDA: loc_1A54E
@@ -271,7 +271,7 @@ z80_bus_release_delay	;IDA: loc_1A568 (93 name). Z80 busy: give the bus back, wa
 	moveq	#$64,d0
 .delay	;IDA: loc_1A570
 	dbf	d0,.delay
-UploadCommandBufferToZ80	;IDA: sub_1A574 (93 name). Copy the 33 byte command buffer (dword_FFD182) to Z80 RAM $02 once the Z80 is idle (Z80 RAM $97 = 0, $96 = $7D)
+UploadCommandBufferToZ80	;IDA: sub_1A574 (93 name). Copy the 33 byte command buffer (Z80_command_buffer) to Z80 RAM $02 once the Z80 is idle (Z80 RAM $97 = 0, $96 = $7D)
 	move.w	#$100,(IO_Z80BUS).l
 .loop	;IDA: loc_1A57C
 	btst	#0,(IO_Z80BUS).l
@@ -284,7 +284,7 @@ UploadCommandBufferToZ80	;IDA: sub_1A574 (93 name). Copy the 33 byte command buf
 	move.b	#$D1,$96(a0)
 	move.b	#0,$97(a0)
 	adda.w	#2,a0
-	movea.w	#(dword_FFD182-M68K_RAM),a1
+	movea.w	#(Z80_command_buffer-M68K_RAM),a1
 	moveq	#$20,d0
 .copy	;IDA: loc_1A5B2
 	move.b	(a1)+,(a0)+
@@ -350,19 +350,19 @@ ReleaseChannelAndNote	;IDA: sub_1A64C (93 name). Key off channel struct a2 if it
 	cmpi.b	#$60,3(a2)
 	bge.w	ClearZ80SpecialEffectsFlags
 	move.b	4(a2),d0
-	bset	d0,(dword_FFD182).w
-	st	(byte_FFD180).w
+	bset	d0,(Z80_command_buffer).w
+	st	(music_needs_z80_update).w
 	rts
-ClearZ80SpecialEffectsFlags	;IDA: sub_1A66E (93 name). Clear Z80 RAM $8E (byte_A0008E, the PCM rate byte written by UpdateChannelFrequencyAndVolume): stops the PCM channel
+ClearZ80SpecialEffectsFlags	;IDA: sub_1A66E (93 name). Clear Z80 RAM $8E (Z80_RAM+$8E, the PCM rate byte written by UpdateChannelFrequencyAndVolume): stops the PCM channel
 	move.w	#$100,(IO_Z80BUS).l
 .loop	;IDA: loc_1A676
 	btst	#0,(IO_Z80BUS).l
 	bne.s	.loop
-	clr.b	(byte_A0008E).l
+	clr.b	(Z80_RAM+$8E).l
 	clr.w	(IO_Z80BUS).l
 	rts
 handle_command_10	;no IDA label (93 name). Event $1x: key on note +2 at volume +3 on channel +1 bits 3-0 of track d7 (volume 0 = key off). An FM
-	;patch takes a free channel or the oldest one; a PCM patch ($60 up) sets the sample start / end (pcm_sample_table, 93 pcm_sample_table) in Z80 RAM
+	;patch takes a free channel or the oldest one; a PCM patch ($60 up) sets the sample start / end (pcm_sample_table, 93 name) in Z80 RAM
 	;$23-$28. Then the volume (SetChannelVolume) and the frequency (UpdateChannelFrequencyAndVolume)
 	tst.b	3(a0)
 	beq.s	handle_command_00	;volume 0: key off
@@ -410,10 +410,10 @@ handle_command_10	;no IDA label (93 name). Event $1x: key on note +2 at volume +
 	move.b	d0,3(a2)
 	clr.w	d1
 	move.b	4(a2),d1
-	bset	d1,(byte_FFD186).w
+	bset	d1,(Z80_command_buffer+4).w
 	movea.w	#(per_channel_patch_table-M68K_RAM),a4
 	move.b	d0,0(a4,d1.w)
-	st	(byte_FFD180).w
+	st	(music_needs_z80_update).w
 .keyon	;IDA: loc_1A720
 	clr.b	5(a2)
 	bset	#0,6(a2)
@@ -422,8 +422,8 @@ handle_command_10	;no IDA label (93 name). Event $1x: key on note +2 at volume +
 	move.b	3(a0),2(a2)
 	clr.w	d1
 	move.b	4(a2),d1
-	bset	d1,(dword_FFD182).w
-	bset	d1,(dword_FFD182+1).w
+	bset	d1,(Z80_command_buffer).w
+	bset	d1,(Z80_command_buffer+1).w
 	bsr.w	SetChannelVolume
 	bra.w	UpdateChannelFrequencyAndVolume
 .pcm	;IDA: loc_1A74E
@@ -504,11 +504,11 @@ UpdateChannelFrequencyAndVolume	;IDA: sub_1A7D8 (93 name). Set the frequency of 
 	or.w	d3,d2
 	clr.w	d3
 	move.b	4(a2),d3
-	bset	d3,(dword_FFD182+3).w
+	bset	d3,(Z80_command_buffer+3).w
 	add.w	d3,d3
 	movea.w	#(per_channel_frequency_table-M68K_RAM),a4
 	move.w	d2,0(a4,d3.w)
-	st	(byte_FFD180).w
+	st	(music_needs_z80_update).w
 	rts
 .1	;IDA: loc_1A860
 	btst	#0,6(a2)
@@ -520,7 +520,7 @@ UpdateChannelFrequencyAndVolume	;IDA: sub_1A7D8 (93 name). Set the frequency of 
 	neg.w	d3
 	addq.w	#8,d3
 	lsr.w	d3,d2
-	move.b	d2,(byte_A0008E).l
+	move.b	d2,(Z80_RAM+$8E).l
 	clr.w	(IO_Z80BUS).l
 .x	;IDA: locret_1A88E
 	rts
@@ -567,7 +567,7 @@ UpdateChannelFrequencyAndVolume	;IDA: sub_1A7D8 (93 name). Set the frequency of 
 	dc.w	$F361,$F443,$F525,$F608,$F6EC,$F7D0,$F8B6,$F99C,$FA83,$FB6B
 	dc.w	$FC54,$FD3E,$FE28,$FF13,$FF13
 SetChannelVolume	;IDA: sub_1ABAA. 94 only. Set the volume of channel struct a2: note volume (+2) * the voice volume (voice table +4) / 128. FM: attenuation from
-	;.veltab (volume / 8); PCM: Z80 RAM $83 (byte_A00083, at least 3). Called from handle_command_10 and handle_command_30
+	;.veltab (volume / 8); PCM: Z80 RAM $83 (Z80_RAM+$83, at least 3). Called from handle_command_10 and handle_command_30
 	movem.l	d0,-(sp)
 	clr.w	d0
 	move.b	2(a2),d0
@@ -585,8 +585,8 @@ SetChannelVolume	;IDA: sub_1ABAA. 94 only. Set the volume of channel struct a2: 
 	move.b	4(a2),d3
 	movea.w	#(per_channel_attenuation_table-M68K_RAM),a4
 	move.b	d0,0(a4,d3.w)
-	bset	d3,(dword_FFD182+2).w
-	st	(byte_FFD180).w
+	bset	d3,(Z80_command_buffer+2).w
+	st	(music_needs_z80_update).w
 	movem.l	(sp)+,d0
 	rts
 .veltab	;IDA: unk_1ABF0. attenuation by volume / 8 (93 handle_command_10 .veltab)
@@ -601,7 +601,7 @@ SetChannelVolume	;IDA: sub_1ABAA. 94 only. Set the volume of channel struct a2: 
 	bgt.w	.1
 	moveq	#3,d0
 .1	;IDA: loc_1AC1E
-	move.b	d0,(byte_A00083).l
+	move.b	d0,(Z80_RAM+$83).l
 	clr.w	(IO_Z80BUS).l
 	movem.l	(sp)+,d0
 	rts
@@ -698,7 +698,7 @@ Z80_LoadROM	;IDA name (93 p_initialZ80, 92 initialization). Free all slots, load
 .loop5	;IDA: loc_1AD3E
 	dbf	d0,.loop5
 	move.w	#$100,(IO_Z80RES).l
-	clr.b	(byte_FFD180).w
+	clr.b	(music_needs_z80_update).w
 	movem.l	(sp)+,d0-d2/a0-a2
 	rts
 ClearAllTrackAndSFXSlots	;IDA: sub_1AD54 (93 name). Free the 8 track slots and reset the 6 channel structs (output channels 0, 1, 2, 4, 5, 6). Called from AllSndOff and Z80_LoadROM

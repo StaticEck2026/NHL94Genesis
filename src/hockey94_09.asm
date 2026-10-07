@@ -11,7 +11,7 @@
 ;	The only IDA gap is BitWidthTable (IDA unk_18336, dc.b).
 ;	EA's compiler emits cmp #imm,Dn as CMP (Bxxx), SNASM emits CMPI (0Cxx). The source has the real cmp / cmpi;
 ;	fixopcodes.js patches the cmp encoding after assembly.
-;	RAM (IDA names, 93 names): potree, word_FFCEF2 WinBits, pojoy (93 playoffroundoffset), statsbuffer,
+;	RAM (IDA names, 93 names): potree, WinBits, pojoy (93 playoffroundoffset), statsbuffer,
 ;	tpassbits. gsstruct game ($10 bytes, 93 gstruct): 0 gst1, 2 gst2, 4 gspotwins, 6 gspobwins, 8 gsper, $A gss1, $C gss2,
 ;	$E gsflags (bits 0 gsftf teams flipped, 1 gsfhl hilite, 2 gsfso series over).
 
@@ -105,7 +105,7 @@ NewPO	;IDA name (92 NewPO, 93 SelectRandomPlayoffTree). New playoff generates tr
 	clr.w	6(a0)	;gspobwins
 	adda.w	#$10,a0	;gssize
 	dbf	d0,.cg	;falls into MakeTree
-MakeTree	;IDA name (93 maketree, 92 MakeTree). Make the playoff tree (potree, 93 potree) from playoffseats and the winbits (word_FFCEF2, 93
+MakeTree	;IDA name (93 maketree, 92 MakeTree). Make the playoff tree (potree, 93 name) from playoffseats and the winbits (WinBits, 93
 	;WinBits), clear the scores of this round's games and set their teams (.sett), then FigureJoy. Called from ContinuePlayoffs, EncodePW and hockey94_08
 	;(SetupStart); falls in from NewPO
 	movem.l	d0-d4/a0-a3,-(sp)
@@ -120,7 +120,7 @@ MakeTree	;IDA name (93 maketree, 92 MakeTree). Make the playoff tree (potree, 93
 	move.l	$C(a1),$C(a0)
 	lea	$10(a0),a1
 	moveq	#$E,d2	;15 winners
-	move.w	(word_FFCEF2).w,d0
+	move.w	(WinBits).w,d0
 .0	;IDA: loc_17DB4
 	move.w	d0,d1
 	andi.w	#1,d1	;winbit picks the top or bottom team of the pair
@@ -164,7 +164,7 @@ MakeTree	;IDA name (93 maketree, 92 MakeTree). Make the playoff tree (potree, 93
 	move.b	(a0)+,gst2+1(a1)
 	rts
 FigureJoy	;IDA name (92 / 93 FigureJoy). Set contteams appropriately: cont1team ... cont4team (94 adds 3 and 4 for FourWayPlay). In the playoffs
-	;(not Shootout, word_FFC2FA bit 0) find this round's game of the po team and set the teams and pads from .pojoylist (.pojoylist2 with
+	;(not Shootout, gmode2 bit 0) find this round's game of the po team and set the teams and pads from .pojoylist (.pojoylist2 with
 	;FourWayPlay); otherwise from .noplist by OptNOP. After a demo (demoflag clear), and outside the playoffs, fill gsstruct with random matchups
 	;(InitializeGameStructures). Called from MakeTree and hockey94_08 GameSetUp
 	movem.l	d0-d3/a0-a1,-(sp)
@@ -176,7 +176,7 @@ FigureJoy	;IDA name (92 / 93 FigureJoy). Set contteams appropriately: cont1team 
 	beq.w	.init	;demo ran
 	tst.w	(OptPlayMode).w
 	beq.w	.fjnpo	;regular season
-	btst	#0,(word_FFC2FA).w
+	btst	#0,(gmode2).w
 	bne.w	.fjnpo	;shootout (94)
 	bsr.w	GetShifter
 	movea.w	#(potree-M68K_RAM),a0	;#potree
@@ -368,7 +368,7 @@ ReadPassBits	;IDA: sub_1803E (93 name). Translate the saved bits at a3 (5 words)
 	dbf	d2,.loop
 	move.w	#$4000,d0
 	bsr.w	SuperDiv
-	move.w	d0,(word_FFCEF2).w	;winbits (93 WinBits)
+	move.w	d0,(WinBits).w	;winbits (93 WinBits)
 	move.w	#8,d0
 	bsr.w	SuperDiv
 	move.w	d0,(pojoy).w	;(93 playoffroundoffset)
@@ -452,7 +452,7 @@ WritePassBits	;IDA: sub_18192 (93 name). Transfer the game variables to the bits
 	move.w	(pojoy).w,d0
 	moveq	#8,d1
 	bsr.w	PushBits
-	move.w	(word_FFCEF2).w,d0
+	move.w	(WinBits).w,d0
 	move.w	#$4000,d1	;92 1<<14
 	bsr.w	PushBits
 	moveq	#5,d1
@@ -533,7 +533,7 @@ SuperDiv	;IDA: sub_1826C (93 name). 5 words at a3 divided by 1 word (d0); d0 = r
 	move.w	d2,d0
 	movem.l	(sp)+,d1-d2/a0
 	rts
-GetShifter	;IDA name (92 / 93 GetShifter). Returns d1 = number of games - 1, d2 = first bit of WinBits (word_FFCEF2)
+GetShifter	;IDA name (92 / 93 GetShifter). Returns d1 = number of games - 1, d2 = first bit of WinBits (WinBits)
 	move.l	d0,-(sp)
 	moveq	#-$10,d2
 	moveq	#$10,d1

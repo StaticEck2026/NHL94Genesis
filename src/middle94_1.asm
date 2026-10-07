@@ -272,26 +272,26 @@ song
 ; wait d0 vblanks or until input from either joystick
 ; return joystick variables (d0-d3) if any
 waitx
-	clr.w	(word_FFDED4).w
+	clr.w	(waitxpad).w
 	neg.w	d0
 	move.w	d0,(vcount).w
 .wait
 	bsr.w	ReadJoy1
-	move.w	d3,(word_FFDED4).w
+	move.w	d3,(waitxpad).w
 	tst.w	d1
 	bne.w	rtss2
 	bsr.w	ReadJoy2
-	or.w	d3,(word_FFDED4).w
+	or.w	d3,(waitxpad).w
 	tst.w	d1
 	bne.w	rtss2
 	tst.w	(FourWayPlay).w
 	beq.w	.1
 	bsr.w	ReadJoy3
-	or.w	d3,(word_FFDED4).w
+	or.w	d3,(waitxpad).w
 	tst.w	d1
 	bne.w	rtss2
 	bsr.w	ReadJoy4
-	or.w	d3,(word_FFDED4).w
+	or.w	d3,(waitxpad).w
 	tst.w	d1
 	bne.w	rtss2
 .1	;IDA: loc_111C0
@@ -317,13 +317,13 @@ waitxsr	;92 name (93 IntermissionLoop). Wait d0 vblanks while the zamboni crosse
 	moveq	#1,d7
 	jsr	(updatecrowdf).w		;4EB8: target below $8000 (hockey94_01)
 	jsr	(RunArenaAnim).l
-	clr.w	(word_FFC316).w
+	clr.w	(pausepad).w
 	bclr	#1,(sflags).w
 	bsr.w	ReadJoy1
 	bsr.w	ProcessInputWithRepeat
 	tst.w	d1
 	bne.w	.1
-	clr.w	(word_FFC316).w
+	clr.w	(pausepad).w
 	bset	#1,(sflags).w
 	bsr.w	ReadJoy2
 	bsr.w	ProcessInputWithRepeat
@@ -332,7 +332,7 @@ waitxsr	;92 name (93 IntermissionLoop). Wait d0 vblanks while the zamboni crosse
 	tst.w	(FourWayPlay).w
 	beq.w	.4
 	bclr	#1,(sflags).w
-	move.w	#3,(word_FFC316).w
+	move.w	#3,(pausepad).w
 	bsr.w	ReadJoy3
 	bsr.w	ProcessInputWithRepeat
 	tst.w	d1
@@ -340,7 +340,7 @@ waitxsr	;92 name (93 IntermissionLoop). Wait d0 vblanks while the zamboni crosse
 	tst.w	(FourWayPlay).w
 	beq.w	.4
 	bset	#1,(sflags).w
-	move.w	#4,(word_FFC316).w
+	move.w	#4,(pausepad).w
 	bsr.w	ReadJoy4
 	bsr.w	ProcessInputWithRepeat
 	tst.w	d1
@@ -424,13 +424,13 @@ ProcessInputWithRepeat	;IDA: sub_11318 (93 name). nodiag, then key repeat on d1-
 	beq.w	rtss2
 	tst.w	d2
 	bne.w	.chg
-	subq.w	#1,(word_FFB042).w
+	subq.w	#1,(repeatdelayframes).w
 	bpl.w	rtss2
-	move.w	#4,(word_FFB042).w
+	move.w	#4,(repeatdelayframes).w
 	move.w	d3,d1
 	rts
 .chg	;IDA: loc_11338
-	move.w	#$F,(word_FFB042).w
+	move.w	#$F,(repeatdelayframes).w
 	rts
 ; Read controller 1
 ; return d0 = direction (bit 0-3) and new button (bit 4-7) presses
@@ -438,7 +438,7 @@ ProcessInputWithRepeat	;IDA: sub_11318 (93 name). nodiag, then key repeat on d1-
 ; d2 = changed buttons (all 8)
 ; d3 = current held buttons (all 8)
 ReadJoy1
-	move.b	(byte_FFBEF6).w,d0
+	move.b	(pad4way1).w,d0
 	bsr.w	ReadJoy
 	move.w	(lj1).w,d2
 	move.w	d1,(lj1).w
@@ -452,7 +452,7 @@ ReadJoy1
 ; d2 = changed buttons (all 8)
 ; d3 = current held buttons (all 8)
 ReadJoy2
-	move.b	(byte_FFBEF7).w,d0
+	move.b	(pad4way2).w,d0
 	bsr.w	ReadJoy
 	move.w	(lj2).w,d2
 	move.w	d1,(lj2).w
@@ -461,7 +461,7 @@ ReadJoy2
 	and.w	d2,d1
 	rts
 ReadJoy3
-	move.b	(byte_FFBEF8).w,d0
+	move.b	(pad4way3).w,d0
 	bsr.w	ReadJoy
 	move.w	(lj3).w,d2
 	move.w	d1,(lj3).w
@@ -470,7 +470,7 @@ ReadJoy3
 	and.w	d2,d1
 	rts
 ReadJoy4
-	move.b	(byte_FFBEF9).w,d0
+	move.b	(pad4way4).w,d0
 	bsr.w	ReadJoy
 	move.w	(lj4).w,d2
 	move.w	d1,(lj4).w

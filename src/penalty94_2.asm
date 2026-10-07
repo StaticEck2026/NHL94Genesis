@@ -21,14 +21,14 @@
 
 PrintScores1	;IDA name (93 printscores1). Draw scoreboard. Vertical rink: period box and the score box (team names and scores). Horizontal rink
 	;(.sbscreen, 93 .sbscreen): period and both team logos with big scores. 94: the period name is gsp of unk_191E4, or name 4 of PenShotPenalties2
-	;when word_FFC2FA bit 1 is set; the horizontal rink uses PenShotPenalties2 (name 4 when bit 0 is set). word_FFC2F6 bit 7 sets word_FFC304 = $78.
+	;when gmode2 bit 1 is set; the horizontal rink uses PenShotPenalties2 (name 4 when bit 0 is set). sflags5 bit 7 sets crowdnoisedelay = $78.
 	;Called from USBoard, Pausemode, lcfound2 and others
 	movem.l	d0-d2/a0-a3,-(sp)
 	btst	#sfhor,(sflags).w	;sfhor
 	bne.w	.sbscreen
-	bclr	#7,(word_FFC2F6).w	;94 only
+	bclr	#7,(sflags5).w	;94 only
 	beq.w	.0
-	move.w	#$78,(word_FFC304).w
+	move.w	#$78,(crowdnoisedelay).w
 .0	;IDA: loc_12C22
 	bsr.w	printz
 	String	$BF,0,$17
@@ -40,7 +40,7 @@ PrintScores1	;IDA name (93 printscores1). Draw scoreboard. Vertical rink: period
 	String	$BF,1,$18
 	move.w	(gsp).w,d0	;period name
 	movea.l	#PerLabels,a1	;93 PerLabels
-	btst	#1,(word_FFC2FA).w	;94 only
+	btst	#1,(gmode2).w	;94 only
 	beq.w	.1
 	move.w	#4,d0
 	movea.l	#PenShotPenalties2,a1
@@ -69,7 +69,7 @@ PrintScores1	;IDA name (93 printscores1). Draw scoreboard. Vertical rink: period
 	bsr.w	printz
 	String	$BE,$11,2
 	move.w	(gsp).w,d0	;IDA hid this in the string (ori.b / andi.b / and.w)
-	btst	#0,(word_FFC2FA).w
+	btst	#0,(gmode2).w
 	beq.w	.2
 	move.w	#4,d0
 .2	;IDA: loc_12CCC
@@ -133,7 +133,7 @@ EASNLogo	;IDA: sub_12D70 (93 name). Draw the EASN logo map at x 1, y $19 on the 
 	clr.w	d1
 	move.w	(a1),d2	;width and height from the map header
 	move.w	2(a1),d3
-	move.w	(word_FFB020).w,d4	;93 EASNcset
+	move.w	(EASNcset).w,d4	;93 EASNcset
 	clr.w	d5
 	bra.w	dobitmap
 USBoard	;IDA: sub_12DA6 (93 name). Update score board, including the players in the penalty box and their time remaining. Called from InProgress and SetHor
@@ -216,7 +216,7 @@ linebar	;IDA: sub_12E66 (93 name). Draw the energy bar of line d0 for team a2 at
 	movea.w	#$30A,a2	;93 #$310
 	move.w	(a1),d2
 	moveq	#1,d3
-	move.w	(word_FFB016).w,d4
+	move.w	(energybarchars).w,d4
 	moveq	#0,d5
 	bsr.w	dobitmap
 	move.w	(sp)+,(printa).w
@@ -270,7 +270,7 @@ AvgCline	;IDA: sub_12EF6 (93 name). Return d0 = average energy of current line o
 	movem.l	(sp)+,d1-d3/a0
 	rts
 ChkShotStat	;determine if shot taken, add to appropriate stats. As 93: crowd, team, shooter and goalie shots against. 94 adds: nothing while the
-	;clock is stopped or in a highlight, PP shots ($354) and period shots ($34A), and a second path (word_FFC2F4 bit 0, byte_FFC2FE bit 3 every
+	;clock is stopped or in a highlight, PP shots ($354) and period shots ($34A), and a second path (sflags4 bit 0, sflags8 bit 3 every
 	;second call) that counts the shot for the player in the last ScoreSum entry
 	btst	#0,(gmode).w	;gmclock: clock stopped
 	bne.w	rtss2	;exit if so
@@ -278,11 +278,11 @@ ChkShotStat	;determine if shot taken, add to appropriate stats. As 93: crowd, te
 	bne.w	rtss2	;exit if so
 	bclr	#4,(sflags2).w	;sf2shot: shot taken
 	bne.w	.Cwdupdate	;it was set
-	btst	#0,(word_FFC2F4).w	;94 only
+	btst	#0,(sflags4).w	;94 only
 	beq.w	rtss2	;exit if cleared
-	bclr	#3,(byte_FFC2FE).w
+	bclr	#3,(sflags8).w
 	bne.w	.0
-	bset	#3,(byte_FFC2FE).w
+	bset	#3,(sflags8).w
 	bra.w	rtss2
 .0	;IDA: loc_12F6C
 	movem.l	d0-d1/a1-a3,-(sp)
@@ -407,7 +407,7 @@ reenergizeteam	;IDA: sub_130BE (93 name). Set all players to max energy on team 
 	rts
 Intermission	;end of period junk (zamboni/stats). As 93: opens the pause menu screen (item list by period, +5 in playoffs), shows the ticker scores
 	;of the other games, then the highlights; Start on either pad cuts it short. 94: when gsp is 4 the clock is cleared and UpdateRecords runs first,
-	;and word_FFC2FA bit 0 picks the ShootoutIntermissionMenu item list. Called from PeriodOver
+	;and gmode2 bit 0 picks the ShootoutIntermissionMenu item list. Called from PeriodOver
 	cmpi.w	#4,(gsp).w
 	bne.w	.1
 	move.w	#0,(gameclock).w
@@ -432,7 +432,7 @@ Intermission	;end of period junk (zamboni/stats). As 93: opens the pause menu sc
 	asl.w	#2,d0
 	lea	.sslist(pc),a0
 	movea.l	0(a0,d0.w),a0
-	btst	#0,(word_FFC2FA).w	;94 only
+	btst	#0,(gmode2).w	;94 only
 	beq.w	.2
 	movea.l	#ShootoutIntermissionMenu,a0
 .2	;IDA: loc_1314C
@@ -557,8 +557,8 @@ getscore	;IDA name (93 SetScore .getscore). d0 = scoring team, d1 = other team. 
 	andi.w	#$70,d0
 	lsr.w	#1,d0	;row * 8
 	lea	sctab(pc),a1
-	move.l	0(a1,d0.w),(dword_FFD036).w	;93 dword_FFCACA
-	move.l	4(a1,d0.w),(dword_FFD03A).w	;93 dword_FFCACE
+	move.l	0(a1,d0.w),(nibblebuffer).w	;93 dword_FFCACA
+	move.l	4(a1,d0.w),(nibblebuffer+4).w	;93 dword_FFCACE
 	asl.w	#2,d1
 	movea.w	#$30E,a1	;TeamList
 	movea.l	0(a1,d1.w),a1
@@ -568,9 +568,9 @@ getscore	;IDA name (93 SetScore .getscore). d0 = scoring team, d1 = other team. 
 	asl.w	#3,d0
 	lea	sctab(pc),a1
 	move.l	0(a1,d0.w),d1
-	add.l	d1,(dword_FFD036).w
+	add.l	d1,(nibblebuffer).w
 	move.l	4(a1,d0.w),d1
-	add.l	d1,(dword_FFD03A).w
+	add.l	d1,(nibblebuffer+4).w
 	moveq	#4,d0	;4 weights
 	bra.w	WeightedRandomSelect
 sctab	;IDA name (93 SetScore .sctab). Weights for 0, 1, 2, 3 goals, 8 rows (92 had 4 percent bytes per row)
@@ -734,8 +734,8 @@ StartHL2	;IDA: loc_13550 (93 name). Play hilite for game a0. Start skips it with
 	move.w	(a0),(HomeTeam).w	;set up teams for game in a0
 	move.w	2(a0),(VisTeam).w
 	move.l	a0,-(sp)
-	clr.w	(word_FFC6F4).w	;93 word_FFC50C
-	clr.w	(word_FFCA58).w	;93 word_FFC6AE
+	clr.w	(HmShots+tmgoalie).w	;93 word_FFC50C
+	clr.w	(AwShots+tmgoalie).w	;93 word_FFC6AE
 	jsr	(clearTeamStats).l
 	jsr	(restoreteams).w
 	st	(c1playernum).w
@@ -879,12 +879,12 @@ StartHL2	;IDA: loc_13550 (93 name). Play hilite for game a0. Start skips it with
 .nhl0	;IDA: loc_137F6
 	bsr.w	.ranres	;IDA: loc_137F6 (93 .nhl0)
 	bra.s	.exit
-.setteam	;IDA: sub_137FC (93 .setteam, IDA SetupTeamForReplay). Refill energy, set personnel; 94 also clears byte_FFC2FE bit 7
+.setteam	;IDA: sub_137FC (93 .setteam, IDA SetupTeamForReplay). Refill energy, set personnel; 94 also clears sflags8 bit 7
 	jsr	(reenergizeteam).l
 	bsr.w	SetPersonel
 	bsr.w	forcepldata
 	st	$18(a2)
-	bclr	#7,(byte_FFC2FE).w
+	bclr	#7,(sflags8).w
 	st	$1A(a2)
 	st	$1C(a2)
 	rts

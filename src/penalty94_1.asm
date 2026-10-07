@@ -79,26 +79,26 @@ PenaltyManager	;called periodically. d7 = elapsed time since last call
 	bsr.w	chkprogress
 	bra.w	UpdatePA
 chkprogress	;control progress of ref and game control thru penalty events. 94: while BA_PS_flags bit 2 is set (penalty shot), bit 7 calls
-	;PenaltyShotBox and word_FFC31A counts down; when it runs out the message area is erased. Then as 93: when the stop delay runs out and a penalty
+	;PenaltyShotBox and msgtimer counts down; when it runs out the message area is erased. Then as 93: when the stop delay runs out and a penalty
 	;with minutes is in PenBuf, switch to the horizontal rink for the player to enter the penalty box
 	btst	#2,(BA_PS_flags).w	;94 only, to .cont
 	beq.w	.cont
 	btst	#7,(BA_PS_flags).w
 	bne.w	.sops
-	tst.w	(word_FFC31A).w
+	tst.w	(msgtimer).w
 	bmi.w	.cont
-	subq.w	#1,(word_FFC31A).w
+	subq.w	#1,(msgtimer).w
 	bpl.w	.ex
 	movem.l	d0-d7/a0-a6,-(sp)
 	bclr	#2,(sflags2).w	;sf2drec
-	bclr	#7,(word_FFC2FA).w
+	bclr	#7,(gmode2).w
 	bsr.w	printz
 	String	$FF,3,2
 	moveq	#$1B,d0
 	moveq	#8,d1
-	btst	#0,(word_FFC2FA).w
+	btst	#0,(gmode2).w
 	beq.w	.0
-	move.w	#$C,d1	;12 rows when word_FFC2FA bit 0 is set
+	move.w	#$C,d1	;12 rows when gmode2 bit 0 is set
 .0	;IDA: loc_12052
 	move.l	#$7FF,d2	;blank tile
 	jsr	(eraser).l
@@ -152,7 +152,7 @@ chkprogress	;control progress of ref and game control thru penalty events. 94: w
 	move.w	#$18,(palcount).w	;24
 	rts
 PenShotChk	;94 only. a3 = checker, a2 = player hit, d0 = penalty. If a2 is on a breakaway ($64 bit 1), no penalty shot is pending (BA_PS_flags
-	;bit 3) and PenShotPenalties has an entry for d0, getBAplayerInfo sets one up and d0 = that penalty (also word_FFD410). Called from CCStart before
+	;bit 3) and PenShotPenalties has an entry for d0, getBAplayerInfo sets one up and d0 = that penalty (also pspenalty). Called from CCStart before
 	;AddPenalty
 	movem.l	d1-d3/a0,-(sp)
 	btst	#1,$64(a2)	;breakaway
@@ -175,7 +175,7 @@ PenShotChk	;94 only. a3 = checker, a2 = player hit, d0 = penalty. If a2 is on a 
 	bclr	#3,(BA_PS_flags).w
 	bra.s	.loop
 .1	;IDA: loc_12168
-	move.w	d1,(word_FFD410).w
+	move.w	d1,(pspenalty).w
 	move.w	d1,d0	;return the penalty shot penalty
 .end
 	movem.l	(sp)+,d1-d3/a0
@@ -262,14 +262,14 @@ InProgress	;ref in progress-- update graphics and stats and penalty information.
 	move.b	(a0),d0
 	movea.l	#PenaltyList,a1
 	adda.w	0(a1,d0.w),a1
-	bclr	#5,(word_FFC2F6).w	;94 only: bit 5 = this penalty is 5 minutes
+	bclr	#5,(sflags5).w	;94 only: bit 5 = this penalty is 5 minutes
 	clr.w	d2
 	move.b	1(a1),d2	;penalty minutes
 	beq.w	.sa2	;no player involved
 	bmi.w	.sa2	;94: negative minutes too
 	cmp.b	#5,d2
 	bne.w	.1
-	bset	#5,(word_FFC2F6).w
+	bset	#5,(sflags5).w
 .1	;IDA: loc_1229A
 	movem.l	d0-d1/a1-a4,-(sp)
 	bsr.w	GetPeriodTimeRemaining	;93 GetPeriodTimeRemaining. Log time, penalty and player
@@ -324,7 +324,7 @@ InProgress	;ref in progress-- update graphics and stats and penalty information.
 	andi.w	#$EFFF,d3
 	cmp.w	d3,d2
 	bne.s	.ctop
-	btst	#5,(word_FFC2F6).w	;94 only: coincidental for a 5 minute penalty only
+	btst	#5,(sflags5).w	;94 only: coincidental for a 5 minute penalty only
 	beq.s	.ctop
 	bset	#6,tmpdst(a1,d1.w)	;coincidental (byte bit 6, word bit 14)
 	bset	#6,tmpdst(a2,d0.w)
@@ -533,7 +533,7 @@ limitfo	;limit face off to 5-20 feet from walls of rink. Checks every player in 
 .1	;IDA: loc_125E2
 	move.w	d0,(fox).w
 	rts
-UpdatePA	;animate ref in ref window. As 93: DisplayPeriodOver (94 sub_1850A) for game over, and the horizontal penalty message line is reprinted when word_FFC3EE (93 word_FFC2BA) runs out
+UpdatePA	;animate ref in ref window. As 93: DisplayPeriodOver (94 sub_1850A) for game over, and the horizontal penalty message line is reprinted when penmsgtimer (93 word_FFC2BA) runs out
 	tst.w	(RefCnt).w
 	bmi.w	rtss2
 	sub.w	d7,(RefCnt).w
@@ -544,9 +544,9 @@ UpdatePA	;animate ref in ref window. As 93: DisplayPeriodOver (94 sub_1850A) for
 	bne.w	.1
 	bsr.w	DisplayPeriodOver	;93 DisplayPeriodOver
 .1	;IDA: loc_1260C
-	sub.w	d7,(word_FFC3EE).w
+	sub.w	d7,(penmsgtimer).w
 	bpl.w	rtss2
-	move.w	#$7FFF,(word_FFC3EE).w
+	move.w	#$7FFF,(penmsgtimer).w
 	bsr.w	PrintPenaltyMessagesString
 	bsr.w	printz
 	String	$BF,$11,$B	;IDA: ori.b / btst d5,d0
@@ -555,7 +555,7 @@ UpdatePA	;animate ref in ref window. As 93: DisplayPeriodOver (94 sub_1850A) for
 	lsr.w	#1,d0
 	sub.w	d0,(printx).w	;center it
 	bra.w	print
-SetPA	;start ref animation. d0 = animation (penalty number). 94: animations from $2E up are ignored, and ShootoutWonBy is called when word_FFC2FA bits 0
+SetPA	;start ref animation. d0 = animation (penalty number). 94: animations from $2E up are ignored, and ShootoutWonBy is called when gmode2 bits 0
 	;and 3 are set. Goal calls loc_1889A (93 DisplayPlayerAttributeMenu). Falls into SetPA2
 	move.w	d0,(RefPen).w
 	cmp.w	#$2E,d0	;94 only: not on the penalty list
@@ -568,18 +568,18 @@ SetPA	;start ref animation. d0 = animation (penalty number). 94: animations from
 	bne.w	.2
 	bsr.w	DisplayPlayerAttributeMenu	;93 DisplayPlayerAttributeMenu
 .2	;IDA: loc_1265A
-	btst	#0,(word_FFC2FA).w	;94 only
+	btst	#0,(gmode2).w	;94 only
 	beq.w	.0
-	btst	#3,(word_FFC2FA).w
+	btst	#3,(gmode2).w
 	beq.w	.0
 	jsr	(ShootoutWonBy).l
 .0	;IDA: loc_12674
-	move.w	#$7FFF,(word_FFC3EE).w
+	move.w	#$7FFF,(penmsgtimer).w
 	btst	#sfhor,(sflags).w	;sfhor
 	beq.w	SetPA2
-	move.w	#$3C,(word_FFC3EE).w	;60
+	move.w	#$3C,(penmsgtimer).w	;60
 SetPA2	;IDA: setPA2 (93 SetPA2). update animation for ref. Next frame/delay pair from the PenaltyList animation of RefPen. 94: the delay is doubled
-	;when word_FFC2FA bits 0 and 3 are set. Also called from UpdatePA
+	;when gmode2 bits 0 and 3 are set. Also called from UpdatePA
 	movem.l	d0-d2/a0-a1,-(sp)
 	moveq	#$40,d0	;clear ref window
 	tst.w	(RefStep).w
@@ -600,9 +600,9 @@ SetPA2	;IDA: setPA2 (93 SetPA2). update animation for ref. Next frame/delay pair
 	move.b	d0,d1
 	asl.w	#3,d1
 	move.w	d1,(RefCnt).w
-	btst	#0,(word_FFC2FA).w	;94 only
+	btst	#0,(gmode2).w	;94 only
 	beq.w	.1
-	btst	#3,(word_FFC2FA).w
+	btst	#3,(gmode2).w
 	beq.w	.1
 	move.w	d0,-(sp)
 	move.w	(RefCnt).w,d0
@@ -737,8 +737,8 @@ PenGoalStuff	;IDA: sub_1284A (93 name). do this stuff after a goal. a1 = scored 
 	bset	#0,(DelayedPen).w	;94 only
 	addq.w	#1,tmap(a1)	;tmap
 	addq.w	#1,tmPwrGoals(a2)	;tmPwrGoals
-	bset	#0,(byte_FFC6FE).w	;home tmflags: tmflcc
-	bset	#0,(byte_FFCA62).w	;visitors tmflags: tmflcc
+	bset	#0,(HmShots+tmflags).w	;home tmflags: tmflcc
+	bset	#0,(AwShots+tmflags).w	;visitors tmflags: tmflcc
 .ex	;IDA: loc_1289E
 	movem.l	(sp)+,d0-d2/a0
 	rts
@@ -855,8 +855,8 @@ releasepl	;IDA: sub_129D2 (93 name). player's penalty time is up so let him out 
 	lsr.w	#1,d3
 	move.w	tmap(a2),d1	;tmap
 	addq.w	#1,tmap(a2)
-	bset	#0,(byte_FFC6FE).w	;home tmflags: tmflcc
-	bset	#0,(byte_FFCA62).w	;visitors tmflags: tmflcc
+	bset	#0,(HmShots+tmflags).w	;home tmflags: tmflcc
+	bset	#0,(AwShots+tmflags).w	;visitors tmflags: tmflcc
 	movea.l	#priolist,a0
 	tst.w	tmgoalie(a2)	;tmgoalie
 	bpl.w	.1
@@ -899,9 +899,9 @@ CalcPenTime	;93 GetLowestPen. a2 = shorthanded team, a3 = team on the power play
 	blt.w	rtss2
 	add.w	d3,d0
 	rts
-updatepwrplay	;show graphic and time remaining for power plays. 94: nothing when word_FFC2FA bit 1 is set, and no song at the start of a home power
+updatepwrplay	;show graphic and time remaining for power plays. 94: nothing when gmode2 bit 1 is set, and no song at the start of a home power
 	;play (the 93 test is left and both ways go to .uppt). Prints the time and the team on the power play
-	btst	#1,(word_FFC2FA).w	;94 only
+	btst	#1,(gmode2).w	;94 only
 	bne.w	rtss2
 	movea.w	#(HmShots-M68K_RAM),a2
 	lea	tmsize(a2),a3	;tmsize

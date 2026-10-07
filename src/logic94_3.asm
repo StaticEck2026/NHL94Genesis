@@ -29,7 +29,7 @@ asswingo
 	sub.b	d7,temp1(a3)	;subtract frames elapsed from temp1
 	bpl.w	.nodec	;branch if positive
 	move.b	aidef(a3),temp1(a3)	;move DfA into temp1
-	btst	#6,(byte_FFC2FC).w	;check if crowd meter currently broken
+	btst	#6,(sflags7).w	;check if crowd meter currently broken
 	beq.w	.noboost
 	tst.b	$40(a3)	;check if temp1 is 0
 	beq.w	.noboost
@@ -136,7 +136,7 @@ asscenterd
 	sub.b	d7,temp1(a3)	;subtract d7 from temp1
 	bpl.w	.nodec
 	move.b	aidef(a3),temp1(a3)	;move aidef into temp1
-	btst	#6,(byte_FFC2FC).w	;check for crowd record flag
+	btst	#6,(sflags7).w	;check for crowd record flag
 	beq.w	.puckcarrier	;jump if not set
 	tst.b	$40(a3)	;check if 0
 	beq.w	.puckcarrier
@@ -188,7 +188,7 @@ asscentero
 	sub.b	d7,temp1(a3)	;subtract d7 from temp1 (d7 = elapsed frames)
 	bpl.w	.nodec	;branch if temp1 not zero or neg
 	move.b	aidef(a3),temp1(a3)	;move aidef into temp1
-	btst	#6,(byte_FFC2FC).w	;check if crowd record broken
+	btst	#6,(sflags7).w	;check if crowd record broken
 	beq.w	.noboost
 	tst.b	$40(a3)	;check if temp1 is 0
 	beq.w	.noboost
@@ -352,7 +352,7 @@ assgoaliectrl
 	bpl.w	.ex	;branch if positive
 	move.b	$6B(a3),d0	;DfA into d0
 	beq.w	.3	;branch if value was 0
-	btst	#6,(byte_FFC2FC).w	;check if crowd meter broken
+	btst	#6,(sflags7).w	;check if crowd meter broken
 	beq.w	.3	;jump if not
 	subq.b	#1,d0	;sub 1 from d0
 .3	;IDA: loc_D508
@@ -369,19 +369,19 @@ assgoaliecpu
 	bne.w	assgoaliectrl	;branch if so
 checkanim	;IDA: _checkanim, a local of assgoaliecpu. Global here: assgoaliectrl branches to it
 	move.w	(puckx).w,(TmpPuckX).w
-	btst	#0,(word_FFC2F4).w	;test bit 0
+	btst	#0,(sflags4).w	;test bit 0
 	beq.w	.assstart
 	btst	#1,$63(a3)	;check if animation in progress
 	bne.w	.assstart	;branch if so
-	btst	#1,(word_FFC2F4).w	;test bit 1
+	btst	#1,(sflags4).w	;test bit 1
 	beq.w	.0	;branch if 0
-	btst	#3,(word_FFC2F4).w	;test bit 3
+	btst	#3,(sflags4).w	;test bit 3
 	bne.w	.assstart	;branch if set
 	cmpi.w	#$2C4,6(a3)	;compare to alice frame number
 	bne.w	.assstart	;branch if not equal
 	cmpi.w	#$2C8,6(a3)	;compare to alice frame number
 	bne.w	.assstart	;branch if not equal
-	bset	#3,(word_FFC2F4).w	;set bit 3
+	bset	#3,(sflags4).w	;set bit 3
 	move.w	#$1C,-(sp)	;SFX
 	bsr.w	sfx
 	bra.w	.assstart	;set bit 3
@@ -396,8 +396,8 @@ checkanim	;IDA: _checkanim, a local of assgoaliecpu. Global here: assgoaliectrl 
 	bgt.w	.assstart	;branch if greater
 	cmpi.w	#$FFEC,(a3)	;compare -14 to Xpos
 	ble.w	.assstart	;branch if less than
-	bset	#1,(word_FFC2F4).w	;set bit 1
-	bclr	#3,(word_FFC2F4).w	;clear bit 3
+	bset	#1,(sflags4).w	;set bit 1
+	bclr	#3,(sflags4).w	;clear bit 3
 	move.w	#$1596,d1	;SPAgslamtop (frames94): goalie stick slam after a goal, top net
 	btst	#7,$62(a3)	;check what goal shooting at
 	beq.w	.1	;branch if bottom
@@ -442,7 +442,7 @@ checkanim	;IDA: _checkanim, a local of assgoaliecpu. Global here: assgoaliectrl 
 .noskate
 	btst	#1,$63(a3)	;check if anim in progress
 	bne.w	rtss2	;exit if so
-	btst	#0,(word_FFC2F4).w	;check bit 0
+	btst	#0,(sflags4).w	;check bit 0
 	beq.w	.noskate3	;branch if not set
 	cmpi.w	#$2C5,6(a3)	;check alice frame
 	beq.w	.noskate2	;branch if equal
@@ -482,7 +482,7 @@ checkanim	;IDA: _checkanim, a local of assgoaliecpu. Global here: assgoaliectrl 
 	bpl.w	.nodec	;branch if still positive
 	move.b	$6B(a3),d0	;move aidef into d0 (DfA)
 	beq.w	.nofo2	;branch if 0
-	btst	#6,(byte_FFC2FC).w	;check if crowd meter broken
+	btst	#6,(sflags7).w	;check if crowd meter broken
 	beq.w	.nofo2	;branch if not
 	subq.b	#1,d0	;sub from d0
 .nofo2
@@ -683,7 +683,7 @@ checkanim	;IDA: _checkanim, a local of assgoaliecpu. Global here: assgoaliectrl 
 .16	;IDA: loc_D996
 	add.w	d3,d1
 	move.w	d1,d2
-	btst	#0,(word_FFC2FA).w
+	btst	#0,(gmode2).w
 	bne.w	.18
 	btst	#2,(BA_PS_flags).w
 	bne.w	.18
@@ -981,7 +981,7 @@ assgoalietopuck
 	bpl.w	.go
 	move.b	aidef(a3),d0	;aidef
 	beq.w	.1
-	btst	#6,(byte_FFC2FC).w
+	btst	#6,(sflags7).w
 	beq.w	.1
 	subq.b	#1,d0
 .1	;IDA: loc_DD70
@@ -1008,7 +1008,7 @@ assgoalietopuck
 .go	;IDA: loc_DDC0
 	bra.w	skatetopuck
 breakaway
-	bset	#2,(word_FFC2F6).w
+	bset	#2,(sflags5).w
 	bclr	#1,$62(a3)	;pfna - clear new assignment
 	beq.w	.nna	;jump if no new assignment
 	move.w	#1,-(sp)	;ding SFX
@@ -1099,7 +1099,7 @@ BreakawayOffsidesFlagSet
 	dbf	d0,.checkYpos
 	bra.s	.setBAbit
 chkpuckc
-	btst	#0,(word_FFC2FA).w
+	btst	#0,(gmode2).w
 	bne.w	.0
 	btst	#2,(BA_PS_flags).w
 	bne.w	.0
@@ -1110,7 +1110,7 @@ chkpuckc
 	move.w	#$10,d0	;asspuckc
 	bsr.w	assreplace
 asspuckc
-	bclr	#2,(word_FFC2F6).w
+	bclr	#2,(sflags5).w
 	bne.w	.0
 	bclr	#1,$64(a3)
 .0	;IDA: loc_DF28
@@ -1119,7 +1119,7 @@ asspuckc
 	bne.w	assexit
 	btst	#2,(BA_PS_flags).w
 	beq.w	.1
-	cmpi.w	#1,(word_FFC31A).w
+	cmpi.w	#1,(msgtimer).w
 	bgt.w	.x
 .1	;IDA: loc_DF48
 	btst	#1,$64(a3)
@@ -1172,7 +1172,7 @@ asspuckc
 	move.b	aioff(a3),temp1(a3)
 	jsr	(ReadGoaliePulled).l
 	bmi.w	.8
-	btst	#6,(byte_FFC2FC).w
+	btst	#6,(sflags7).w
 	beq.w	.9
 	tst.b	$40(a3)
 	beq.w	.9
@@ -1181,11 +1181,11 @@ asspuckc
 .9	;IDA: loc_E036
 	btst	#2,(BA_PS_flags).w
 	bne.w	.12
-	btst	#0,(word_FFC2FA).w
+	btst	#0,(gmode2).w
 	bne.w	.12
 	bsr.w	checkob
 	bsr.w	AutoLineChange
-	btst	#0,(word_FFC2FA).w
+	btst	#0,(gmode2).w
 	bne.w	.12
 	btst	#2,(BA_PS_flags).w
 	bne.w	.12
@@ -1224,11 +1224,11 @@ asspuckc
 	move.w	0(a0,d0.w),d0
 	btst	#2,(BA_PS_flags).w
 	bne.w	.14
-	btst	#0,(word_FFC2FA).w
+	btst	#0,(gmode2).w
 	beq.w	.15
 .14	;IDA: loc_E0EE
 	jsr	(SkatePath).l
-	cmpi.b	#$80,(word_FFDA16).w
+	cmpi.b	#$80,(sopathx).w
 	beq.w	.x
 .15	;IDA: loc_E0FE
 	btst	#7,pflags(a3)	;pfgoal - 0 for bottom 1 for top
@@ -1239,7 +1239,7 @@ asspuckc
 	lea	.chkdir(pc),a0
 	btst	#2,(BA_PS_flags).w
 	bne.w	.16
-	btst	#0,(word_FFC2FA).w
+	btst	#0,(gmode2).w
 	beq.w	.17
 .16	;IDA: loc_E124
 	lea	.x(pc),a0
@@ -1316,7 +1316,7 @@ asspuckc
 	dc.w	$1E
 	dc.w	$E6
 AutoLineChange	;IDA: sub_E1F4
-	btst	#4,(byte_FFC2FC).w
+	btst	#4,(sflags7).w
 	bne.w	rtss2
 	move.w	(pucky).w,d0
 	btst	#7,$62(a3)
@@ -1382,7 +1382,7 @@ chk4shot
 	cmp.w	$14(a3),d0
 	bgt.w	compshoot	;clear puck
 .0	;IDA: loc_E2D4
-	bset	#3,(word_FFC2F6).w
+	bset	#3,(sflags5).w
 	jmp	dopass
 	dc.b	$60	;`
 	dc.b	0,1

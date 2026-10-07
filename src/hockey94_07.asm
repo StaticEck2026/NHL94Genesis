@@ -55,7 +55,7 @@ ScoutCrowdRecordBy	;no IDA label (was sub_FCBD8) (IDA dc.b, no xref). 94 only, u
 	clr.w	d2
 	move.b	9(a0),d2
 	movea.l	#$FFFFBF20,a1	;name String buffer
-	bset	#7,(word_FFC2F8).w
+	bset	#7,(sflags6).w
 	bsr.w	AppendUserName
 	jsr	(appstring).l	;append the name
 	movea.l	#ScoutSpaceTxt,a1
@@ -86,7 +86,7 @@ ScoutingReport	;IDA: sub_FCC76 (93 name). 94 pregame MATCHUPS screen, called fro
 	;UpdateScoutingDisplay) types the paragraph list. A / C page the matchups (the page also turns by itself about every $10E frames), down types fast, start leaves
 	jsr	(ReadNameLog).l	;read the $80 byte SRAM name list at $DA0 to $FFD45A
 	jsr	(BuildHotColdLists).l	;hot / cold players for the text (not matched yet)
-	clr.w	(word_FFD5A4).w	;advantage mark frame
+	clr.w	(advframe).w	;advantage mark frame
 	move.w	#$7A,-(sp)	;song $7A (93 $37)
 	jsr	(song).l
 	move.l	#vb2,(vbint).w
@@ -104,16 +104,16 @@ ScoutingReport	;IDA: sub_FCC76 (93 name). 94 pregame MATCHUPS screen, called fro
 	move.w	#0,d0	;fade to color
 	jsr	(setvram).l
 	move.w	#2,d4	;vram chars from 2
-	move.w	d4,(word_FFD430).w	;home picture chars (6 x 6)
+	move.w	d4,(homepicchars).w	;home picture chars (6 x 6)
 	addi.w	#$24,d4
-	move.w	d4,(word_FFD432).w	;visitors picture chars
+	move.w	d4,(vispicchars).w	;visitors picture chars
 	addi.w	#$24,d4
-	move.w	d4,(word_FFB010).w	;93 BigFontChars
+	move.w	d4,(BigFontChars).w	;93 BigFontChars
 	movea.l	#BigFontMap+8,a2	;big font tiles
 	jsr	(DecompressGraphicsWithCallback).l
 	dc.l	$05431567,$79ABCDEF	;remap table (IDA: bchg / move.b / muls.w / ori.b)
 	jsr	(AddSmallFont).l	;IDA hid this in the table
-	move.w	d4,(word_FFB014).w	;1st vram char of the 2nd small font set (93)
+	move.w	d4,(smallfont2chars).w	;1st vram char of the 2nd small font set (93)
 	movea.l	#SmallFontMap+8,a2	;small font tiles (as AddSmallFont), remapped
 	jsr	(DecompressGraphicsWithCallback).l
 	dc.l	$0A234567,$89ABCDEF	;remap table (IDA: eori.b / or.l)
@@ -136,7 +136,7 @@ ScoutingReport	;IDA: sub_FCC76 (93 name). 94 pregame MATCHUPS screen, called fro
 	jsr	(dobitmap).l
 	jsr	(printbigz).l
 	String	$DF,$C,$D,'MATCHUPS'	;IDA: ori.b / movep.l / subq x2 (and dropped a word)
-	move.w	#0,(word_FFB030).w	;char set 0
+	move.w	#0,(printfontset).w	;char set 0
 	jsr	(printz).l
 	String	$FF,$10,$11,'ADVANTAGE:'	;IDA: ori.b / move.b / addq / move.w (and dropped a word)
 	jsr	(printz).l
@@ -168,14 +168,14 @@ ScoutingReport	;IDA: sub_FCC76 (93 name). 94 pregame MATCHUPS screen, called fro
 	moveq	#$C,d5	;color fam 3-4
 	jsr	(dobitmap).l
 	movea.l	#HotIconMap+8,a2
-	move.w	d4,(word_FFDEE4).w	;tiles: 1st vram char
+	move.w	d4,(hoticonchars).w	;tiles: 1st vram char
 	jsr	(DoDMA_clearCallbackPointer).l
 	movea.l	#ColdIconMap+8,a2
-	move.w	d4,(word_FFDEE6).w	;tiles: 1st vram char
+	move.w	d4,(coldiconchars).w	;tiles: 1st vram char
 	jsr	(DoDMA_clearCallbackPointer).l
-	clr.w	(word_FFD598).w	;matchup 0: the teams
-	clr.w	(word_FFD59A).w
-	move.w	#$10D,(word_FFD5A8).l	;frames to the next matchup
+	clr.w	(matchup).w	;matchup 0: the teams
+	clr.w	(scoutunused).w
+	move.w	#$10D,(matchuptimer).l	;frames to the next matchup
 	bsr.w	GetMatchupPlayers	;the matchup players
 	bsr.w	DrawMatchupPictures	;pictures
 	bsr.w	PrintMatchupRatings	;ratings
@@ -206,24 +206,24 @@ ScoutingReport	;IDA: sub_FCC76 (93 name). 94 pregame MATCHUPS screen, called fro
 	move.w	#$21,(a0)+	;'Hit the start button ...'
 	move.w	#$FFFF,(a0)	;end of list
 	clr.w	(asv).w	;fast text flag
-	move.w	#$7FFF,(word_FFD5B6).w	;frames left on the screen (93 word_FFC9D4)
-	move.l	#$8CA0,(dword_FFDEEC).w	;then 36000 more when OptNOP is not 0
+	move.w	#$7FFF,(screentimer).w	;frames left on the screen (93 word_FFC9D4)
+	move.l	#$8CA0,(scoutwait).w	;then 36000 more when OptNOP is not 0
 .top	;IDA: loc_FCEC2
 	moveq	#0,d0
 	jsr	(waitx).l	;d1 = new presses
-	subq.w	#1,(word_FFD5A8).w
+	subq.w	#1,(matchuptimer).w
 	bpl.w	.2
-	move.w	#$10E,(word_FFD5A8).l
+	move.w	#$10E,(matchuptimer).l
 .2	;IDA: loc_FCEDA
 	bsr.w	PrintAdvantageMarks	;advantage marks
 	btst	#7,d1	;sbut
 	bne.w	.7	;start leaves
-	cmpi.w	#$10E,(word_FFD5A8).w
+	cmpi.w	#$10E,(matchuptimer).w
 	beq.w	.3	;timer ran out: next matchup
 	btst	#5,d1	;cbut
 	beq.w	.4
-	move.w	#$7FFF,(word_FFD5B6).w
-	move.l	#$8CA0,(dword_FFDEEC).w
+	move.w	#$7FFF,(screentimer).w
+	move.l	#$8CA0,(scoutwait).w
 .3	;IDA: loc_FCF06
 	bsr.w	RestartAdvantageMarks
 	move.w	#1,d0	;next matchup
@@ -232,8 +232,8 @@ ScoutingReport	;IDA: sub_FCC76 (93 name). 94 pregame MATCHUPS screen, called fro
 .4	;IDA: loc_FCF16
 	btst	#6,d1	;abut
 	beq.w	.5
-	move.w	#$7FFF,(word_FFD5B6).w
-	move.l	#$8CA0,(dword_FFDEEC).w
+	move.w	#$7FFF,(screentimer).w
+	move.l	#$8CA0,(scoutwait).w
 	bsr.w	RestartAdvantageMarks
 	move.w	#$FFFF,d0	;previous matchup
 	bsr.w	PageMatchup
@@ -244,24 +244,24 @@ ScoutingReport	;IDA: sub_FCC76 (93 name). 94 pregame MATCHUPS screen, called fro
 	beq.w	.6
 	st	(asv).w	;down: type the rest without delays
 .6	;IDA: loc_FCF4C
-	btst	#1,(word_FFDED4+1).w	;down held (waitx pad bits)
+	btst	#1,(waitxpad+1).w	;down held (waitx pad bits)
 	beq.w	.upd
 	st	(asv).w
 .upd	;IDA: loc_FCF5A
 	jsr	(ScoutTextPlayer).l	;93 UpdateScoutingDisplay
-	subq.w	#1,(word_FFD5B6).w
+	subq.w	#1,(screentimer).w
 	bpl.w	.top
 	tst.w	(OptNOP).w
 	beq.w	.7	;OptNOP 0: leave when the text is done
-	move.w	#$FFFF,(word_FFD5B6).w	;else wait for start, up to dword_FFDEEC frames
-	subq.l	#1,(dword_FFDEEC).w
+	move.w	#$FFFF,(screentimer).w	;else wait for start, up to scoutwait frames
+	subq.l	#1,(scoutwait).w
 	bpl.w	.top
 .7	;IDA: loc_FCF7E
-	move.w	#0,(word_FFB030).w	;char set 0
+	move.w	#0,(printfontset).w	;char set 0
 	rts
 PageMatchup	;IDA: sub_FCF86. 94 only. Page the matchup by d0 (+1 / -1, 0-6 wrapping), restart the page timer and redraw. Called from ScoutingReport
-	move.w	#$10E,(word_FFD5A8).w
-	add.w	(word_FFD598).w,d0
+	move.w	#$10E,(matchuptimer).w
+	add.w	(matchup).w,d0
 	bmi.w	.0
 	cmp.w	#7,d0
 	blt.w	.1
@@ -270,7 +270,7 @@ PageMatchup	;IDA: sub_FCF86. 94 only. Page the matchup by d0 (+1 / -1, 0-6 wrapp
 .0	;IDA: loc_FCFA2
 	move.w	#6,d0
 .1	;IDA: loc_FCFA6
-	move.w	d0,(word_FFD598).w
+	move.w	d0,(matchup).w
 	bsr.w	GetMatchupPlayers
 	bsr.w	DrawMatchupPictures
 	bsr.w	PrintMatchupRatings
@@ -313,13 +313,13 @@ StatsText	;no IDA label (93 name). The 93 rating names (93 StatsText). 94 prints
 DrawMatchupPictures	;IDA: sub_FD084. 94 only. Draw the matchup's 6 x 6 pictures, visitors at x 2, home at x $20, y $F: matchup 0 the team logos (GetTeamLogo, DrawMatchupLogo),
 	;1-6 the two players' pictures (DrawPlayerPicture, DrawMatchupPicture). Called from ScoutingReport and PageMatchup
 	movem.l	d0-d7/a0-a6,-(sp)
-	tst.w	(word_FFD598).w
+	tst.w	(matchup).w
 	bne.w	.0
 	move.w	(VisTeam).w,d3
 	bsr.w	GetTeamLogo	;a0 = visitors logo
 	move.w	#2,(printx).w
 	move.w	#$F,(printy).w
-	move.w	(word_FFD432).w,d4
+	move.w	(vispicchars).w,d4
 	move.w	#4,d5
 	move.w	#$6000,(printa).w
 	bsr.w	DrawMatchupLogo
@@ -327,7 +327,7 @@ DrawMatchupPictures	;IDA: sub_FD084. 94 only. Draw the matchup's 6 x 6 pictures,
 	bsr.w	GetTeamLogo	;a0 = home logo
 	move.w	#$20,(printx).w
 	move.w	#$F,(printy).w
-	move.w	(word_FFD430).w,d4
+	move.w	(homepicchars).w,d4
 	move.w	#0,(printa).w
 	move.w	#2,d5
 	bsr.w	DrawMatchupLogo
@@ -335,20 +335,20 @@ DrawMatchupPictures	;IDA: sub_FD084. 94 only. Draw the matchup's 6 x 6 pictures,
 	bra.w	.x
 .0	;IDA: loc_FD0E6
 	move.w	(VisTeam).w,d1
-	move.w	(word_FFD59E).w,d0
+	move.w	(matchupvis).w,d0
 	jsr	(DrawPlayerPicture).l	;a0 = picture of player d0 of team d1 (visitors)
 	move.w	#2,(printx).w
 	move.w	#$F,(printy).w
-	move.w	(word_FFD432).w,d4
+	move.w	(vispicchars).w,d4
 	move.w	#2,d5
 	move.w	#0,(printa).w
 	bsr.w	DrawMatchupPicture
 	move.w	(HomeTeam).w,d1
-	move.w	(word_FFD59C).w,d0
+	move.w	(matchuphome).w,d0
 	jsr	(DrawPlayerPicture).l	;home
 	move.w	#$20,(printx).w
 	move.w	#$F,(printy).w
-	move.w	(word_FFD430).w,d4
+	move.w	(homepicchars).w,d4
 	move.w	#0,d5
 	move.w	#0,(printa).w
 	bsr.w	DrawMatchupPicture
@@ -416,9 +416,9 @@ GetTeamLogo	;IDA: sub_FD1F0. 94 only. Return a0 = the logo bitmap of team d3 (Te
 	rts
 PrintMatchupRatings	;IDA: sub_FD1FE. 94 only. Print the matchup ratings. Matchup 0: 'Overall' at y $13, the team ratings (PrintMatchupRating), home at x $22, visitors at x 4, y
 	;$16. 1-6: the position name at y $13, the player names on y $17 (PrintPlayerNameRight; home right justified), and the player ratings at x $22 / 4, y
-	;$16: CalcAttrib with the PAttribOverallMask (skater) or GAttribOverallMask (goalie) long in d4, * 100 / d1, AttribAdjust. The ratings go to word_FFD5A0
-	;(home) / word_FFD5A2 (visitors) for PrintAdvantageMarks. Called from ScoutingReport and PageMatchup
-	tst.w	(word_FFD598).w
+	;$16: CalcAttrib with the PAttribOverallMask (skater) or GAttribOverallMask (goalie) long in d4, * 100 / d1, AttribAdjust. The ratings go to homerating
+	;(home) / visrating (visitors) for PrintAdvantageMarks. Called from ScoutingReport and PageMatchup
+	tst.w	(matchup).w
 	bne.w	.2
 	jsr	(printz2).l
 	String	$F8,0,1,$16,$16,$F9,1	;IDA: ori.b / btst / move.b
@@ -435,7 +435,7 @@ PrintMatchupRatings	;IDA: sub_FD1FE. 94 only. Print the matchup ratings. Matchup
 	adda.w	(a1),a1
 	bra.w	.1
 .0	;IDA: loc_FD23A
-	move.w	#2,(word_FFB030).w
+	move.w	#2,(printfontset).w
 	move.w	(printy).w,-(sp)
 	subq.w	#3,(printy).w	;y $13
 	jsr	(print2).l
@@ -444,7 +444,7 @@ PrintMatchupRatings	;IDA: sub_FD1FE. 94 only. Print the matchup ratings. Matchup
 	addq.w	#1,d7
 	tst.w	(a1)
 	bpl.s	.loop
-	move.w	#2,(word_FFB030).w
+	move.w	#2,(printfontset).w
 	jsr	(printz).l
 	String	$FF,0,$17,'                                        '	;40 spaces. IDA: ori.b / move.l x20
 	jsr	(printz).l
@@ -452,16 +452,16 @@ PrintMatchupRatings	;IDA: sub_FD1FE. 94 only. Print the matchup ratings. Matchup
 	movea.l	#HmShots,a0
 	movea.l	#AwShots,a2
 	bsr.w	PrintMatchupRating	;home
-	move.w	d0,(word_FFD5A0).w
-	move.w	#2,(word_FFB030).w
+	move.w	d0,(homerating).w
+	move.w	#2,(printfontset).w
 	jsr	(printz).l
 	String	$FF,4,$16	;IDA: ori.b / move.b d0,d3
 	exg	a0,a2
 	bsr.w	PrintMatchupRating	;visitors
-	move.w	d0,(word_FFD5A2).w
+	move.w	d0,(visrating).w
 	bra.w	.x
 .2	;IDA: loc_FD2D2
-	move.w	(word_FFD598).w,d0
+	move.w	(matchup).w,d0
 	subq.w	#1,d0
 	movea.l	#MatchupPosNames,a1	;position name of matchup - 1
 	bra.w	.3
@@ -473,14 +473,14 @@ PrintMatchupRatings	;IDA: sub_FD1FE. 94 only. Print the matchup ratings. Matchup
 	String	$F8,0,1,$D,$13,$F9,1	;IDA: ori.b / movep.w / btst
 	jsr	(print2).l
 	move.w	#$16,(printy).w
-	move.w	#2,(word_FFB030).w
+	move.w	#2,(printfontset).w
 	movea.l	#HmShots,a2
 	move.l	(PAttribOverallMask).l,d4	;skater rating weights
-	tst.w	(word_FFD5AA).w	;line slot 0: goalie
+	tst.w	(matchupslot).w	;line slot 0: goalie
 	bne.w	.4
 	move.l	(GAttribOverallMask).l,d4	;goalie
 .4	;IDA: loc_FD324
-	move.w	(word_FFD59C).w,d0	;home player
+	move.w	(matchuphome).w,d0	;home player
 	jsr	(printz).l
 	String	$FF,0,$17,'                                        '	;40 spaces. IDA: ori.b / move.l x20
 	jsr	(printz).l
@@ -491,7 +491,7 @@ PrintMatchupRatings	;IDA: sub_FD1FE. 94 only. Print the matchup ratings. Matchup
 	divu.w	d1,d0
 	bsr.w	AttribAdjust
 	move.w	#2,d1
-	move.w	d0,(word_FFD5A0).w
+	move.w	d0,(homerating).w
 	jsr	(PushNumberWidth).l
 	jsr	(printz).l
 	String	$FF,$22,$16	;IDA: ori.b / move.b d0,d3
@@ -499,11 +499,11 @@ PrintMatchupRatings	;IDA: sub_FD1FE. 94 only. Print the matchup ratings. Matchup
 	jsr	(print2).l
 	movea.l	#AwShots,a2
 	move.l	(PAttribOverallMask).l,d4
-	tst.w	(word_FFD5AA).w
+	tst.w	(matchupslot).w
 	bne.w	.5
 	move.l	(GAttribOverallMask).l,d4
 .5	;IDA: loc_FD3B8
-	move.w	(word_FFD59E).w,d0	;visitors player
+	move.w	(matchupvis).w,d0	;visitors player
 	jsr	(printz).l
 	String	$FF,0,$17	;IDA: ori.b / move.b d0,-(a3)
 	bsr.w	PrintPlayerNameRight
@@ -511,7 +511,7 @@ PrintMatchupRatings	;IDA: sub_FD1FE. 94 only. Print the matchup ratings. Matchup
 	mulu.w	#$64,d0	;* 100
 	divu.w	d1,d0
 	bsr.w	AttribAdjust
-	move.w	d0,(word_FFD5A2).w
+	move.w	d0,(visrating).w
 	move.w	#2,d1
 	jsr	(PushNumberWidth).l
 	jsr	(printz).l
@@ -527,25 +527,25 @@ MatchupPosNames	;IDA: unk_FD400. Position names of matchups 1-6
 	String	'left defenseman '
 	String	'right defenseman'
 	String	'     goalie     '
-GetMatchupPlayers	;IDA: sub_FD46C. 94 only. word_FFD59C / word_FFD59E = the home / visitors player of the matchup (GetMatchupPlayer). Called from ScoutingReport and PageMatchup
+GetMatchupPlayers	;IDA: sub_FD46C. 94 only. matchuphome / matchupvis = the home / visitors player of the matchup (GetMatchupPlayer). Called from ScoutingReport and PageMatchup
 	movem.l	d0/a0-a1,-(sp)
 	movea.l	#HmShots,a0
 	bsr.w	GetMatchupPlayer
-	move.w	d0,(word_FFD59C).w
+	move.w	d0,(matchuphome).w
 	movea.l	#AwShots,a0
 	bsr.w	GetMatchupPlayer
-	move.w	d0,(word_FFD59E).w
+	move.w	d0,(matchupvis).w
 	movem.l	(sp)+,d0/a0-a1
 	rts
-GetMatchupPlayer	;IDA: sub_FD492. 94 only. Return d0 = the roster index of team a0's player for matchup word_FFD598: the first line of the team's line sets, slot
-	;MatchupLineSlots[matchup] (word_FFD5AA; 0 goalie, 1 left defense, 2 right defense, 3 left wing, 4 center, 5 right wing)
+GetMatchupPlayer	;IDA: sub_FD492. 94 only. Return d0 = the roster index of team a0's player for matchup: the first line of the team's line sets, slot
+	;MatchupLineSlots[matchup] (matchupslot; 0 goalie, 1 left defense, 2 right defense, 3 left wing, 4 center, 5 right wing)
 	movea.l	$1E(a0),a0	;tmdata
 	adda.w	6(a0),a0	;LineSets
-	move.w	(word_FFD598).w,d0
+	move.w	(matchup).w,d0
 	movea.l	#MatchupLineSlots,a1
 	move.b	0(a1,d0.w),d0
 	ext.w	d0
-	move.w	d0,(word_FFD5AA).w
+	move.w	d0,(matchupslot).w
 	move.b	0(a0,d0.w),d0
 	ext.w	d0
 	subq.w	#1,d0	;player numbers start at 1
@@ -554,26 +554,26 @@ MatchupLineSlots	;IDA: unk_FD4B8. Line slot by matchup 0-6 (0 for the teams, the
 	;0 goalie), and a pad byte
 	dc.b	0,4,3,5,1,2,0,0
 RestartAdvantageMarks	;IDA: sub_FD4C0. 94 only. Restart the advantage marks (PrintAdvantageMarks)
-	clr.w	(word_FFD5A6).w
-	clr.w	(word_FFD5A4).w
+	clr.w	(advcount).w
+	clr.w	(advframe).w
 	rts
 PrintAdvantageMarks	;IDA: sub_FD4CA. 94 only. Called every frame by ScoutingReport. Print the advantage marks at x $13, y $16: ']' marks growing toward the home
 	;side (right) when the home rating is higher, '[' marks toward the visitors (left) when lower, one more every 7 frames up to 3; blank if equal
 	movem.l	d0-d7/a0-a6,-(sp)
-	addq.w	#1,(word_FFD5A6).w
-	cmpi.w	#7,(word_FFD5A6).w
+	addq.w	#1,(advcount).w
+	cmpi.w	#7,(advcount).w
 	blt.w	.0
-	clr.w	(word_FFD5A6).w
-	addq.w	#1,(word_FFD5A4).w
-	cmpi.w	#6,(word_FFD5A4).w
+	clr.w	(advcount).w
+	addq.w	#1,(advframe).w
+	cmpi.w	#6,(advframe).w
 	blt.w	.0
-	move.w	#5,(word_FFD5A4).w
+	move.w	#5,(advframe).w
 .0	;IDA: loc_FD4F4
-	move.w	(word_FFD5A4).w,d1
+	move.w	(advframe).w,d1
 	asl.w	#2,d1
 	movea.l	#HomeAdvMarks,a1
-	move.w	(word_FFD5A0).w,d0
-	cmp.w	(word_FFD5A2).w,d0	;home - visitors
+	move.w	(homerating).w,d0
+	cmp.w	(visrating).w,d0	;home - visitors
 	bgt.w	.1
 	beq.w	.2
 	movea.l	#VisAdvMarks,a1
@@ -583,14 +583,14 @@ PrintAdvantageMarks	;IDA: sub_FD4CA. 94 only. Called every frame by ScoutingRepo
 .2	;IDA: loc_FD51E
 	movea.l	#EvenAdvTxt,a1	;equal
 .3	;IDA: loc_FD524
-	move.w	#2,(word_FFB030).w
+	move.w	#2,(printfontset).w
 	jsr	(printz).l
 	String	$FF,$13,$16	;IDA: ori.b / move.b d0,d3
 	jsr	(print2).l
-	move.w	#0,(word_FFB030).w
+	move.w	#0,(printfontset).w
 	movem.l	(sp)+,d0-d7/a0-a6
 	rts
-HomeAdvMarks	;IDA: unk_FD548. Home advantage marks, by word_FFD5A4 (0-5)
+HomeAdvMarks	;IDA: unk_FD548. Home advantage marks, by advframe (0-5)
 	dc.l	HomeAdv0Txt,HomeAdv1Txt,HomeAdv2Txt,HomeAdv3Txt,HomeAdv3Txt,HomeAdv3Txt
 VisAdvMarks	;IDA: unk_FD560. Visitors advantage marks
 	dc.l	VisAdv0Txt,VisAdv1Txt,VisAdv2Txt,VisAdv3Txt,VisAdv3Txt,VisAdv3Txt

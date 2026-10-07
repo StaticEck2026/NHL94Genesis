@@ -41,7 +41,7 @@ EASportsScreen	;94 only. Called from Begin. Show the EA Sports screen until a bu
 	moveq	#$F,d5
 	bsr.w	dobitmap
 	move.w	#$EEE,(palfadenew).w
-	move.w	#0,(word_FFBD36).w
+	move.w	#0,(palfadenew+$E).w
 	move.w	#$18,(palcount).w	;fade in
 	move	#$2500,sr		;vblank on
 	move.w	#$50,(RNGseed).w	;frame count down in the random seed word
@@ -81,8 +81,8 @@ DrawMatchupBitmaps	;IDA: sub_17AF4. 94 only. Called from PrintOptions. Draw the 
 	move.w	d1,d0
 	asl.w	#6,d0			;64 bytes per team
 	movea.l	#TeamPalettes,a0
-	move.l	$26(a0,d0.w),(dword_FFBD4E).w
-	move.w	(word_FFD43A).w,d4
+	move.l	$26(a0,d0.w),(palfadenew+$26).w
+	move.w	(teambitmapchars).w,d4
 	bsr.w	DrawTeamBitmap
 	bsr.w	printz
 	String	$BF,$16,1,0
@@ -90,8 +90,8 @@ DrawMatchupBitmaps	;IDA: sub_17AF4. 94 only. Called from PrintOptions. Draw the 
 	move.w	d1,d0
 	asl.w	#6,d0			;64 bytes per team
 	movea.l	#TeamPalettes,a0
-	move.l	2(a0,d0.w),(dword_FFBD4A).w
-	move.w	#$EEE,(word_FFBD52).w
+	move.l	2(a0,d0.w),(palfadenew+$22).w
+	move.w	#$EEE,(palfadenew+$2A).w
 	move.w	#2,d4
 	bsr.w	DrawTeamBitmap
 	bsr.w	setteams

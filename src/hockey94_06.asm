@@ -17,7 +17,7 @@
 
 setupice	;set all variables, send non purgeable graphics, build sprite frame lists for ice rink. Called from StartGame and StartPer.
 	;Decompresses the tile sets with DoDMA_clearCallbackPointer / DecompressGraphicsWithCallback. 94 loads RevRinkTiles in a reverse angle replay
-	;(word_FFC2F4 bit 4) and calls LoadHomeTeamGfx
+	;(sflags4 bit 4) and calls LoadHomeTeamGfx
 	movem.l	d0-d7/a0-a6,-(sp)
 	bset	#df32c,(disflags).w	;df32c
 	move.w	#$C000,(VmMap2).w
@@ -44,23 +44,23 @@ setupice	;set all variables, send non purgeable graphics, build sprite frame lis
 	clr.w	d4
 	move.w	d4,(rinkvrcset).w
 	movea.l	#Rinktiles,a2
-	btst	#4,(word_FFC2F4).w	;94 only: reverse angle replay
+	btst	#4,(sflags4).w	;94 only: reverse angle replay
 	beq.w	.0	;branch if not
 	movea.l	#RevRinkTiles,a2
 .0	;IDA: loc_16A88
 	bsr.w	DoDMA_clearCallbackPointer
 	jsr	(LoadHomeTeamGfx).l	;94 only
-	move.w	d4,(word_FFB020).w	;93 EASNcset
+	move.w	d4,(EASNcset).w	;93 EASNcset
 	bsr.w	setupEASNmap
-	move.w	d4,(word_FFB016).w	;energy bar chars
+	move.w	d4,(energybarchars).w	;energy bar chars
 	movea.l	#EnergyBarMap+8,a2
 	bsr.w	DoDMA_clearCallbackPointer
-	move.w	d4,(word_FFB01A).w	;crowd chars
+	move.w	d4,(gamesetuptilesetindex).w	;crowd chars
 	movea.l	#CrowdFrameList+8,a2
 	bsr.w	DoDMA_clearCallbackPointer
-	move.w	d4,(word_FFD6AC).w
+	move.w	d4,(arenaanimchars).w
 	addi.w	#$32,d4
-	move.w	d4,(word_FFB024).w
+	move.w	d4,(spritechars).w
 	bsr.w	defaultsprites
 	bsr.w	setupIceRinkMap
 	bsr.w	AddFramer
@@ -68,7 +68,7 @@ setupice	;set all variables, send non purgeable graphics, build sprite frame lis
 	movea.l	#SmallFontMap+8,a2
 	bsr.w	DecompressGraphicsWithCallback
 	dc.l	$43434567,$89ABCDEF	;remap table (IDA: or.l d4,-$3211(a3); IDA dropped the first long)
-	move.w	d4,(word_FFB010).w	;93 BigFontChars
+	move.w	d4,(BigFontChars).w	;93 BigFontChars
 	movea.l	#BigFontMap+8,a2
 	bsr.w	DecompressGraphicsWithCallback
 	dc.l	$71234567,$89ABCDEF	;remap table (IDA: or.l d4,-$3211(a3); IDA dropped the first long)
@@ -84,11 +84,11 @@ setupice	;set all variables, send non purgeable graphics, build sprite frame lis
 	dbf	d0,.loop
 .gok	;IDA: loc_16B20
 	bsr.w	SetTeamColors
-	move.w	#$FFFF,(word_FFBE78).w
-	move.w	#$FFFF,(word_FFBE86).w
+	move.w	#$FFFF,(PadControlBits).w
+	move.w	#$FFFF,(PadControlBits34).w
 	clr.l	(padcont).w
-	clr.l	(dword_FFBE7E).w
-	clr.l	(dword_FFBE82).w
+	clr.l	(padcont+4).w
+	clr.l	(padcont+8).w
 	st	(c1playernum).w
 	st	(c2playernum).w
 	movea.w	#(DMAList-M68K_RAM),a5
@@ -118,7 +118,7 @@ setupice	;set all variables, send non purgeable graphics, build sprite frame lis
 	movem.l	(sp)+,d0-d7/a0-a6
 	rts
 setupice_highlight	;IDA: sub_16BAC (93 name). Rebuild the rink sprites after a highlight replay without reloading tiles, then fade in. Uses the
-	;sprite char start saved by setupice in word_FFB024. Called from StartHL2 (penalty94_2)
+	;sprite char start saved by setupice in spritechars. Called from StartHL2 (penalty94_2)
 	movem.l	d0-d7/a0-a6,-(sp)
 	bsr.w	forceblack
 	bclr	#sfpz,(sflags).w
@@ -128,7 +128,7 @@ setupice_highlight	;IDA: sub_16BAC (93 name). Rebuild the rink sprites after a h
 	clr.w	(Vpos).w
 	move.w	#$7D0,(Oldrow).w
 	st	(zamx).w
-	move.w	(word_FFB024).w,d4
+	move.w	(spritechars).w,d4
 	bsr.w	defaultsprites
 	bsr.w	setupIceRinkMap
 	btst	#gmdir,(gmode).w
@@ -141,11 +141,11 @@ setupice_highlight	;IDA: sub_16BAC (93 name). Rebuild the rink sprites after a h
 	dbf	d0,.loop
 .gok	;IDA: loc_16C00
 	bsr.w	SetTeamColors
-	move.w	#$FFFF,(word_FFBE78).w
-	move.w	#$FFFF,(word_FFBE86).w
+	move.w	#$FFFF,(PadControlBits).w
+	move.w	#$FFFF,(PadControlBits34).w
 	clr.l	(padcont).w
-	clr.l	(dword_FFBE7E).w
-	clr.l	(dword_FFBE82).w
+	clr.l	(padcont+4).w
+	clr.l	(padcont+8).w
 	st	(c1playernum).w
 	st	(c2playernum).w
 	bsr.w	setupEASNmap
@@ -185,30 +185,30 @@ setupIceRinkMap	;IDA: sub_16C96 (93 name). Copy the ice rink palettes (pal 0&1, 
 	move.l	(a0)+,(a1)+
 	dbf	d0,.ipal
 	rts
-setupEASNmap	;IDA: sub_16CAC (93 name). Decompress the easn logo tiles (EASNmap+8, 93 EASNmap+8) to vram at word_FFB020 (93 EASNcset). Called from setupice, setupice_highlight and hockey94_02
-	move.w	(word_FFB020).w,d4
+setupEASNmap	;IDA: sub_16CAC (93 name). Decompress the easn logo tiles (EASNmap+8, 93 name) to vram at EASNcset (93 name). Called from setupice, setupice_highlight and hockey94_02
+	move.w	(EASNcset).w,d4
 	movea.l	#EASNmap+8,a2
 	bsr.w	DecompressGraphicsWithCallback
 	dc.l	$71234567,$89ABCDEF	;remap table (IDA: or.l d4,-$3211(a3); IDA dropped the first long)
 	rts
-ReloadEnergyBarTiles	;IDA: sub_16CC4. 94 only. Reload the energy bar tiles (EnergyBarMap+8) at word_FFB016. Called from the replay code (hockey94_02) and ReloadRinkGraphics
-	move.w	(word_FFB016).w,d4
+ReloadEnergyBarTiles	;IDA: sub_16CC4. 94 only. Reload the energy bar tiles (EnergyBarMap+8) at energybarchars. Called from the replay code (hockey94_02) and ReloadRinkGraphics
+	move.w	(energybarchars).w,d4
 	movea.l	#EnergyBarMap+8,a2
 	bra.w	DoDMA_clearCallbackPointer
-ReloadCrowdTiles	;IDA: sub_16CD2. 94 only. Reload the crowd tiles (CrowdFrameList+8) at word_FFB01A. Called from the replay code and ReloadRinkGraphics
-	move.w	(word_FFB01A).w,d4
+ReloadCrowdTiles	;IDA: sub_16CD2. 94 only. Reload the crowd tiles (CrowdFrameList+8) at gamesetuptilesetindex. Called from the replay code and ReloadRinkGraphics
+	move.w	(gamesetuptilesetindex).w,d4
 	movea.l	#CrowdFrameList+8,a2
 	bra.w	DoDMA_clearCallbackPointer
-ReloadRefHorTiles	;IDA: sub_16CE0. 94 only. Reload the horizontal ref tiles (RefMap2+8, 93 RefMap2+8) at ExtraChars. Called from PauseMode
+ReloadRefHorTiles	;IDA: sub_16CE0. 94 only. Reload the horizontal ref tiles (RefMap2+8, 93 name) at ExtraChars. Called from PauseMode
 	move.w	(ExtraChars).w,d4
 	movea.l	#RefMap2+8,a2
 	bra.w	DoDMA_clearCallbackPointer
-ReloadRefTiles	;IDA: sub_16CEE. 94 only. Reload the ref tiles (RefsMap+8, 93 RefsMap+8) at ExtraChars. Called from the replay code (hockey94_02)
+ReloadRefTiles	;IDA: sub_16CEE. 94 only. Reload the ref tiles (RefsMap+8, 93 name) at ExtraChars. Called from the replay code (hockey94_02)
 	move.w	(ExtraChars).w,d4
 	movea.l	#RefsMap+8,a2
 	bra.w	DoDMA_clearCallbackPointer
-ReloadFaceOffTiles	;IDA: sub_16CFC. 94 only. Reload the face off tiles (FaceOffSprites+8, 93 FaceOffSprites+8) at word_FFB01C. Called from the replay code
-	move.w	(word_FFB01C).w,d4
+ReloadFaceOffTiles	;IDA: sub_16CFC. 94 only. Reload the face off tiles (FaceOffSprites+8, 93 name) at faceoffvrcset. Called from the replay code
+	move.w	(faceoffvrcset).w,d4
 	movea.l	#FaceOffSprites+8,a2
 	bra.w	DoDMA_clearCallbackPointer
 ReloadFaceOffMap	;IDA: sub_16D0A. 94 only. Reload the FaceOffMap+8 tiles at ExtraChars. Called from the replay code (hockey94_02)
@@ -216,8 +216,8 @@ ReloadFaceOffMap	;IDA: sub_16D0A. 94 only. Reload the FaceOffMap+8 tiles at Extr
 	movea.l	#FaceOffMap+8,a2
 	bra.w	DoDMA_clearCallbackPointer
 setupTeamBlocksMap	;IDA: sub_16D18 (93 name). Load the TeamBlocks map tiles (Teamblocksmap) at d4+$2C (93 $30) and copy the home and visitor team
-	;blocks to vram at word_FFB022 and word_FFB022+$16. d4 = 1st vram char; return d4 = word_FFB022+$2C. Called from setupice
-	move.w	d4,(word_FFB022).w
+	;blocks to vram at basetileoffset and basetileoffset+$16. d4 = 1st vram char; return d4 = basetileoffset+$2C. Called from setupice
+	move.w	d4,(basetileoffset).w
 	addi.w	#$2C,d4
 	movea.w	#(TeamBlockMap-M68K_RAM),a1
 	movea.l	#Teamblocksmap,a0
@@ -226,16 +226,16 @@ setupTeamBlocksMap	;IDA: sub_16D18 (93 name). Load the TeamBlocks map tiles (Tea
 	adda.l	4(a0),a0
 	move.l	a0,-(sp)
 	move.w	(HomeTeam).w,d0
-	move.w	(word_FFB022).w,d1
+	move.w	(basetileoffset).w,d1
 	asl.w	#5,d1
 	bsr.w	CopyTeamBlockMapData
 	movea.l	(sp)+,a0
 	move.w	(VisTeam).w,d0
-	move.w	(word_FFB022).w,d1
+	move.w	(basetileoffset).w,d1
 	addi.w	#$16,d1
 	asl.w	#5,d1
 	bsr.w	CopyTeamBlockMapData
-	move.w	(word_FFB022).w,d4
+	move.w	(basetileoffset).w,d4
 	addi.w	#$2C,d4
 	rts
 CopyTeamBlockMapData	;IDA: sub_16D64 (93 name). Copy one team's 22 block chars (94; 93 24) from the loaded tile set to vram at d1 by vram dma
@@ -254,7 +254,7 @@ CopyTeamBlockMapData	;IDA: sub_16D64 (93 name). Copy one team's 22 block chars (
 	move.w	(sp)+,d1
 	move.w	(a0)+,d2
 	andi.w	#$7FF,d2
-	add.w	(word_FFB022).w,d2
+	add.w	(basetileoffset).w,d2
 	addi.w	#$2C,d2
 	asl.w	#5,d2
 	bsr.w	DoDMA_nd2
@@ -623,9 +623,9 @@ resetplstuff	;reset team variables/and players on both teams. Called from puckfa
 	dbf	d2,.loop
 	rts
 clearTeamStats	;clear both team structs (2 x tmsize) but keep the first $1A0 bytes of each hot / cold table (HmShots+$1A2 / AwShots+$1A2, saved to
-	;$FFFFD6D2 / $FFFFD872 and back) and word_FFC6F4 / word_FFCA58. Falls into setteams
-	move.w	(word_FFC6F4).w,-(sp)
-	move.w	(word_FFCA58).w,-(sp)
+	;$FFFFD6D2 / $FFFFD872 and back) and HmShots+tmgoalie / AwShots+tmgoalie. Falls into setteams
+	move.w	(HmShots+tmgoalie).w,-(sp)
+	move.w	(AwShots+tmgoalie).w,-(sp)
 	movem.l	a1-a3,-(sp)
 	move.w	#$19F,d0
 	movea.l	#AwShots+$1A2,a1	;Hot/Cold table Away Team
@@ -658,10 +658,10 @@ clearTeamStats	;clear both team structs (2 x tmsize) but keep the first $1A0 byt
 	move.b	(a3)+,(a1)+
 	dbf	d0,.loop4
 	movem.l	(sp)+,a1-a3
-	move.w	(sp)+,(word_FFCA58).w
-	move.w	(sp)+,(word_FFC6F4).w
-	st	(byte_FFC768).w
-	st	(byte_FFCACC).w
+	move.w	(sp)+,(AwShots+tmgoalie).w
+	move.w	(sp)+,(HmShots+tmgoalie).w
+	st	(HmShots+tmpdst+$34).w
+	st	(AwShots+tmpdst+$34).w
 setteams	;IDA: sub_17190 (93 name). Use hometeam/visteam to set team structures (InitTeamSructure for each). Falls in from clearTeamStats, also called from DrawMatchupBitmaps (attract94)
 	movem.l	d0/a0-a2,-(sp)
 	movea.w	#(HmShots-M68K_RAM),a2
@@ -714,7 +714,7 @@ SetTeamColors	;IDA name (93 setplayercolors). Copy in correct color data for eac
 	movea.l	$1E(a0),a2
 	adda.w	2(a2),a2
 	adda.w	d1,a2
-	movea.w	#(CardPalette-M68K_RAM),a1
+	movea.w	#(palfadenew+$40-M68K_RAM),a1
 	adda.w	d1,a1
 	moveq	#7,d0
 .loop	;IDA: loc_1722E
@@ -792,7 +792,7 @@ Opening2	;reset the stack and clear the variables, then options (GameSetUp, User
 	jsr	(GameSetUp).l
 	jsr	(UserNameEntry).l
 	bsr.w	PlayoffScreen
-	btst	#0,(word_FFC2FA).w
+	btst	#0,(gmode2).w
 	bne.w	.1
 	jsr	(ScoutingReport).l
 .1	;IDA: loc_17332
@@ -847,16 +847,16 @@ PlayoffScreen	;bring up playoff screen if in playoff mode. Called from GameOver 
 	lea	8(a1),a2
 	adda.l	(a1),a1
 	moveq	#7,d0
-	movea.w	#(CardPalette-M68K_RAM),a0
+	movea.w	#(palfadenew+$40-M68K_RAM),a0
 .pal	;IDA: loc_17406
 	move.l	-$40(a0),$20(a0)
 	move.l	(a1)+,-$40(a0)
 	move.l	-$20(a0),(a0)+
 	dbf	d0,.pal
-	move.w	d4,(word_FFB016).w
+	move.w	d4,(energybarchars).w
 	bsr.w	DoDMA_clearCallbackPointer
-	move.w	#$104,(word_FFB8B2).w
-	move.w	#$A0,(word_FFB8B0).w
+	move.w	#$104,(clampcounter).w
+	move.w	#$A0,(playoffspritey).w
 	movea.l	#VDP_CTRL,a0
 	move.w	#$9202,(a0)
 	movea.w	#(potree-M68K_RAM),a1
@@ -944,7 +944,7 @@ HandlePlayoffInput	;IDA: sub_17542 (93 name). Read both pads: start leaves Playo
 	beq.w	UpdatePlayoffScroll
 	move.w	#2,(PlayerScrollCtr).w
 UpdatePlayoffScroll	;IDA: sub_17572 (93 name). Move the tree one step (PlayerScrollCtr) and stop on a page boundary ($70). The position is
-	;DispAttribCtr; word_FFB8AE is the sprite x offset while it is on screen
+	;DispAttribCtr; playoffspritex is the sprite x offset while it is on screen
 	move.w	(PlayerScrollCtr).w,d0
 	beq.w	rtss2
 	add.w	(DispAttribCtr).w,d0
@@ -960,14 +960,14 @@ UpdatePlayoffScroll	;IDA: sub_17572 (93 name). Move the tree one step (PlayerScr
 	cmp.w	d1,d0
 	blt.w	rtss2
 	move.w	d0,(DispAttribCtr).w
-	clr.w	(word_FFB8AE).w
+	clr.w	(playoffspritex).w
 	move.w	d0,d1
 	addi.w	#$100,d1
 	cmp.w	#$40,d1
 	blt.w	.nox
 	cmp.w	#$200,d1
 	bgt.w	.nox
-	move.w	d1,(word_FFB8AE).w
+	move.w	d1,(playoffspritex).w
 .nox	;IDA: loc_175C0
 	ext.l	d0
 	divs.w	#$70,d0
@@ -979,10 +979,10 @@ UpdatePlayoffScroll	;IDA: sub_17572 (93 name). Move the tree one step (PlayerScr
 PlayoffScreenExit	;IDA: loc_175D4 (93 name). Drop HandlePlayoffInput's return address and return from PlayoffScreen
 	addq.w	#4,sp
 	rts
-PlayoffScreen_waitvsync	;IDA: sub_175D8 (93 name). Each time palcount runs out, eor the color word at word_FFBD6A with $EE and restart palcount at $18; then wait for the next vblank
+PlayoffScreen_waitvsync	;IDA: sub_175D8 (93 name). Each time palcount runs out, eor the color word at palfadenew+$42 with $EE and restart palcount at $18; then wait for the next vblank
 	tst.w	(palcount).w
 	bpl.w	.wait
-	eori.w	#$EE,(word_FFBD6A).w
+	eori.w	#$EE,(palfadenew+$42).w
 	move.w	#$18,(palcount).w
 .wait	;IDA: loc_175EC
 	move.w	(vcount).w,d0
@@ -1046,9 +1046,9 @@ PlayoffScreenDataTable	;IDA: loc_17692 (93 name; 93 IDA left it undecoded). The 
 	btst	#dfng,(disflags).w
 	bne.w	.nograph
 	movea.w	#(Satt-M68K_RAM),a0
-	move.w	(word_FFC2E8).w,d0
+	move.w	(Sattsize).w,d0
 	beq.w	.nosat
-	clr.w	(word_FFC2E8).w
+	clr.w	(Sattsize).w
 	move.w	(VSPRITES).w,d1
 	bsr.w	DoDMA
 	move.w	(VSCRLPM).w,d0
@@ -1069,22 +1069,22 @@ PlayoffScreenText	;IDA: unk_176DE (93 name). Round titles by gamelevel, printed 
 	String	'Semifinals'
 	String	'Finals'
 	String	'Champions'
-StartScoutText	;IDA: sub_17718. 94 only. Start the text player ScoutTextPlayer: VertLineScrolling = -1, PlayerScrollCtr = -1, clear SelectedPlayerIdx / word_FFD5B4; return a0 = TestList. Called from
+StartScoutText	;IDA: sub_17718. 94 only. Start the text player ScoutTextPlayer: VertLineScrolling = -1, PlayerScrollCtr = -1, clear SelectedPlayerIdx / typedelay; return a0 = TestList. Called from
 	;sub_FCC76
 	move.w	#$FFFF,(VertLineScrolling).w
 	st	(PlayerScrollCtr).w
 	clr.w	(SelectedPlayerIdx).w
-	clr.w	(word_FFD5B4).w
+	clr.w	(typedelay).w
 	movea.w	#(TestList-M68K_RAM),a0
 	rts
-ScoutTextPlayer	;IDA: sub_17730. 94 only. Text player for the screen at sub_FCC76: prints the ScoutTextScript script word by word with a typing delay (word_FFD5B4, longer
+ScoutTextPlayer	;IDA: sub_17730. 94 only. Text player for the screen at sub_FCC76: prints the ScoutTextScript script word by word with a typing delay (typedelay, longer
 	;after , and .). $D ends a line; special characters ( _ + $ { } [ ] < > | \ @ # % = * ^ ; ) insert team data through the $FCxxx-$FExxx
 	;routines (GetTeamNickname / GetTeamArena for HmShots / AwShots). Line breaks scroll the text box (ScoutTextNextLine). Called from sub_FCC76
-	cmpi.w	#$1000,(word_FFD5B4).w
+	cmpi.w	#$1000,(typedelay).w
 	bgt.w	rtss2
 	tst.w	(asv).w
 	bmi.w	.0
-	subq.w	#1,(word_FFD5B4).w
+	subq.w	#1,(typedelay).w
 	bpl.w	rtss2
 .0	;IDA: loc_1774A
 	movea.l	#ScoutTextScript,a1
@@ -1096,8 +1096,8 @@ ScoutTextPlayer	;IDA: sub_17730. 94 only. Text player for the screen at sub_FCC7
 	movea.w	#(TestList-M68K_RAM),a0
 	move.w	0(a0,d0.w),d0
 	bpl.w	.1
-	move.w	#$7FFF,(word_FFD5B4).w
-	move.w	#$1E0,(word_FFD5B6).w
+	move.w	#$7FFF,(typedelay).w
+	move.w	#$1E0,(screentimer).w
 	rts
 .1	;IDA: loc_1777E
 	bsr.w	ScoutTextNextLine
@@ -1112,7 +1112,7 @@ ScoutTextPlayer	;IDA: sub_17730. 94 only. Text player for the screen at sub_FCC7
 	move.w	a2,d0
 .3	;IDA: loc_17796
 	lea	0(a1,d0.w),a2
-	move.w	#$A,(word_FFD5B4).w
+	move.w	#$A,(typedelay).w
 	move.w	(DispAttribCtr).w,d0
 	cmpi.b	#$5F,(a2)
 	beq.w	.29
@@ -1165,7 +1165,7 @@ ScoutTextPlayer	;IDA: sub_17730. 94 only. Text player for the screen at sub_FCC7
 	cmpi.b	#$2E,(a2)
 	bne.w	.5
 .4	;IDA: loc_1785C
-	addi.w	#$28,(word_FFD5B4).w
+	addi.w	#$28,(typedelay).w
 .5	;IDA: loc_17862
 	cmpi.b	#$20,(a2)+
 	bne.s	.loop2
@@ -1244,7 +1244,7 @@ ScoutTextPlayer	;IDA: sub_17730. 94 only. Text player for the screen at sub_FCC7
 	bra.w	.25
 .20	;IDA: loc_17956
 	movea.l	#HmShots,a1
-	tst.w	(word_FFBF50).w
+	tst.w	(awayhotter).w
 	beq.w	.21
 	movea.l	#AwShots,a1
 .21	;IDA: loc_1796A
@@ -1269,14 +1269,14 @@ ScoutTextPlayer	;IDA: sub_17730. 94 only. Text player for the screen at sub_FCC7
 	dbf	d1,.loop5
 	bra.w	.31
 .27	;IDA: loc_1799C
-	movea.l	(dword_FFCA50).w,a1
+	movea.l	(AwayTeamRosterPtr).w,a1
 	adda.w	4(a1),a1
 	bra.w	.31
 .28	;IDA: loc_179A8
-	movea.l	(dword_FFCA50).w,a1
+	movea.l	(AwayTeamRosterPtr).w,a1
 	bra.w	.30
 .29	;IDA: loc_179B0
-	movea.l	(dword_FFC6EC).w,a1
+	movea.l	(HomeTeamRosterPtr).w,a1
 .30	;IDA: loc_179B4
 	adda.w	4(a1),a1
 .31	;IDA: loc_179B8
