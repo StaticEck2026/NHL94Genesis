@@ -54,39 +54,92 @@ const assets = [
     // { name: 'Walesh.pal', folder: 'NHL94/Graphics/Pals', start: 0x00002FB8, end: 0x00002FD8 },
     // { name: 'Walesv.pal', folder: 'NHL94/Graphics/Pals', start: 0x00002FD8, end: 0x00002FF8 },
     // { name: 'Hockey.snd', folder: 'NHL94/Sound', start: 0x0000F4C8, end: 0x00024214 },
-    // SFC & Music from 0x2CEF4 to 0x-487A0
-    { name: 'GameSetUp94-1.map.jim', folder: 'NHL94/Graphics', start: 0x0004B7A0, end: 0x0004DEEE },
-    { name: 'GameSetUp94-2.map.jim', folder: 'NHL94/Graphics', start: 0x0004DEEE, end: 0x0004E45C },
-    { name: 'Title94-1.map.jim', folder: 'NHL94/Graphics', start: 0x0004E45C, end: 0x00052DAA },
-    { name: 'Title94-2.map.jim', folder: 'NHL94/Graphics', start: 0x00052DAA, end: 0x0005338C },
-    { name: 'Title94-3.map.jim', folder: 'NHL94/Graphics', start: 0x0005338C, end: 0x0005394E },
-    { name: 'Title94-4.map.jim', folder: 'NHL94/Graphics', start: 0x0005394E, end: 0x00054e24 },
-    { name: 'unknown5.map.jim', folder: 'NHL94/Graphics', start: 0x00054e24, end: 0x55b7e }, // calc is off? comes out as 0x15562e but from file is 0x55b7e
-    // gap?
-    { name: 'IceRink94.map.jim', folder: 'NHL94/Graphics', start: 0x0005605a, end: 0x0005c408 },
-    { name: 'Sprites94.anim', folder: 'NHL94/Graphics', start: 0x0005c408, end: 0x000a4b54 },
-    { name: 'unknown6.map.jim', folder: 'NHL94/Graphics', start: 0x000a4b54, end: 0x000a5aa2 }, // broken
-    // gap?
-    { name: 'unknown7.map.jim', folder: 'NHL94/Graphics', start: 0x000a8922, end: 0x000a9950 }, // broken 
-    // gap?
-    { name: 'BigFont94.map.jim', folder: 'NHL94/Graphics', start: 0x000a9a10, end: 0x000aac52 },
-    // AAC7C -- font, not jim?
-    { name: 'unknown9.map.jim', folder: 'NHL94/Graphics', start: 0x000aac52, end: 0x000afe12 }, // error on this one!
-    { name: 'TeamBlocks94.map.jim', folder: 'NHL94/Graphics', start: 0x000afe12, end: 0x000b3530 },
-    // gap? -- Ron Barr at 0x000B389C
-    { name: 'RonBarrCompressed.map.jim', folder: 'NHL94/Graphics', start: 0x000b389c, end: 0x000b3e78 },
-    { name: 'IceRink94Reverse.map.jim', folder: 'NHL94/Graphics', start: 0x000b5180, end: 0x000bb4ee },
-    { name: 'ReplayOptions.map.jim', folder: 'NHL94/Graphics', start: 0x000bb4ee, end: 0x000bc05c },
-    { name: 'PauseScreen.map.jim', folder: 'NHL94/Graphics', start: 0x000bc05c, end: 0x000be26a },
-    { name: 'SmallFont94.map.jim', folder: 'NHL94/Graphics', start: 0x000be26a, end: 0x000befb8 },
-    { name: 'GameSetupBkgd1.map.jim', folder: 'NHL94/Graphics', start: 0x000befb8, end: 0x000bf542 },
-    { name: 'GameSetupBkgd2.map.jim', folder: 'NHL94/Graphics', start: 0x000bf542, end: 0x000bf702 },
-    { name: 'GameSetupLogoBorder.map.jim', folder: 'NHL94/Graphics', start: 0x000bf702, end: 0x000bf8d0 },
-    { name: 'logoANA.map.jim', folder: 'NHL94/Graphics', start: 0x000bf8d0, end: 0x000bfd9a },
-    { name: 'logoBOS.map.jim', folder: 'NHL94/Graphics', start: 0x000bfd66, end: 0x000c00f0 },
-    { name: 'logoBUF.map.jim', folder: 'NHL94/Graphics', start: 0x000c00bc, end: 0x000c0446 },
-    { name: 'logoCGY.map.jim', folder: 'NHL94/Graphics', start: 0x000c0412, end: 0x000c08dc },
-    { name: 'logoCHI.map.jim', folder: 'NHL94/Graphics', start: 0x000c08a8, end: 0x000c0d12 },
+    // NHL 94 $1AD90-$F66ED, the incbins of src/graphics94.asm: one slice per IDA label (the 92 / 93 file name where the asset
+    // lines up, else the label), contiguous, end exclusive. Labels IDA made from constants or from data read as code are not slice
+    // boundaries (see graphics94.asm). Replaces the 94 draft entries $4B7A0-$C0D12 (unknown6, unknown7, unknown9 broken; logos overlapping).
+    { name: 'unk_1AD90.bin', folder: 'NHL94/Sound', start: 0x0001AD90, end: 0x0001B01C }, // unk_1AD90
+    { name: 'unk_1B01C.bin', folder: 'NHL94/Sound', start: 0x0001B01C, end: 0x0002C248 }, // unk_1B01C
+    { name: 'fm_instrument_patches.bin', folder: 'NHL94/Sound', start: 0x0002C248, end: 0x0002C648 }, // unk_2C248
+    { name: 'unk_2C648.bin', folder: 'NHL94/Sound', start: 0x0002C648, end: 0x0002C708 }, // unk_2C648
+    { name: 'off_2C708.bin', folder: 'NHL94/Sound', start: 0x0002C708, end: 0x0002CEF2 }, // off_2C708
+    { name: 'unk_2CEF2.bin', folder: 'NHL94/Sound', start: 0x0002CEF2, end: 0x0004B5C0 }, // unk_2CEF2
+    { name: 'unk_4B5C0.bin', folder: 'NHL94/Text', start: 0x0004B5C0, end: 0x0004B7A0 }, // unk_4B5C0
+    { name: 'GameSetUp94-1.map.jim', folder: 'NHL94/Graphics', start: 0x0004B7A0, end: 0x0004DEEE }, // unk_4B7A0
+    { name: 'GameSetUp94-2.map.jim', folder: 'NHL94/Graphics', start: 0x0004DEEE, end: 0x0004E45C }, // unk_4DEEE
+    { name: 'Title94-1.map.jim', folder: 'NHL94/Graphics', start: 0x0004E45C, end: 0x00052DAA }, // TitleScreenImg
+    { name: 'Title94-2.map.jim', folder: 'NHL94/Graphics', start: 0x00052DAA, end: 0x0005338C }, // NHLShieldImg
+    { name: 'Title94-3.map.jim', folder: 'NHL94/Graphics', start: 0x0005338C, end: 0x0005394E }, // PAlogoImg
+    { name: 'Title94-4.map.jim', folder: 'NHL94/Graphics', start: 0x0005394E, end: 0x00054E24 }, // TitleImg
+    { name: 'unknown5.map.jim', folder: 'NHL94/Graphics', start: 0x00054E24, end: 0x00055B7E }, // unk_54E24
+    { name: 'Framer.map.jim', folder: 'NHL94/Graphics', start: 0x00055B7E, end: 0x00055BF6 }, // framermap
+    { name: 'FaceOff.map.jim', folder: 'NHL94/Graphics', start: 0x00055BF6, end: 0x0005605A }, // FaceOffMap
+    { name: 'IceRink94.map.jim', folder: 'NHL94/Graphics', start: 0x0005605A, end: 0x0005C408 }, // Rinktilelist
+    { name: 'Refs.map.jim', folder: 'NHL94/Graphics', start: 0x0005C408, end: 0x0005CF64 }, // RefsMap
+    { name: 'Refs2.map.jim', folder: 'NHL94/Graphics', start: 0x0005CF64, end: 0x0005DE7A }, // unk_5CF64
+    { name: 'off_5DE7A.bin', folder: 'NHL94/Graphics', start: 0x0005DE7A, end: 0x0005DE84 }, // off_5DE7A
+    { name: 'Spritetiles.bin', folder: 'NHL94/Graphics', start: 0x0005DE84, end: 0x0009E724 }, // Spritetiles
+    { name: 'frameSprData.bin', folder: 'NHL94/Graphics', start: 0x0009E724, end: 0x000A44C8 }, // frameSprData
+    { name: 'Hotlist.bin', folder: 'NHL94/Graphics', start: 0x000A44C8, end: 0x000A4B54 }, // Hotlist
+    { name: 'Crowd.anim', folder: 'NHL94/Graphics', start: 0x000A4B54, end: 0x000A78AE }, // CrowdFrameList
+    { name: 'FaceOff.anim', folder: 'NHL94/Graphics', start: 0x000A78AE, end: 0x000A8922 }, // unk_A78AE
+    { name: 'Zam.anim', folder: 'NHL94/Graphics', start: 0x000A8922, end: 0x000A9A10 }, // ZamFrameList
+    { name: 'BigFont94.map.jim', folder: 'NHL94/Graphics', start: 0x000A9A10, end: 0x000AAC52 }, // unk_A9A10
+    { name: 'SmallFont.map.jim', folder: 'NHL94/Graphics', start: 0x000AAC52, end: 0x000AB920 }, // unk_AAC52
+    { name: 'EnergyBar.map.jim', folder: 'NHL94/Graphics', start: 0x000AB920, end: 0x000ABA14 }, // unk_AB920
+    { name: 'TeamBlocks.map.jim', folder: 'NHL94/Graphics', start: 0x000ABA14, end: 0x000AFE12 }, // unk_ABA14
+    { name: 'TeamBlocks94.map.jim', folder: 'NHL94/Graphics', start: 0x000AFE12, end: 0x000B3530 }, // unk_AFE12
+    { name: 'EASN.map.jim', folder: 'NHL94/Graphics', start: 0x000B3530, end: 0x000B3640 }, // unk_B3530
+    { name: 'Arrows.map.jim', folder: 'NHL94/Graphics', start: 0x000B3640, end: 0x000B389C }, // unk_B3640
+    { name: 'RonBarr.map.jim', folder: 'NHL94/Graphics', start: 0x000B389C, end: 0x000B3E74 }, // unk_B389C
+    { name: 'Scores.map.jim', folder: 'NHL94/Graphics', start: 0x000B3E74, end: 0x000B425A }, // unk_B3E74
+    { name: 'unk_B425A.bin', folder: 'NHL94/Graphics', start: 0x000B425A, end: 0x000B5180 }, // unk_B425A
+    { name: 'IceRink94Reverse.map.jim', folder: 'NHL94/Graphics', start: 0x000B5180, end: 0x000BB4EE }, // RevRinkTilelist
+    { name: 'ReplayOptions.map.jim', folder: 'NHL94/Graphics', start: 0x000BB4EE, end: 0x000BC05C }, // unk_BB4EE
+    { name: 'PauseScreen.map.jim', folder: 'NHL94/Graphics', start: 0x000BC05C, end: 0x000BE26A }, // unk_BC05C
+    { name: 'SmallFont94.map.jim', folder: 'NHL94/Graphics', start: 0x000BE26A, end: 0x000BEFB8 }, // unk_BE26A
+    { name: 'GameSetupBkgd1.map.jim', folder: 'NHL94/Graphics', start: 0x000BEFB8, end: 0x000BF542 }, // unk_BEFB8
+    { name: 'GameSetupBkgd2.map.jim', folder: 'NHL94/Graphics', start: 0x000BF542, end: 0x000BF702 }, // unk_BF542
+    { name: 'GameSetupLogoBorder.map.jim', folder: 'NHL94/Graphics', start: 0x000BF702, end: 0x000BF8D0 }, // unk_BF702
+    { name: 'logoANA.map.jim', folder: 'NHL94/Graphics', start: 0x000BF8D0, end: 0x000BFD66 }, // logoANA
+    { name: 'logoBOS.map.jim', folder: 'NHL94/Graphics', start: 0x000BFD66, end: 0x000C00BC }, // logoBOS
+    { name: 'logoBUF.map.jim', folder: 'NHL94/Graphics', start: 0x000C00BC, end: 0x000C0412 }, // logoBUF
+    { name: 'logoCGY.map.jim', folder: 'NHL94/Graphics', start: 0x000C0412, end: 0x000C08A8 }, // logoCGY
+    { name: 'logoCHI.map.jim', folder: 'NHL94/Graphics', start: 0x000C08A8, end: 0x000C0CDE }, // logoCHI
+    { name: 'logoDET.map.jim', folder: 'NHL94/Graphics', start: 0x000C0CDE, end: 0x000C1034 }, // logoDET
+    { name: 'logoEDM.map.jim', folder: 'NHL94/Graphics', start: 0x000C1034, end: 0x000C142A }, // logoEDM
+    { name: 'logoFLA.map.jim', folder: 'NHL94/Graphics', start: 0x000C142A, end: 0x000C1900 }, // logoFLA
+    { name: 'logoHFD.map.jim', folder: 'NHL94/Graphics', start: 0x000C1900, end: 0x000C1B96 }, // logoHFD
+    { name: 'logoNYI.map.jim', folder: 'NHL94/Graphics', start: 0x000C1B96, end: 0x000C1FEC }, // logoNYI
+    { name: 'logoLA.map.jim', folder: 'NHL94/Graphics', start: 0x000C1FEC, end: 0x000C2362 }, // logoLA
+    { name: 'logoDAL.map.jim', folder: 'NHL94/Graphics', start: 0x000C2362, end: 0x000C2638 }, // logoDAL
+    { name: 'logoMTL.map.jim', folder: 'NHL94/Graphics', start: 0x000C2638, end: 0x000C29AE }, // logoMTL
+    { name: 'logoNJ.map.jim', folder: 'NHL94/Graphics', start: 0x000C29AE, end: 0x000C2E64 }, // logoNJ
+    { name: 'logoNYR.map.jim', folder: 'NHL94/Graphics', start: 0x000C2E64, end: 0x000C333A }, // logoNYR
+    { name: 'logoOTW.map.jim', folder: 'NHL94/Graphics', start: 0x000C333A, end: 0x000C3750 }, // logoOTW
+    { name: 'logoPHI.map.jim', folder: 'NHL94/Graphics', start: 0x000C3750, end: 0x000C3B06 }, // logoPHI
+    { name: 'logoPIT.map.jim', folder: 'NHL94/Graphics', start: 0x000C3B06, end: 0x000C3E7C }, // logoPIT
+    { name: 'logoQUE.map.jim', folder: 'NHL94/Graphics', start: 0x000C3E7C, end: 0x000C41D2 }, // logoQUE
+    { name: 'logoSJ.map.jim', folder: 'NHL94/Graphics', start: 0x000C41D2, end: 0x000C4608 }, // logoSJ
+    { name: 'logoSTL.map.jim', folder: 'NHL94/Graphics', start: 0x000C4608, end: 0x000C49DE }, // logoSTL
+    { name: 'logoTB.map.jim', folder: 'NHL94/Graphics', start: 0x000C49DE, end: 0x000C4DF4 }, // logoTB
+    { name: 'logoTOR.map.jim', folder: 'NHL94/Graphics', start: 0x000C4DF4, end: 0x000C514A }, // logoTOR
+    { name: 'logoVAN.map.jim', folder: 'NHL94/Graphics', start: 0x000C514A, end: 0x000C5560 }, // logoVAN
+    { name: 'logoWSH.map.jim', folder: 'NHL94/Graphics', start: 0x000C5560, end: 0x000C57D6 }, // logoWSH
+    { name: 'logoWPG.map.jim', folder: 'NHL94/Graphics', start: 0x000C57D6, end: 0x000C5C4C }, // logoWPG
+    { name: 'logoASE.map.jim', folder: 'NHL94/Graphics', start: 0x000C5C4C, end: 0x000C6022 }, // logoASE
+    { name: 'logoASW.map.jim', folder: 'NHL94/Graphics', start: 0x000C6022, end: 0x000C63F8 }, // logoASW
+    { name: 'unk_C63F8.bin', folder: 'NHL94/Graphics', start: 0x000C63F8, end: 0x000C682E }, // unk_C63F8
+    { name: 'unk_C682E.bin', folder: 'NHL94/Graphics', start: 0x000C682E, end: 0x000C6B98 }, // unk_C682E
+    { name: 'unk_C6B98.bin', folder: 'NHL94/Graphics', start: 0x000C6B98, end: 0x000C6F02 }, // unk_C6B98
+    { name: 'unk_C6F02.bin', folder: 'NHL94/Graphics', start: 0x000C6F02, end: 0x000C726C }, // unk_C6F02
+    { name: 'unk_C726C.bin', folder: 'NHL94/Graphics', start: 0x000C726C, end: 0x000E9A80 }, // unk_C726C
+    { name: 'unk_E9A80.bin', folder: 'NHL94/Graphics', start: 0x000E9A80, end: 0x000E9ED6 }, // unk_E9A80
+    { name: 'unk_E9ED6.bin', folder: 'NHL94/Graphics', start: 0x000E9ED6, end: 0x000F3098 }, // unk_E9ED6
+    { name: 'unk_F3098.bin', folder: 'NHL94/Graphics', start: 0x000F3098, end: 0x000F5338 }, // unk_F3098
+    { name: 'HiScoreImg.bin', folder: 'NHL94/Graphics', start: 0x000F5338, end: 0x000F5AF6 }, // HiScoreImg
+    { name: 'unk_F5AF6.bin', folder: 'NHL94/Graphics', start: 0x000F5AF6, end: 0x000F5D1C }, // unk_F5AF6
+    { name: 'unk_F5D1C.bin', folder: 'NHL94/Graphics', start: 0x000F5D1C, end: 0x000F600E }, // unk_F5D1C
+    { name: 'revframetbl.bin', folder: 'NHL94/Graphics', start: 0x000F600E, end: 0x000F66EE }, // revframetbl
 
     // { name: 'Title1.map.jim', folder: 'NHL94/Graphics', start: 0x00025642, end: 0x0002ADF0 },
     // { name: 'Title2.map.jim', folder: 'NHL94/Graphics', start: 0x0002ADF0, end: 0x0002C0FE },
@@ -109,7 +162,7 @@ const assets = [
     // { name: 'EASN.map.jim', folder: 'NHL94/Graphics', start: 0x0007FC20, end: 0x0007FE8A }
 ];
 
-// Expected CRC32 checksum (996931775 in hexadecimal)
+// Expected CRC32 of lst/nhl94.bin
 const EXPECTED_CRC32 = 0x9438F5DD;
 
 async function verifyCRC32(filePath) {
@@ -135,7 +188,7 @@ async function extractAssets(romPath, options = {}) {
         // Verify CRC32
         const isValid = await verifyCRC32(romPath);
         if (!isValid) {
-            console.error('CRC32 checksum mismatch. Expected 3B6BF8BF. Aborting extraction.');
+            console.error(`CRC32 checksum mismatch. Expected ${EXPECTED_CRC32.toString(16).toUpperCase()}. Aborting extraction.`);
             return;
         }
 
