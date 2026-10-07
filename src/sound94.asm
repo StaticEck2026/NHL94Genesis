@@ -1,10 +1,11 @@
-;	NHL 94 (retail) segment $1A264-$1AD8F
+;	NHL 94 (retail) segment $1A264-$4B5BF
 ;	68k side of the sound driver, as 93 sound93 (same driver, revised): AllSndOff (93 p_turnoff), p_initfx (93
 ;	play_sfx_or_music_track), play_new_song, the 94 pad readers (ReadJoyData ... ResetZ80Bus, run from MusicVB), MusicVB (93
 ;	p_music_vblank), UploadCommandBufferToZ80, ProcessOneMusicTrack and the event handlers, UpdateChannelFrequencyAndVolume, the 94
-;	volume routine SetChannelVolume, Z80_LoadROM (93 p_initialZ80) and ClearAllTrackAndSFXSlots. The Z80 program (Z80_Program_Code, loaded by
-;	Z80_LoadROM), the PCM sample table (pcm_sample_table), the samples, the FM patches ($2C248) and the sound pointer table (MusicTrackPointerTable) follow
-;	from $1AD90; they are not in this segment (93: incbins after the driver).
+;	volume routine SetChannelVolume, Z80_LoadROM (93 p_initialZ80) and ClearAllTrackAndSFXSlots. Then, as 93 sound93 (incbins after the
+;	driver), the sound data from $1AD90 to $4B5BF: the Z80 program (Z80_Program_Code, loaded by Z80_LoadROM), the PCM sample table and
+;	samples (pcm_sample_table), the FM patches (fm_instrument_patches), the sound pointer tables (MusicTrackPointerTable, SongPointerTable)
+;	and the song event streams (SongStreams), each a slice of lst/nhl94.bin written by npm run extractassets (extractAssets94.js).
 ;	94 changes from 93: sounds 0-$7A (93 0-$37) through a long pointer table (93 word offsets), 8 byte channel structs (93 6), a voice
 ;	volume word (+4) and the controller event handle_command_30, the vblank pad reading, and the Rev A 93 50 Hz tempo block.
 ;	Transcribed from lst/nhl94.bin.lst lines 61529-63138. Global names are the IDA names, or the 93 sound93 name where IDA has an auto
@@ -723,3 +724,29 @@ ClearAllTrackAndSFXSlots	;IDA: sub_1AD54 (93 name). Free the 8 track slots and r
 	clr.b	6(a0)
 	dbf	d0,.chan
 	rts
+
+;	Sound data (incbin, as 93 sound93): $1AD90-$4B5BF
+Z80_Program_Code		;retail $1AD90-$1B01B (652 bytes). IDA unk_1AD90: the Z80 sound program. Z80_LoadROM copies $295 bytes from here into Z80 RAM (through $1B024, into the sample table, as 93
+	;does)
+	incbin	..\Extracted\NHL94\Sound\z80_snd_drv94.bin
+	even
+pcm_sample_table		;retail $1B01C-$2C247 (70188 bytes). IDA unk_1B01C: the PCM sample table (handle_command_10; 93 pcm_sample_table), 15 entries
+	;of 8 bytes, then the PCM samples from $1B094. IDA unk_1C000 (an andi.l constant in the high ROM), unk_1D491 (data in hockey94_10 read as a
+	;bcs.w), unk_2000A (an attribute long in hockey94_11) and unk_2000D (data in the high ROM read as code) are not labels
+	incbin	..\Extracted\NHL94\Sound\pcm_sample_table.bin
+	even
+fm_instrument_patches		;retail $2C248-$2C647 (1024 bytes). IDA unk_2C248: 32 FM patches of 32 bytes (93 fm_instrument_patches;
+	;UpdateChannelFrequencyAndVolume reads byte $1E, the pitch bend scale). IDA byte_2C266 (+$1E, from that label difference) is not a label
+	incbin	..\Extracted\NHL94\Sound\fm_instrument_patches.bin
+	even
+MusicTrackPointerTable		;retail $2C648-$2C707 (192 bytes). IDA unk_2C648: the event stream pointers of sounds 0-$2F (p_initfx; 93 word offsets)
+	incbin	..\Extracted\NHL94\Sound\MusicTrackPointerTable.bin
+	even
+SongPointerTable		;retail $2C708-$2CEF1 (2026 bytes). IDA off_2C708: the pointers of sounds $30-$7A, the songs (play_new_song reads the first), then the event streams of sounds 0-$2F from $2C834
+	incbin	..\Extracted\NHL94\Sound\SongPointerTable.bin
+	even
+SongStreams		;retail $2CEF2-$4B5BF (124622 bytes). IDA unk_2CEF2: the song event streams, song $30 (the first SongPointerTable pointer) to song
+	;$7A ($490E2). IDA unk_3000C, unk_40EE8 (data in the high ROM read as code), unk_3FEB0 (the Calc_Checksum long count), unk_4082A, byte_408AA
+	;(the offsets in Sprites) and unk_44120 (the string long #$44120 in SetLCmode2, logic94_1) are not labels
+	incbin	..\Extracted\NHL94\Sound\SongStreams.bin
+	even

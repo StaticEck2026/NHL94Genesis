@@ -2,7 +2,7 @@
 
 ;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 ;
-;	sound94 segment stub. Retail $01A264-$01AD8F.
+;	sound94 segment stub. Retail $01A264-$04B5BF (the 68k driver, then the sound data incbins).
 ;
 ;<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
@@ -14,12 +14,8 @@
 	include	stubinc\equals.inc	;VDP status bits
 	include	stubinc\ram_addrs.inc	;RAM names
 
-; External addresses outside $01A264-$01AD8F, read from lst/nhl94.bin: jsr / jmp (x).l, movea.l / move.l #x and
-; lea (x).l carry the address; bsr.w / bra.w / Bcc.w is the displacement word address + displacement. IDA names.
-SongPointerTable = $2C708		;movea.l (x).l operand at $1A314 (the sound $30 pointer in MusicTrackPointerTable) (IDA: off_2C708)
-Z80_Program_Code = $1AD90		;#x at $1ACE4 (IDA: unk_1AD90)
-pcm_sample_table = $1B01C		;lea (x,pc) at $1A77E (IDA: unk_1B01C)
-MusicTrackPointerTable = $2C648		;lea (x).l at $1A2C8 (IDA: unk_2C648)
+; External addresses outside $01A264-$04B5BF: none. The sound data the driver reads (Z80_Program_Code, pcm_sample_table,
+; MusicTrackPointerTable, SongPointerTable) is in this segment. Run npm run extractassets first (npm run seg:sound94 does).
 
 ; Main segment code
 	include	sound94.asm

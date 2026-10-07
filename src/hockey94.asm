@@ -37,8 +37,8 @@
 	include	hockey94_10.asm		;$018380-$018CFB  ResolveGames ... exception handlers, crash
 	include	hockey94_11.asm		;$018CFC-$01A04F  data: cd0, asstab, PenaltyList ... menu and pause text
 	include	sram94.asm		;$01A050-$01A263  InitSaveRAM ... ReadSRAM (battery save RAM)
-	include	sound94.asm		;$01A264-$01AD8F  AllSndOff ... ClearAllTrackAndSFXSlots (68k sound driver)
-	include	graphics94.asm		;$01AD90-$0F66ED  Z80 program, sound data, graphics (incbin)
+	include	sound94.asm		;$01A264-$04B5BF  AllSndOff ... ClearAllTrackAndSFXSlots (68k sound driver), then Z80 program and sound data (incbin)
+	include	graphics94.asm		;$04B5C0-$0F66ED  MATCHUPS script, graphics (incbin)
 	include	high94_1.asm		;$0F66EE-$0F739D  puckvzadj ... one-timer, 4 way play test, crowd meter, hot / cold
 	include	hockey94_08.asm		;$0F739E-$0F8B59  GameSetUp ... setoptions (game setup screen)
 	include	high94_2.asm		;$0F8B5A-$0FCB99  wallcollduringcheck ... save RAM records, Player Cards, shootout

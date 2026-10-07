@@ -1,39 +1,15 @@
-;	graphics94.asm: retail $1AD90-$F66ED (899422 bytes), the sound data after the 68k driver (sound94) and the graphics, up to the
-;	94 code in the high ROM. incbin only, no gap and no overlap. Each file is a slice of lst/nhl94.bin written by npm run extractassets
-;	(extractAssets94.js) into Extracted\NHL94\Sound, Graphics and Text. One slice per IDA label. Labels are the IDA names (the
-;	matched segments use them; SNASM symbols are case-insensitive), or for an address with no IDA label the name the matched segment
-;	uses (IDA hid it in a string) or, for the team logos, logo<team>. Files use the 92 / 93 name where the 94 asset is the same one
-;	(same use, mostly the same size), else the extractAssets94.js draft name where its slice lined up, else the label. A map's tiles
-;	start past its 8-byte header: the IDA label there is written as label+8. Not labels (no slice starts there): the IDA names made
-;	from constants (unk_1C000, unk_3FEB0, unk_44120, unk_50000, unk_E0000), from offsets or attribute longs read as addresses
-;	(unk_2000A, unk_4082A, byte_408AA, unk_8000A), from a label difference (byte_2C266) and from data read as code (unk_1D491,
-;	unk_2000D, unk_3000C, unk_40EE8, unk_8000C, unk_D0000, dword_EDF9B, loc_F4458 ... loc_F4F02).
-Z80_Program_Code		;retail $1AD90-$1B01B (652 bytes). IDA unk_1AD90: the Z80 sound program. Z80_LoadROM (sound94) copies $295 bytes from here into Z80 RAM (through $1B024, into the sample table, as 93
-	;does)
-	incbin	..\Extracted\NHL94\Sound\unk_1AD90.bin
-	even
-pcm_sample_table		;retail $1B01C-$2C247 (70188 bytes). IDA unk_1B01C: the PCM sample table (handle_command_10; 93 pcm_sample_table), 15 entries
-	;of 8 bytes, then the PCM samples from $1B094. IDA unk_1C000 (an andi.l constant in the high ROM), unk_1D491 (data in hockey94_10 read as a
-	;bcs.w), unk_2000A (an attribute long in hockey94_11) and unk_2000D (data in the high ROM read as code) are not labels
-	incbin	..\Extracted\NHL94\Sound\unk_1B01C.bin
-	even
-fm_instrument_patches		;retail $2C248-$2C647 (1024 bytes). IDA unk_2C248: 32 FM patches of 32 bytes (93 fm_instrument_patches;
-	;UpdateChannelFrequencyAndVolume reads byte $1E, the pitch bend scale). IDA byte_2C266 (+$1E, from that label difference) is not a label
-	incbin	..\Extracted\NHL94\Sound\fm_instrument_patches.bin
-	even
-MusicTrackPointerTable		;retail $2C648-$2C707 (192 bytes). IDA unk_2C648: the event stream pointers of sounds 0-$2F (p_initfx; 93 word offsets)
-	incbin	..\Extracted\NHL94\Sound\unk_2C648.bin
-	even
-SongPointerTable		;retail $2C708-$2CEF1 (2026 bytes). IDA off_2C708: the pointers of sounds $30-$7A, the songs (play_new_song reads the first), then the event streams of sounds 0-$2F from $2C834
-	incbin	..\Extracted\NHL94\Sound\off_2C708.bin
-	even
-SongStreams		;retail $2CEF2-$4B5BF (124622 bytes). IDA unk_2CEF2: the song event streams, song $30 (the first SongPointerTable pointer) to song
-	;$7A ($490E2). IDA unk_3000C, unk_40EE8 (data in the high ROM read as code), unk_3FEB0 (the Calc_Checksum long count), unk_4082A, byte_408AA
-	;(the offsets in Sprites) and unk_44120 (the string long #$44120 in SetLCmode2, logic94_1) are not labels
-	incbin	..\Extracted\NHL94\Sound\unk_2CEF2.bin
-	even
+;	graphics94.asm: retail $4B5C0-$F66ED (700718 bytes), the data after the sound data (sound94 ends with the sound incbins,
+;	$1AD90-$4B5BF): the MATCHUPS script and the graphics, up to the 94 code in the high ROM. incbin only, no gap and no overlap. Each file
+;	is a slice of lst/nhl94.bin written by npm run extractassets (extractAssets94.js) into Extracted\NHL94\Graphics and Text. One slice
+;	per IDA label. Labels are the 93 names, or named for what the data is (IDA name in the comment), the IDA name where it is not an
+;	auto name, or for an address with no IDA label the name the matched segment uses (IDA hid it in a string) or, for the team logos,
+;	logo<team>. Files use the 92 / 93 name where the 94 asset is the same one (same use, mostly the same size; 94 in the name when it
+;	differs), else the extractAssets94.js draft name where its slice lined up, else the label. A map's tiles start past its 8-byte
+;	header: the IDA label there is written as label+8. Not labels (no slice starts there): the IDA names made from constants (unk_50000,
+;	unk_E0000), from attribute longs read as addresses (unk_8000A) and from data read as code (unk_8000C, unk_D0000, dword_EDF9B,
+;	loc_F4458 ... loc_F4F02); those in the sound data are listed in sound94.asm.
 ScoutTextScript		;retail $4B5C0-$4B79F (480 bytes). IDA unk_4B5C0: the script ScoutTextPlayer (hockey94_06) types out word by word on the ScoutingReport (MATCHUPS) screen
-	incbin	..\Extracted\NHL94\Text\unk_4B5C0.bin
+	incbin	..\Extracted\NHL94\Text\ScoutTextScript.bin
 	even
 GameSetUpMap	;IDA: unk_4B7A0. retail $4B7A0-$4DEED (10062 bytes). no IDA label (hidden in a setoptions string; hockey94_08 loads #$4B7A0): the game setup screen bitmap, 40 x 28 (93 GameSetUp.map.jim)
 	incbin	..\Extracted\NHL94\Graphics\GameSetUp94-1.map.jim
@@ -54,7 +30,7 @@ TitleImg		;retail $5394E-$54E23 (5334 bytes). IDA TitleImg: the title on newTitl
 	incbin	..\Extracted\NHL94\Graphics\Title94-4.map.jim
 	even
 ScoutMap		;retail $54E24-$55B7D (3418 bytes). IDA unk_54E24 (93 ScoutMap): the ScoutingReport and PlayoffScreen background
-	incbin	..\Extracted\NHL94\Graphics\unknown5.map.jim
+	incbin	..\Extracted\NHL94\Graphics\Scouting94.map.jim
 	even
 framermap		;retail $55B7E-$55BF5 (120 bytes). IDA framermap (92 / 93 FramerMap): Framer
 	incbin	..\Extracted\NHL94\Graphics\Framer.map.jim
@@ -78,7 +54,7 @@ RefMap2		;retail $5CF64-$5DE79 (3862 bytes). IDA unk_5CF64 (93 RefMap2): the hor
 ;RefMap2+8: retail $5CF6C. the tiles (chkprogress, ReloadRefHorTiles) (IDA unk_5CF6C)
 Sprites		;retail $5DE7A-$5DE83 (10 bytes). IDA off_5DE7A: the sprite header (93 Sprites; addframe2): long offsets from here $4082A (to
 	;$9E6A4) and $408AA (to frameSprData), then a word. IDA read the two offsets as the addresses unk_4082A and byte_408AA
-	incbin	..\Extracted\NHL94\Graphics\off_5DE7A.bin
+	incbin	..\Extracted\NHL94\Graphics\Sprites.bin
 	even
 Spritetiles		;retail $5DE84-$9E723 (264352 bytes). IDA Spritetiles: the sprite tiles (93 Sprites+$A; addframe2 adds the frame tile offset
 	;to #Spritetiles). IDA unk_8000A (an attribute long in hockey94_11) and unk_8000C (data in the high ROM read as code) are not labels
@@ -138,7 +114,7 @@ ScoresMap		;retail $B3E74-$B4259 (998 bytes). IDA unk_B3E74 (93 ScoresMap, same 
 	incbin	..\Extracted\NHL94\Graphics\Scores.map.jim
 	even
 EASportsMap	;IDA: unk_B425A. retail $B425A-$B517F (3878 bytes). no IDA label (hidden in the EASportsScreen string; attract94 loads #$B425A): the EA Sports screen map
-	incbin	..\Extracted\NHL94\Graphics\unk_B425A.bin
+	incbin	..\Extracted\NHL94\Graphics\EASportsMap.bin
 	even
 RevRinkTilelist		;retail $B5180-$BB4ED (25454 bytes). IDA RevRinkTilelist: the reversed ice rink (updatescroll, ShowReplayIcon)
 	incbin	..\Extracted\NHL94\Graphics\IceRink94Reverse.map.jim
@@ -252,40 +228,40 @@ logoASW		;retail $C6022-$C63F7 (982 bytes). no IDA label: the ASW logo, team 27 
 	incbin	..\Extracted\NHL94\Graphics\logoASW.map.jim
 	even
 PicturePalette		;retail $C63F8-$C682D (1078 bytes). IDA unk_C63F8: the player picture palette, and the picture of a player with none (DrawMatchupPicture, PlayerCardScreen)
-	incbin	..\Extracted\NHL94\Graphics\unk_C63F8.bin
+	incbin	..\Extracted\NHL94\Graphics\PicturePalette.bin
 	even
 NoPicSkater1		;retail $C682E-$C6B97 (874 bytes). IDA unk_C682E: read by DrawPlayerPicture (high ROM, not matched yet)
-	incbin	..\Extracted\NHL94\Graphics\unk_C682E.bin
+	incbin	..\Extracted\NHL94\Graphics\NoPicSkater1.bin
 	even
 NoPicSkater2		;retail $C6B98-$C6F01 (874 bytes). IDA unk_C6B98: read by DrawPlayerPicture (high ROM, not matched yet)
-	incbin	..\Extracted\NHL94\Graphics\unk_C6B98.bin
+	incbin	..\Extracted\NHL94\Graphics\NoPicSkater2.bin
 	even
 NoPicGoalie1		;retail $C6F02-$C726B (874 bytes). IDA unk_C6F02: read by DrawPlayerPicture (high ROM, not matched yet)
-	incbin	..\Extracted\NHL94\Graphics\unk_C6F02.bin
+	incbin	..\Extracted\NHL94\Graphics\NoPicGoalie1.bin
 	even
 PlayerPictures		;retail $C726C-$E9A7F (141332 bytes). IDA unk_C726C: read by DrawPlayerPicture (high ROM, not matched yet). IDA unk_D0000 (data read as code) and unk_E0000 (an andi.l constant) are
 	;not
 	;labels
-	incbin	..\Extracted\NHL94\Graphics\unk_C726C.bin
+	incbin	..\Extracted\NHL94\Graphics\PlayerPictures.bin
 	even
 CornerLogoMap		;retail $E9A80-$E9ED5 (1110 bytes). IDA unk_E9A80: read in the high ROM near NoNameTxt and by SkipOtherUserName (not matched yet)
-	incbin	..\Extracted\NHL94\Graphics\unk_E9A80.bin
+	incbin	..\Extracted\NHL94\Graphics\CornerLogoMap.bin
 	even
 ArenaGfxBank		;retail $E9ED6-$F3097 (37314 bytes). IDA unk_E9ED6: read in the high ROM near NoNameTxt and by SkipOtherUserName (not matched yet). IDA dword_EDF9B (data read as code) is not a label
-	incbin	..\Extracted\NHL94\Graphics\unk_E9ED6.bin
+	incbin	..\Extracted\NHL94\Graphics\ArenaGfxBank.bin
 	even
 PlayoffSprite		;retail $F3098-$F5337 (8864 bytes). IDA unk_F3098: PlayoffScreen and DrawPlayoffSprite. The IDA code labels loc_F4458 ... loc_F4F02 in it are data read as code: not labels
-	incbin	..\Extracted\NHL94\Graphics\unk_F3098.bin
+	incbin	..\Extracted\NHL94\Graphics\PlayoffSprite.bin
 	even
 HiScoreImg		;retail $F5338-$F5AF5 (1982 bytes). IDA HiScoreImg: HiScoreScreen (high ROM)
 	incbin	..\Extracted\NHL94\Graphics\HiScoreImg.bin
 	even
 HotIconMap		;retail $F5AF6-$F5D1B (550 bytes). IDA unk_F5AF6: read by HotColdIcon (high ROM, not matched yet)
-	incbin	..\Extracted\NHL94\Graphics\unk_F5AF6.bin
+	incbin	..\Extracted\NHL94\Graphics\HotIconMap.bin
 	even
 ;HotIconMap+8: retail $F5AFE. the tiles (ScoutingReport) (IDA unk_F5AFE)
 ColdIconMap		;retail $F5D1C-$F600D (754 bytes). IDA unk_F5D1C: read by HotColdIcon (high ROM, not matched yet)
-	incbin	..\Extracted\NHL94\Graphics\unk_F5D1C.bin
+	incbin	..\Extracted\NHL94\Graphics\ColdIconMap.bin
 	even
 ;ColdIconMap+8: retail $F5D24. the tiles (ScoutingReport) (IDA unk_F5D24)
 revframetbl		;retail $F600E-$F66ED (1760 bytes). IDA revframetbl: the replay frame table (RestoreReplayFrame)

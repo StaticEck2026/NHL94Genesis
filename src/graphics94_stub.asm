@@ -1,13 +1,13 @@
 ;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 ;
-;	graphics94 segment stub. Retail $01AD90-$0F66ED.
+;	graphics94 segment stub. Retail $04B5C0-$0F66ED.
 ;
 ;<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
-; External addresses outside $01AD90-$0F66ED: none. The segment is incbin only.
+; External addresses outside $04B5C0-$0F66ED: none. The segment is incbin only.
 ; Run npm run extractassets first (npm run seg:graphics94 does) to write Extracted\NHL94.
 ; .region data
-	org	$1AD90
+	org	$4B5C0
 
 ; Main segment data
 	include	graphics94.asm
