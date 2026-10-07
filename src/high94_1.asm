@@ -710,7 +710,7 @@ checkwallcoll	;IDA name (and comments; 92 name). IDA: ywall 210 = blue line to t
 	movem.w	(sp)+,d2-d5
 	move.w	$4E(a3),d0	;wallcos(a3)
 	or.w	$50(a3),d0	;wallsin(a3)
-	bne.w	rtss3
+	bne.w	.rtss3
 	move.w	#$100,d0	;now check side walls
 	clr.w	d1
 	cmp.w	d5,d3
@@ -726,7 +726,7 @@ checkwallcoll	;IDA name (and comments; 92 name). IDA: ywall 210 = blue line to t
 	neg.w	d1
 	cmp.w	d4,d2
 	ble.w	wallcollb
-rtss3	;IDA name. The shared rts of checkwallcoll
+.rtss3	;IDA: rtss3 (a second IDA rtss3; the global one is logic94_1's). 93 checkwallcoll branches to the shared rtss here
 	rts
 wallcollb	;IDA name (92 name). Thunk: jmp wallcollb2 (hockey94_04)
 	jmp	wallcollb2

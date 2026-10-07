@@ -598,7 +598,7 @@ FormatAndPrintTime	;IDA: sub_11C72 (93 name). d0 bits 14-15 = period, bits 0-13 
 	clr.w	d0
 	rol.l	#2,d0
 	movea.l	#PeriodLabelTable,a1
-	bsr.w	sub_13508
+	bsr.w	PrintStringFromList
 	addq.w	#2,(printx).w
 	swap	d0
 	lsr.w	#2,d0
@@ -814,7 +814,7 @@ printbig
 	rts
 sub_11E8E
 	subi.w	#$20,d0
-	movea.l	#unk_1916A,a0
+	movea.l	#bfasciicon,a0
 	moveq	#1,d2
 	move.b	0(a0,d0.w),d1
 	ext.w	d1

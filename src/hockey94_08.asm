@@ -28,7 +28,7 @@ GameSetUp	;IDA name. 94 game setup screen, called from PeriodOver (93 PeriodOver
 	;(loc_F843E), and $5460 frames without a press start a demo (loc_F8418). 93 setoptions from .keep on
 	jsr	(sub_FE660).l
 	movea.l	#unk_FFD088,a3	;saved playoff state
-	jsr	(sub_1803E).l	;(93 ReadPassBits)
+	jsr	(ReadPassBits).l	;(93 ReadPassBits)
 	move.w	(TmpOptLine2).w,(OptLine).w	;undo the start changes of loc_F843E (Auto line changes, Shootout)
 	move.w	(TempOptPlayMode).w,(OptPlayMode).w
 	bclr	#1,(byte_FFC2FC).w
@@ -1253,7 +1253,7 @@ sub_F8868	;94 only. Draw a player card on one side (word_FFD42E bit 1: visitors 
 	move.w	(word_FFD43E).w,d3
 	mulu.w	#6,d3
 	asl.w	#2,d0
-	movea.l	#(loc_F92F0+4),a0	;pictures of each team: picture.l, roster index.w entries
+	movea.l	#unk_F92F4,a0	;IDA #(loc_F92F0+4). pictures of each team: picture.l, roster index.w entries
 	movea.l	0(a0,d0.w),a0
 	move.w	4(a0,d3.w),(word_FFD434).w	;roster index
 	movea.l	0(a0,d3.w),a0

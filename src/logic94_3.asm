@@ -1337,7 +1337,7 @@ sub_E1F4
 	beq.w	.E248
 	exg	a2,a1
 .E248
-	bsr.w	sub_12EF6
+	bsr.w	AvgCline
 	cmp.w	#$C00,d0
 	bhi.w	rtss2
 	bsr.w	CompLine

@@ -254,7 +254,7 @@ CalculateTeamAttributeValues	;IDA: sub_1867E (93 name). Star scores of team a2 (
 	sub.w	$C(a3),d3	;goal difference (HmGoals / AwGoals)
 	ext.l	d3
 	moveq	#$19,d4	;26 slots
-	jsr	(sub_9F40).l	;d0 = goalies on the team (93 ReadAttributeNibble)
+	jsr	(ReadAttributeNibble).l	;d0 = goalies on the team (93 ReadAttributeNibble)
 	neg.w	d0
 	add.w	d4,d0
 .18696

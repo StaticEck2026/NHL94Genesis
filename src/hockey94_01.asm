@@ -75,7 +75,7 @@ StartGame	;reset game state for a new game, then start the first period
 	jsr	(InitScores).l
 	jsr	(setupice).l
 	jsr	(LoadCrowdRec).l
-	jmp	loc_17278		;on to period start (93 IntermissionStart)
+	jmp	IntermissionStart		;on to period start (93 IntermissionStart)
 
 ClearShotData	;IDA: sub_77E4. Clear $E4 words at $FFD092 (93: 49 words at $FFCB0A)
 	move.w	#$E3,d0
@@ -185,7 +185,7 @@ DoGameFrame	;wait for at least one vblank, then run one frame of game logic
 	bmi.w	.nosong
 	subq.w	#1,(word_FFDECC).w
 	bne.w	.nosong
-	jsr	(sub_1A304).l
+	jsr	(play_new_song).l
 	move.w	(word_FFDECE).w,-(sp)
 	jsr	(song).l
 .nosong	jsr	(setSlotBit).l
@@ -214,7 +214,7 @@ periodicevents	;IDA: periodiceevents. Called every time thru game loop with d7 =
 CheckInjury	;IDA: loc_79EA. Called once per second. Count down InjCntDown, act on it at zero
 	subq.w	#1,(InjCntDown).w
 	bne.w	rtss8
-	jmp	loc_1871C		;countdown expired (93 ShowInjuryBox)
+	jmp	ShowInjuryBox		;countdown expired (93 ShowInjuryBox)
 
 UpdateLineChange	;IDA: loc_79F8. Called once per second. Restore energy for players on the bench
 	tst.w	(OptLine).w
@@ -310,7 +310,7 @@ clockcont	;monitor period clock and initiate various clock activated events
 	tst.w	(gameclock).w
 	bne.w	rtss8
 	bset	#3,(disflags).w		;dfclock: clock needs update
-	jsr	(sub_1A304).l
+	jsr	(play_new_song).l
 	move.w	#4,-(sp)		;horn
 	jsr	(sfx).l
 	bsr.w	freezewindow
@@ -402,7 +402,7 @@ demoread	;monitor joystick if in demo mode (called every game loop)
 HandleJoy1	;IDA: loc_7CB0. Any button on the pad just read (d1) ends the demo
 	tst.w	d1
 	beq.w	rtss8			;nothing pressed
-	jmp	loc_172E4		;exit demo (93 ExitToOpening)
+	jmp	ExitToOpening		;exit demo (93 ExitToOpening)
 
 startpause1	;pause initiated by cont 1
 	clr.w	(word_FFC316).w		;94: pausing pad number (0 = pad 1 or 2)
@@ -434,7 +434,7 @@ Pausemode	;IDA: PauseMode. Game is in pause mode now
 	jsr	(AllSndOff).l		;shut off sound (93 p_turnoff)
 	move.w	(sflags).w,-(sp)
 	bsr.w	seta2			;a2 = team of pausing controller
-	movea.l	#unk_19700,a0		;menu item list (93 PauseText)
+	movea.l	#PauseText,a0		;menu item list (93 PauseText)
 	lea	SetupPauseScreen(pc),a1	;screen draw routine
 	btst	#0,(word_FFC2FA).w
 	beq.w	.chk2			;IDA: loc_7D38
@@ -442,13 +442,13 @@ Pausemode	;IDA: PauseMode. Game is in pause mode now
 	bra.w	.0
 .chk2	btst	#2,$30(a2)		;tmflags
 	beq.w	.0			;IDA: loc_7D48
-	movea.l	#unk_1988C,a0		;alternate item list (93 PauseText2)
-.0	bsr.w	sub_7E36		;93 InitMenuState
+	movea.l	#PauseText2,a0		;alternate item list (93 PauseText2)
+.0	bsr.w	InitMenuState		;93 InitMenuState
 .1	bsr.w	vcountwait		;IDA: loc_7D4C. 93 MenuWaitVblank
 	bsr.w	getpzjoy
 	jsr	(showclock).l
-	jsr	(sub_11318).l
-	bsr.w	sub_7E88		;93 HandleMenuInput
+	jsr	(ProcessInputWithRepeat).l
+	bsr.w	HandleMenuInput		;93 HandleMenuInput
 	bne.s	.1			;eq = leave pause
 
 	;92 PauseExit: restore graphics and return from pause mode

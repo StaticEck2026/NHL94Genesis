@@ -36,7 +36,7 @@ setc1player = $C0BC		;jsr / jmp (x).l at $153A8. logic94_1
 setc2player = $C0DA		;jsr / jmp (x).l at $153B6. logic94_1
 sfx = $11132			;bsr.w / Bcc.w at $151D2. middle94_1
 song = $11156			;bsr.w / Bcc.w at $152DC. middle94_1
-sub_9F9A = $9F9A			;jsr / jmp (x).l at $158DC
+GetPlayerCount = $9F9A			;jsr / jmp (x).l at $158DC. IDA: sub_9F9A
 sublist = $1921C			;#x at $158BA
 vtoa = $10676			;bsr.w / Bcc.w at $15480. logic94_5
 

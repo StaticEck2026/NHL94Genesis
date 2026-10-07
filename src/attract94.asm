@@ -10,7 +10,7 @@
 ;	Inline print strings after printz use the String macro (length word includes itself).
 
 EASportsScreen	;94 only. Called from Begin. Show the EA Sports screen until a button, or $50 x 4 frames (about 5 s)
-	move.l	#loc_15E4C,(vbint).w	;vblank handler
+	move.l	#vb2,(vbint).w	;vblank handler
 	bclr	#1,(disflags).w
 	move.w	#5,(Map3col1).w
 	move.w	#$A000,(VmMap2).w
@@ -24,8 +24,8 @@ EASportsScreen	;94 only. Called from Begin. Show the EA Sports screen until a bu
 	moveq	#$1F,d1			;32 longs: all 64 colours black
 .clr	clr.l	(a0)+			;IDA: loc_17A5C
 	dbf	d1,.clr
-	bsr.w	sub_11044
-	bsr.w	loc_115AA
+	bsr.w	CopyPaletteToCRAM
+	bsr.w	setVram_0
 	bsr.w	printz
 	String	$FE,0,0,0
 	movea.l	#unk_B425A,a2		;screen map. IDA hid this in the string (ori.b #$7C,d0 / ori.b #$5A,a3)
@@ -94,7 +94,7 @@ sub_17AF4	;94 only. Called from sub_F7B20. Draw the VisTeam and HomeTeam bitmaps
 	move.w	#$EEE,(word_FFBD52).w
 	move.w	#2,d4
 	bsr.w	sub_17B78
-	bsr.w	sub_17190
+	bsr.w	setteams
 	move.w	#$64,(palcount).w
 	movem.l	(sp)+,d0-d7/a0-a2
 	rts
@@ -145,7 +145,7 @@ sub_17BE4	;94 only, no xref (IDA dc.b). $26(a2) = 0 if a pad has team a2, else (
 	;a value from the team's .sodds
 	movem.l	d0/a0,-(sp)
 	clr.w	$26(a2)
-	bsr.w	sub_17E42
+	bsr.w	FigureJoy
 	cmpa.w	#(HmShots-M68K_RAM),a2
 	seq	d0
 	ext.w	d0
@@ -165,8 +165,8 @@ sub_17BE4	;94 only, no xref (IDA dc.b). $26(a2) = 0 if a pad has team a2, else (
 	movea.l	0(a0,d0.w),a0		;team block
 	adda.w	$A(a0),a0		;ScoreOdds offset: a0 = .sodds
 	moveq	#4,d0
-	bsr.w	sub_10E88
-	bsr.w	sub_10EB4
+	bsr.w	UnpackNibbles
+	bsr.w	WeightedRandomSelect
 .set	move.w	d0,$26(a2)
 .x	movem.l	(sp)+,d0/a0
 	rts
@@ -178,7 +178,7 @@ VBlank_SetOptions	;IDA: loc_17C42. 93 hockey93_08 name: vbint handler stored by 
 	bne.w	.nograph		;IDA: loc_17C62
 	bclr	#0,(disflags).w		;dfok
 	beq.w	.fade			;IDA: loc_17C5E
-	bsr.w	sub_15E72		;93 DumpSprites2
+	bsr.w	DumpSprites2		;93 DumpSprites2
 .fade	bsr.w	cramfade
 .nograph	addq.w	#1,(vcount).w
 	jsr	(MusicVB).l		;93 p_music_vblank

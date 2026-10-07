@@ -272,7 +272,7 @@ InProgress	;ref in progress-- update graphics and stats and penalty information.
 	bset	#5,(word_FFC2F6).w
 .1229A
 	movem.l	d0-d1/a1-a4,-(sp)
-	bsr.w	sub_14A94	;93 GetPeriodTimeRemaining. Log time, penalty and player
+	bsr.w	GetPeriodTimeRemaining	;93 GetPeriodTimeRemaining. Log time, penalty and player
 	movea.w	#(PenSum-M68K_RAM),a4	;93 unk_FFC3F6
 	adda.w	(PenSumLength).w,a4	;93 word_FFC3F4
 	cmpi.w	#$EC,(PenSumLength).w	;log full: keep overwriting the last entry
@@ -342,7 +342,7 @@ InProgress	;ref in progress-- update graphics and stats and penalty information.
 	bsr.w	assreplace
 	movem.l	(sp)+,d0-d1/a1-a4
 	bsr.w	SetPA
-	bsr.w	sub_12DA6	;93 USBoard
+	bsr.w	USBoard	;93 USBoard
 	bra.w	.123D8
 .1238E
 	clr.w	(a0)	;93 .sa2
@@ -493,7 +493,7 @@ Stop4Pen	;a0 = penaltylist penalty +2. Stop the clock, set the face off spot fro
 .skipfo
 	clr.w	(Pencntdwn).w
 	bset	#2,(gmode).w	;gmpen
-	jsr	(sub_1A304).l	;94 only
+	jsr	(play_new_song).l	;94 only
 	move.w	#3,-(sp)	;whistle (92 SFXwhistle = 10)
 	bsr.w	sfx
 	move.w	#$A,d0	;whistle (92 PenWhistle = $26)
@@ -542,7 +542,7 @@ UpdatePA	;animate ref in ref window. As 93: DisplayPeriodOver (94 sub_1850A) for
 .125FC
 	cmpi.w	#4,(RefPen).l	;game over (92 PenEOG = 4)
 	bne.w	.1260C
-	bsr.w	sub_1850A	;93 DisplayPeriodOver
+	bsr.w	DisplayPeriodOver	;93 DisplayPeriodOver
 .1260C
 	sub.w	d7,(word_FFC3EE).w
 	bpl.w	rtss2
@@ -566,7 +566,7 @@ SetPA	;start ref animation. d0 = animation (penalty number). 94: animations from
 	bsr.w	prefmes
 	cmp.w	#$E,d0	;goal (92 PenGoal = 6)
 	bne.w	.1265A
-	bsr.w	loc_1889A	;93 DisplayPlayerAttributeMenu
+	bsr.w	DisplayPlayerAttributeMenu	;93 DisplayPlayerAttributeMenu
 .1265A
 	btst	#0,(word_FFC2FA).w	;94 only
 	beq.w	.12674
@@ -950,7 +950,7 @@ updatepwrplay	;show graphic and time remaining for power plays. 94: nothing when
 .clrpwrplay
 	bclr	#5,(sflags2).w
 	beq.w	rtss2
-	bra.w	sub_12D70
+	bra.w	EASNLogo
 ClrHor	;revert the graphics back to vertical ice rink mode. 94 reloads Rinktiles and calls sub_FEA52
 	movem.l	d0-d7/a0-a6,-(sp)
 	bclr	#7,(sflags).w	;sfhor
@@ -993,7 +993,7 @@ SetHor	;switch graphics to horizontal ice rink graphics mode
 	move.w	(rinkvrcset).w,d4
 	moveq	#0,d5
 	bsr.w	dobitmap
-	bsr.w	sub_12DA6	;93 USBoard
+	bsr.w	USBoard	;93 USBoard
 	btst	#0,(sflags).w	;sfpz
 	bne.w	.12BFE
 	move.w	#$800,d0	;92 $1000

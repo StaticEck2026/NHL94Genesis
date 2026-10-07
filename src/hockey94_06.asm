@@ -765,11 +765,11 @@ IntermissionStart	;IDA: loc_17278 (93 name; 93 IDA _sp). PeriodOver tail: reset 
 	beq.w	GameOver
 	jmp	(StartPer).w	;hockey94_01
 GameOver	;IDA name (92 name). sub_180FC (93: save the password), then in playoff mode sub_9428 (93: the playoff stats) and the playoff screen. Falls into ExitToOpening
-	bsr.w	sub_180FC
+	bsr.w	EncodePW
 	tst.w	(OptPlayMode).w
 	beq.w	.172E0
 	bclr	#1,(sflags).w
-	jsr	(sub_9428).l
+	jsr	(DisplayTeamStats).l
 .172E0
 	bsr.w	PlayoffScreen
 ExitToOpening	;IDA: loc_172E4 (93 name). Song $78, then restart at Opening2. Also jumped to from demoread (hockey94_01) and sub_FC4C0
@@ -793,7 +793,7 @@ Opening2	;reset the stack and clear the variables, then options (GameSetUp, sub_
 	bsr.w	PlayoffScreen
 	btst	#0,(word_FFC2FA).w
 	bne.w	.17332
-	jsr	(sub_FCC76).l
+	jsr	(ScoutingReport).l
 .17332
 	jmp	(StartGame).w	;hockey94_01
 PlayoffScreen	;bring up playoff screen if in playoff mode. Called from GameOver and Opening2. Runs its own vblank (PlayoffScreenDataTable) and
@@ -859,7 +859,7 @@ PlayoffScreen	;bring up playoff screen if in playoff mode. Called from GameOver 
 	movea.l	#VDP_CTRL,a0
 	move.w	#$9202,(a0)
 	movea.w	#(unk_FFCEF4-M68K_RAM),a1
-	movea.l	#unk_1928E,a0	;playoff tree layout by gamelevel
+	movea.l	#PlayoffTreeSetup,a0	;playoff tree layout by gamelevel
 	move.w	(gamelevel).w,d0
 	asl.w	#1,d0
 	adda.w	0(a0,d0.w),a0

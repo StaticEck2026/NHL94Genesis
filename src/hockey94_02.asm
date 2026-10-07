@@ -26,7 +26,7 @@ ReplayMode	;no IDA label ($9FD0). Instant replay play-back control and display c
 	bsr.w	DoFill
 	move.w	(ExtraChars).w,d4
 	movea.l	#unk_BB4F6,a2
-	jsr	(sub_11738).l
+	jsr	(DoDMA_clearCallbackPointer).l
 	jsr	(sub_A448).l
 	bclr	#5,(sflags).w
 	bclr	#5,(sflags3).w
@@ -147,7 +147,7 @@ ReplayMode	;no IDA label ($9FD0). Instant replay play-back control and display c
 	movea.w	#(SortCords-M68K_RAM),a3
 	adda.w	d0,a3
 	moveq	#4,d4
-	bsr.w	sub_C656
+	bsr.w	setpads
 	bsr.w	UpdateCameraPos
 	jsr	(setvideo).l
 	bra.w	.A058
@@ -276,7 +276,7 @@ ReplayMode	;no IDA label ($9FD0). Instant replay play-back control and display c
 	bclr	#3,(sflags2).w
 	move.w	(sp)+,(disflags).w
 	jsr	(sub_9CDC).l
-	jsr	(sub_16CAC).l
+	jsr	(setupEASNmap).l
 	jsr	(sub_16CC4).l
 	jsr	(sub_16CD2).l
 	jsr	(sub_16CEE).l
@@ -953,7 +953,7 @@ updateplayers	;this routine calls all collision/animation/assignment code for al
 	btst	#7,(sflags).w	;#sfhor - check if in horiz mode
 	bne.w	.tp
 	moveq	#-2,d4	;-2 - pad index for puck carrier
-	bsr.w	sub_C656
+	bsr.w	setpads
 .tp
 	btst	#0,(sflags2).w	;sf2faceoff- check for faceoff
 	bne.w	.tp2	;branch if faceoff

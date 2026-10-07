@@ -409,7 +409,7 @@ EncodePW	;IDA: sub_180FC (93 name). After a playoff game compute winners and sav
 	beq.w	rtss2
 	move.w	#1,(OptPlayMode).w	;continue playoffs
 	move.w	#1,(TempOptPlayMode).w
-	bsr.w	sub_18380	;93 ResolveGames (hockey94_10)
+	bsr.w	ResolveGames	;93 ResolveGames (hockey94_10)
 	bsr.w	MakeTree
 	cmpi.w	#4,(gamelevel).w
 	beq.w	.18160	;finished playoffs

@@ -51,14 +51,13 @@ startpause1 = $7CBC		;bne.w at $B178 (hockey94_01)
 startpause2 = $7CCA		;bne.w at $B17C (hockey94_01)
 startpause3 = $7CDC		;beq.w at $B18C. IDA loc_7CDC (hockey94_01)
 startpause4 = $7CEA		;bra.w at $B190. IDA loc_7CEA (hockey94_01)
-sub_12E66 = $12E66		;bsr.w at $B9A0
-sub_13508 = $13508		;bsr.w at $B99A
+linebar = $12E66		;bsr.w at $B9A0. IDA: sub_12E66
+PrintStringFromList = $13508		;bsr.w at $B99A. IDA: sub_13508
 sub_F6778 = $F6778		;jsr (x).l at $BCA4
 sub_F67E4 = $F67E4		;jsr (x).l at $BC88
 sub_F6C44 = $F6C44		;jsr (x).l at $B208
 sub_FE1AA = $FE1AA		;jsr (x).l at $B152
 sub_FEE60 = $FEE60		;jsr (x).l at $B760
-unk_44120 = $44120		;move.l #x,(a1) at $B984
 vtoa = $10676			;jsr (x).l at $B4EC
 
 ; Main segment code

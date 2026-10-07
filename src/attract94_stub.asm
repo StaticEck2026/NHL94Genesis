@@ -16,21 +16,21 @@
 
 ; External addresses outside $017A18-$017C71, read from lst/nhl94.bin: jsr (x).l, movea.l #x and move.l #x carry the
 ; address; bsr.w / bra.w / Bcc.w is the displacement word address + displacement. IDA names.
-loc_15E4C = $15E4C		;move.l #x at $17A18. vblank handler
-sub_11044 = $11044		;bsr.w at $17A62
-loc_115AA = $115AA		;bsr.w at $17A66
+vb2 = $15E4C		;move.l #x at $17A18. vblank handler. IDA: loc_15E4C
+CopyPaletteToCRAM = $11044		;bsr.w at $17A62. IDA: sub_11044
+setVram_0 = $115AA		;bsr.w at $17A66. IDA: loc_115AA
 printz = $11B92			;bsr.w at $17A6A
 dobitmap = $1169A		;bsr.w at $17A90
 waitx = $11176			;bsr.w at $17AB2
 rtss2 = $15464			;blt.w at $17ACE (an rts)
-sub_17190 = $17190		;bsr.w at $17B68
-sub_15E72 = $15E72		;bsr.w at $17C5A. 93 DumpSprites2
+setteams = $17190		;bsr.w at $17B68. IDA: sub_17190
+DumpSprites2 = $15E72		;bsr.w at $17C5A. 93 DumpSprites2. IDA: sub_15E72
 cramfade = $10FB6		;bsr.w at $17C5E
 MusicVB = $1A50A			;jsr (x).l at $17C66. 93 p_music_vblank
 eraser = $1197E			;bra.w at $17BC6
-sub_17E42 = $17E42		;bsr.w at $17BEC (hockey94_09 range; no IDA label)
-sub_10E88 = $10E88		;bsr.w at $17C30
-sub_10EB4 = $10EB4		;bsr.w at $17C34
+FigureJoy = $17E42		;bsr.w at $17BEC (hockey94_09 range; no IDA label)
+UnpackNibbles = $10E88		;bsr.w at $17C30. IDA: sub_10E88
+WeightedRandomSelect = $10EB4		;bsr.w at $17C34. IDA: sub_10EB4
 unk_F8BF4 = $F8BF4		;movea.l #x at $17B28. 64 bytes per team
 unk_AFE12 = $AFE12		;movea.l #x at $17B7C
 unk_ABA14 = $ABA14		;movea.l #x at $17B9C

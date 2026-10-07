@@ -254,7 +254,7 @@ checkgoal	;look for coll with goal/net. a2 = goal struct, a3 = object, d2/d3 = x
 	bset	#0,(word_FFC2F4).w	;94 only
 	bclr	#3,(byte_FFC2FE).w
 	bsr.w	ChkShotStat
-	bsr.w	sub_1A304	;94 only
+	bsr.w	play_new_song	;94 only
 	move.w	d0,-(sp)
 	move.w	(vcount).w,d0
 .14842

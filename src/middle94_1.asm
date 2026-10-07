@@ -79,7 +79,7 @@ forcefade
 	move.l	(vbint).w,-(sp)
 	move.w	(disflags).w,-(sp)
 	bclr	#2,(disflags).w
-	move.l	#loc_15E4C,(vbint).l
+	move.l	#vb2,(vbint).l
 	move	#$2500,sr
 .10FA4
 	tst.w	(palcount).w
@@ -352,7 +352,7 @@ waitxsr	;92 name (93 IntermissionLoop). Wait d0 vblanks while the zamboni crosse
 	moveq	#$FFFFFF88,d0
 .11276
 	movem.w	d0,-(sp)
-	jsr	(sub_7E88).w		;4EB8: target below $8000 (93 HandleMenuInput)
+	jsr	(HandleMenuInput).w		;4EB8: target below $8000 (93 HandleMenuInput)
 	bne.w	.1128C
 	addq.w	#2,sp
 	bset	#7,d1
@@ -662,7 +662,8 @@ setvram
 	dbf	d1,.0
 	move.w	#$18,(palcount).w
 	bsr.w	forcefade
-.115AA
+setVram_0	;IDA: loc_115AA. 93 name: second half of 92 setVram (no fade): clear vram and set the VDP registers from disflags, Map1col, VmMap1-3, VSPRITES and VSCRLPM.
+	;Falls in from setvram, called from EASportsScreen (attract94) and HiScoreScreen (high94_3)
 	move.w	(disflags).w,-(sp)
 	bset	#2,(disflags).w	;#dfng
 	move.w	#$8F02,(VDP_CTRL).l

@@ -12,8 +12,8 @@ None. Every ROM map row is matched (checksum94 was the last). What is left is th
 - The listing was exported from IDA as an LST in ASM68K / MRI mode. It has no address column. A `loc_`, `sub_`, or `unk_` name is the address. A named routine is at the instruction before the next address-bearing label. Confirm the org against `lst/nhl94.bin` before the first verify.
 - Style source: the matching file in https://github.com/abdulahmad/NHLPA93Genesis. 93 is the closer source.
 - Reference ROM: `lst/nhl94.bin`. This is the ROM the listing was generated from. Bytes and branch displacements come from it. Do not substitute another ROM.
-- `src/hockey94.asm` is the include order. Do not reorder it.
-- Stub includes live in `src/stubinc` (`ports.inc`, `equals.inc`, `ram_addrs.inc`).
+- `src/hockey94.asm` is the full ROM include list, in address order (every row of the ROM map, high ROM included). Keep it in address order: a full build needs each file at the address after the one before it.
+- Stub includes live in `src/stubinc` (`ports.inc`, `equals.inc`, `ram_addrs.inc`). `hockey94.asm` includes the same three for the full build.
 
 
 ## Teams
@@ -55,48 +55,61 @@ A MATCH of 0 bytes is a failure. The byte count must be the confirmed range.
 - A global label ends local-label scope. Strip `?` from IDA names. Keep each comment line under 200 characters.
 - Do not delete an asm file. Edit it in place. Do not add a file except the stub and the segment asm.
 
+## Naming rules
+
+The style source is https://github.com/abdulahmad/NHLPA93Genesis.
+
+- Match a function name to the NHLPA93Genesis routine when the body is the same. If the IDA name in `lst/nhl94.bin.lst` differs, keep the 93 name and put the IDA name in a comment.
+- Match subroutines, arguments, parameters, and expressions to NHLPA93Genesis when the 93 source has a name for them. A 94 value may differ. The name still comes from 93.
+- If you rename a label away from the lst name, note the original IDA name in the comment.
+- Do not leave a generic name. `loc_`, `sub_`, `unk_`, and unnamed arguments need a name. Use the 93 name when there is one. Otherwise name it from what it does, in the same local-label and routine style as NHLPA93Genesis.
+- Bring over the NHLPA93Genesis comment when the routine matches. If a function has no comment, add one that says what it does. Keep each comment line under 200 characters.
+- These rules apply to every file a session edits, and to a file it edits to fix a mismatch. Do not reopen a matched segment only to rename it.
+- The 93 structure, team, game and flag names (`Ypos`, `SCnum`, `pflags` / `pfteam`, `tmap`, `tmsize`, `gsper`, `sfhor` ...) are in `src/stubinc/equals.inc` with the 94 values (`tmsize` is `$364`, 93 `$1A2`). Write `Ypos(a3)`, not `$14(a3)`.
+- A global rename changes every file that uses the name: the segment asm and the `_stub.asm` equates (SNASM symbols are case-insensitive). Then rerun every `seg:` script and the full build.
+
 ## ROM map
 
 The first row that is not matched is the current segment. Ranges are provisional until that row is matched.
 
-| File | Status | Start | Note |
+| File | Status | Org, start label | Note |
 |---|---|---|---|
 | main94 | matched | org 0 | 778 bytes, `$000000-$000309`. vectors, header, Start, SegaInit |
-| teamdata94 | matched | after main94 | 22546 bytes, `$00030A-$005B1B`. TeamList, 28 team blocks, playoffseats, Credits |
-| frames94 | matched | SPAList | 7062 bytes, `$005B1C-$0076B1`. SPAlist, 66 SPA tables |
-| ram94 | skipped | | equates only, no ROM bytes: no byte verify is possible. Skipped by the user; the queue goes past it |
-| hockey94_01 | matched | VBjsr | 1924 bytes, `$0076B2-$007E35`. VBjsr, Begin ... Pausemode, SetupPauseScreen, seta2 |
-| attract94 | matched | EASportsScreen | 602 bytes, `$017A18-$017C71`. EASportsScreen ... sub_17BE4, VBlank_SetOptions. HiScoreScreen is not here |
-| hockey94_02 | matched | ReplayMode | 4376 bytes, `$009FD0-$00B0E7`. ReplayMode (no IDA label) ... checkwindow |
-| logic94_1 | matched | doinput | 5672 bytes, `$00B0E8-$00C70F`. doinput ... setpads, check4bench |
-| logic94_2 | matched | assbench | 2444 bytes, `$00C710-$00D09B`. assbench ... asswingd |
-| logic94_3 | matched | asswingo | 5522 bytes, `$00D09C-$00E62D`. asswingo ... chk4pass, EvadePC |
-| logic94_4 | matched | checkob | 6588 bytes, `$00E62E-$00FFE9`. checkob ... pucknorm |
-| logic94_5 | matched | ChkOffsides | 3830 bytes, `$00FFEA-$010EDF`. ChkOffsides ... WeightedRandomSelect |
-| middle94_1 | matched | remap | 1978 bytes, `$010EE0-$011699`. remap ... Vmaddr |
-| middle94_2 | matched | dobitmap | 2194 bytes, `$01169A-$011F2B`. dobitmap ... AddTeamBlock |
-| penalty94_1 | matched | AddPenalty | 3288 bytes, `$011F2C-$012C03`. AddPenalty ... SetHor |
-| penalty94_2 | matched | PrintScores1 | 3240 bytes, `$012C04-$0138AB`. PrintScores1 ... StartHL2 |
-| hockey94_03 | matched | checkcoll | 3230 bytes, `$0138AC-$014549`. checkcoll ... setInjuryType |
-| hockey94_04 | matched | checkfight | 2970 bytes, `$01454A-$0150E3`. checkfight ... checkpuckcoll |
-| hockey94_05 | matched | puckstick | 3254 bytes, `$0150E4-$015D99`. puckstick ... checkattriblimits |
-| video94_1 | matched | VBlank | 1380 bytes, `$015D9A-$0162FD`. VBlank ... showcrowd |
-| video94_2 | matched | showclock | 1788 bytes, `$0162FE-$0169F9`. showclock ... KillCrowd |
-| hockey94_06 | matched | setupice | 4126 bytes, `$0169FA-$017A17`. setupice ... sub_179D2 |
-| hockey94_07 | matched | ScoutingReport | 2686 bytes, `$0FCB9A-$0FD617`. sub_FCB9A ... sub_FD60E; ScoutingReport (IDA sub_FCC76) is the 94 MATCHUPS screen. Out of address order |
-| hockey94_08 | matched | setoptions | 6076 bytes, `$0F739E-$0F8B59`. GameSetUp ... sub_F8868; setoptions is `$F8168`. 94 game setup screen. Out of address order |
-| hockey94_09 | matched | DefaultMenus | 1806 bytes, `$017C72-$01837F`. LoadDefMenuOptions ... ReadTeamStats |
-| hockey94_10 | matched | ResolveGames | 2428 bytes, `$018380-$018CFB`. ResolveGames ... crash |
-| hockey94_11 | matched | cd0 | 4948 bytes, `$018CFC-$01A04F`. cd0 ... ExitAttribText (data) |
-| sram94 | matched | InitSaveRAM | 532 bytes, `$01A050-$01A263`. InitSaveRAM ... ReadSRAM |
-| sound94 | matched | AllSndOff | 2860 bytes, `$01A264-$01AD8F`: the 68k driver, AllSndOff ... ClearAllTrackAndSFXSlots. The Z80 program and sound data from `$1AD90` are not done (incbin) |
-| graphics94 | matched | unk_1AD90 | 899422 bytes, `$01AD90-$0F66ED`. incbin only: 83 slices from extractAssets94.js, one per IDA label (Z80 program, PCM samples, FM patches, sound streams, then the graphics) |
-| menu94 | matched | InitMenuState | 670 bytes, `$007E36-$0080D3`. InitMenuState (IDA sub_7E36) ... PrintTeamData, vcountwait, as 93 menu93 |
-| stats94 | matched | ShowScores | 7932 bytes, `$0080D4-$009FCF`. ShowScores ... _rjoy, as 93 stats93: the stats screens (menu item handlers) |
-| high94_1 | matched | puckvzadj | 3248 bytes, `$0F66EE-$0F739D`. puckvzadj ... sub_F737E: one-timer, 4 way adaptor test, crowd meter, hot / cold. 94 high ROM code |
-| high94_2 | matched | wallcollduringcheck | 16448 bytes, `$0F8B5A-$0FCB99`. wallcollduringcheck ... sub_FCB1A: save RAM records, Player Cards, NAME ENTRY, Record Holders, shootout. 94 high ROM code |
-| high94_3 | matched | sub_FD618 | 9384 bytes, `$0FD618-$0FFABF`. sub_FD618 ... j_setc2player: arena animations, Period Stats / Game Statistics, Manual Goalie, ChooseSong, shootout paths, title screen and credits, chgplayer. 94 high ROM code |
-| checksum94 | matched | ValidationRoutine | 80 bytes, `$0FFAC0-$0FFB0F`. ValidationRoutine (IDA Calc_Checksum), as 93 checksum93. The `$FF` fill `$FFB10-$FFFFF` after it is the hockey94.asm `dcb.b` |
+| teamdata94 | matched | org $30A | 22546 bytes, `$00030A-$005B1B`. TeamList, 28 team blocks, playoffseats, Credits |
+| frames94 | matched | org $5B1C, SPAList | 7062 bytes, `$005B1C-$0076B1`. SPAlist, 66 SPA tables |
+| ram94 | skipped | no org (equates only)
+| hockey94_01 | matched | org $76B2, VBjsr | 1924 bytes, `$0076B2-$007E35`. VBjsr, Begin ... Pausemode, SetupPauseScreen, seta2 |
+| menu94 | matched | org $7E36, InitMenuState | 670 bytes, `$007E36-$0080D3`. InitMenuState (IDA sub_7E36) ... PrintTeamData, vcountwait, as 93 menu93 |
+| stats94 | matched | org $80D4, ShowScores | 7932 bytes, `$0080D4-$009FCF`. ShowScores ... _rjoy, as 93 stats93: the stats screens (menu item handlers) |
+| hockey94_02 | matched | org $9FD0, ReplayMode | 4376 bytes, `$009FD0-$00B0E7`. ReplayMode (no IDA label) ... checkwindow |
+| logic94_1 | matched | org $B0E8, doinput | 5672 bytes, `$00B0E8-$00C70F`. doinput ... setpads, check4bench |
+| logic94_2 | matched | org $C710, assbench | 2444 bytes, `$00C710-$00D09B`. assbench ... asswingd |
+| logic94_3 | matched | org $D09C, asswingo | 5522 bytes, `$00D09C-$00E62D`. asswingo ... chk4pass, EvadePC |
+| logic94_4 | matched | org $E62E, checkob | 6588 bytes, `$00E62E-$00FFE9`. checkob ... pucknorm |
+| logic94_5 | matched | org $FFEA, ChkOffsides | 3830 bytes, `$00FFEA-$010EDF`. ChkOffsides ... WeightedRandomSelect |
+| middle94_1 | matched | org $10EE0, remap | 1978 bytes, `$010EE0-$011699`. remap ... Vmaddr |
+| middle94_2 | matched | org $1169A, dobitmap | 2194 bytes, `$01169A-$011F2B`. dobitmap ... AddTeamBlock |
+| penalty94_1 | matched | org $11F2C, AddPenalty | 3288 bytes, `$011F2C-$012C03`. AddPenalty ... SetHor |
+| penalty94_2 | matched | org $12C04, PrintScores1 | 3240 bytes, `$012C04-$0138AB`. PrintScores1 ... StartHL2 |
+| hockey94_03 | matched | org $138AC, checkcoll | 3230 bytes, `$0138AC-$014549`. checkcoll ... setInjuryType |
+| hockey94_04 | matched | org $1454A, checkfight | 2970 bytes, `$01454A-$0150E3`. checkfight ... checkpuckcoll |
+| hockey94_05 | matched | org $150E4, puckstick | 3254 bytes, `$0150E4-$015D99`. puckstick ... checkattriblimits |
+| video94_1 | matched | org $15D9A, VBlank | 1380 bytes, `$015D9A-$0162FD`. VBlank ... showcrowd |
+| video94_2 | matched | org $162FE, showclock | 1788 bytes, `$0162FE-$0169F9`. showclock ... KillCrowd |
+| hockey94_06 | matched | org $169FA, setupice | 4126 bytes, `$0169FA-$017A17`. setupice ... sub_179D2 |
+| attract94 | matched | org $17A18, EASportsScreen | 602 bytes, `$017A18-$017C71`. EASportsScreen ... sub_17BE4, VBlank_SetOptions. HiScoreScreen is not here |
+| hockey94_09 | matched | org $17C72, DefaultMenus | 1806 bytes, `$017C72-$01837F`. LoadDefMenuOptions ... ReadTeamStats |
+| hockey94_10 | matched | org $18380, ResolveGames | 2428 bytes, `$018380-$018CFB`. ResolveGames ... crash |
+| hockey94_11 | matched | org $18CFC, cd0 | 4948 bytes, `$018CFC-$01A04F`. cd0 ... ExitAttribText (data) |
+| sram94 | matched | org $1A050, InitSaveRAM | 532 bytes, `$01A050-$01A263`. InitSaveRAM ... ReadSRAM |
+| sound94 | matched | org $1A264, AllSndOff | 2860 bytes, `$01A264-$01AD8F`: the 68k driver, AllSndOff ... ClearAllTrackAndSFXSlots. The Z80 program and sound data from `$1AD90` are not done (incbin) |
+| graphics94 | matched | org $1AD90, unk_1AD90 | 899422 bytes, `$01AD90-$0F66ED`. incbin only: 83 slices from extractAssets94.js, one per IDA label (Z80 program, PCM samples, FM patches, sound streams, then the graphics) |
+| high94_1 | matched | org $F66EE, puckvzadj | 3248 bytes, `$0F66EE-$0F739D`. puckvzadj ... sub_F737E: one-timer, 4 way adaptor test, crowd meter, hot / cold. 94 high ROM code |
+| hockey94_08 | matched | org $F739E, setoptions | 6076 bytes, `$0F739E-$0F8B59`. GameSetUp ... sub_F8868; setoptions is `$F8168`. 94 game setup screen. Out of address order |
+| high94_2 | matched | org $F8B5A, wallcollduringcheck | 16448 bytes, `$0F8B5A-$0FCB99`. wallcollduringcheck ... sub_FCB1A: save RAM records, Player Cards, NAME ENTRY, Record Holders, shootout. 94 high ROM code |
+| hockey94_07 | matched | org $FCB9A, ScoutingReport | 2686 bytes, `$0FCB9A-$0FD617`. sub_FCB9A ... sub_FD60E; ScoutingReport (IDA sub_FCC76) is the 94 MATCHUPS screen. Out of address order |
+| high94_3 | matched | org $FD618, sub_FD618 | 9384 bytes, `$0FD618-$0FFABF`. sub_FD618 ... j_setc2player: arena animations, Period Stats / Game Statistics, Manual Goalie, ChooseSong, shootout paths, title screen and credits, chgplayer. 94 high ROM code |
+| checksum94 | matched | org $FFAC0, ValidationRoutine | 80 bytes, `$0FFAC0-$0FFB0F`. ValidationRoutine (IDA Calc_Checksum), as 93 checksum93. The `$FF` fill `$FFB10-$FFFFF` after it is the hockey94.asm `dcb.b` |
 
 ## History
 

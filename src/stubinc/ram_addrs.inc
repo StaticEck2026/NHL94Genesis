@@ -244,7 +244,6 @@ HmShots equ $FFFFC6CE
 HmGoals equ $FFFFC6DA
 word_FFC6E4 equ $FFFFC6E4
 dword_FFC6EC equ $FFFFC6EC
-tmap equ $FFFFC6F2
 word_FFC6F4 equ $FFFFC6F4
 byte_FFC6FE equ $FFFFC6FE
 byte_FFC768 equ $FFFFC768
@@ -252,7 +251,6 @@ AwShots equ $FFFFCA32
 AwGoals equ $FFFFCA3E
 word_FFCA48 equ $FFFFCA48
 dword_FFCA50 equ $FFFFCA50
-tmsize equ $FFFFCA56
 word_FFCA58 equ $FFFFCA58
 byte_FFCA62 equ $FFFFCA62
 byte_FFCACC equ $FFFFCACC
@@ -299,7 +297,7 @@ TmpOptPen equ $FFFFD060
 TmpOptLine equ $FFFFD062
 demoflag equ $FFFFD064
 RNGseed equ $FFFFD066
-dmaram? equ $FFFFD06A
+dmaram equ $FFFFD06A
 word_FFD06E equ $FFFFD06E
 word_FFD070 equ $FFFFD070
 TmpOptLine2 equ $FFFFD072

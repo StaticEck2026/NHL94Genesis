@@ -403,7 +403,7 @@ unk_19664	;IDA name. 94 only: pause menu item list (PauseMode; hockey94_01)
 	String	'  Instant Replay  '
 	dc.l	ReplayMode
 	String	'   Team Roster    '
-	dc.l	sub_89AC	;93 TeamRosterScreen
+	dc.l	TeamRosterScreen	;93 TeamRosterScreen
 	String	'   Player Cards   '
 	dc.l	sub_FA07E	;94 only
 	String	'  Record Holders  '
@@ -420,25 +420,25 @@ PauseText	;IDA: unk_19700 (93 name). Pause menu item list (PauseMode, hockey94_0
 	String	'  Instant Replay  '
 	dc.l	ReplayMode
 	String	'  Change Goalie   '
-	dc.l	sub_9DE6	;93 SelectGoalieMenu
+	dc.l	SelectGoalieMenu	;93 SelectGoalieMenu
 	String	'    Edit Lines    '
-	dc.l	sub_82DA	;93 LineEditor
+	dc.l	LineEditor	;93 LineEditor
 	String	'    Game Stats    '
-	dc.l	sub_FDC5A	;93 GameStatisticsScreen
+	dc.l	GameStatisticsScreen	;93 GameStatisticsScreen
 	String	'   Player Stats   '
-	dc.l	sub_945A	;93 PlayerStatsScreen
+	dc.l	PlayerStatsScreen	;93 PlayerStatsScreen
 	String	' Scoring Summary  '
-	dc.l	sub_8EB0	;93 ScoringSummaryScreen
+	dc.l	ScoringSummaryScreen	;93 ScoringSummaryScreen
 	String	' Penalty Summary  '
-	dc.l	sub_9142	;93 PenaltySummaryScreen
+	dc.l	PenaltySummaryScreen	;93 PenaltySummaryScreen
 	String	'   Team Roster    '
-	dc.l	sub_89AC	;93 TeamRosterScreen
+	dc.l	TeamRosterScreen	;93 TeamRosterScreen
 	String	'   Other Scores   '
-	dc.l	sub_80D4	;93 ShowScores
+	dc.l	ShowScores	;93 ShowScores
 	String	'   Crowd Meter    '
-	dc.l	sub_9A2A	;93 CrowdMeterScreen
+	dc.l	CrowdMeterScreen	;93 CrowdMeterScreen
 	String	'     Timeout      '
-	dc.l	sub_9D7A	;93 TimeoutMenu
+	dc.l	TimeoutMenu	;93 TimeoutMenu
 	String	'   Player Cards   '
 	dc.l	sub_FA07E	;94 only
 	String	'  Record Holders  '
@@ -457,23 +457,23 @@ PauseText2	;IDA: unk_1988C (93 name). Pause menu item list without Timeout (Paus
 	String	'  Instant Replay  '
 	dc.l	ReplayMode
 	String	'  Change Goalie   '
-	dc.l	sub_9DE6	;93 SelectGoalieMenu
+	dc.l	SelectGoalieMenu	;93 SelectGoalieMenu
 	String	'    Edit Lines    '
-	dc.l	sub_82DA	;93 LineEditor
+	dc.l	LineEditor	;93 LineEditor
 	String	'    Game Stats    '
-	dc.l	sub_FDC5A	;93 GameStatisticsScreen
+	dc.l	GameStatisticsScreen	;93 GameStatisticsScreen
 	String	'   Player Stats   '
-	dc.l	sub_945A	;93 PlayerStatsScreen
+	dc.l	PlayerStatsScreen	;93 PlayerStatsScreen
 	String	' Scoring Summary  '
-	dc.l	sub_8EB0	;93 ScoringSummaryScreen
+	dc.l	ScoringSummaryScreen	;93 ScoringSummaryScreen
 	String	' Penalty Summary  '
-	dc.l	sub_9142	;93 PenaltySummaryScreen
+	dc.l	PenaltySummaryScreen	;93 PenaltySummaryScreen
 	String	'   Team Roster    '
-	dc.l	sub_89AC	;93 TeamRosterScreen
+	dc.l	TeamRosterScreen	;93 TeamRosterScreen
 	String	'   Other Scores   '
-	dc.l	sub_80D4	;93 ShowScores
+	dc.l	ShowScores	;93 ShowScores
 	String	'   Crowd Meter    '
-	dc.l	sub_9A2A	;93 CrowdMeterScreen
+	dc.l	CrowdMeterScreen	;93 CrowdMeterScreen
 	String	'   Player Cards   '
 	dc.l	sub_FA07E	;94 only
 	String	'  Record Holders  '
@@ -492,7 +492,7 @@ unk_19A00	;IDA name. 94 only: Intermission menu in Shootout (word_FFC2FA bit 0; 
 	String	'  Shootout SetUp  '
 	dc.l	sub_FC620	;94 only
 	String	'   Team Roster    '
-	dc.l	sub_89AC	;93 TeamRosterScreen
+	dc.l	TeamRosterScreen	;93 TeamRosterScreen
 	String	'   Player Cards   '
 	dc.l	sub_FA07E	;94 only
 	String	'  Record Holders  '
@@ -505,13 +505,13 @@ StartGameText	;no IDA label (93 name). Intermission menu for gsp 0 (penalty94_2 
 	String	'    Start Game    '
 	dc.l	rtss2
 	String	'  Change Goalie   '
-	dc.l	sub_9DE6	;93 SelectGoalieMenu
+	dc.l	SelectGoalieMenu	;93 SelectGoalieMenu
 	String	'    Edit Lines    '
-	dc.l	sub_82DA	;93 LineEditor
+	dc.l	LineEditor	;93 LineEditor
 	String	'   Team Roster    '
-	dc.l	sub_89AC	;93 TeamRosterScreen
+	dc.l	TeamRosterScreen	;93 TeamRosterScreen
 	String	'   Other Scores   '
-	dc.l	sub_80D4	;93 ShowScores
+	dc.l	ShowScores	;93 ShowScores
 	String	'   Player Cards   '
 	dc.l	sub_FA07E	;94 only
 	String	'  Record Holders  '
@@ -524,15 +524,15 @@ StartGameTextPO	;no IDA label (93 name). Intermission menu for gsp 0 in the play
 	String	'    Start Game    '
 	dc.l	rtss2
 	String	'  Change Goalie   '
-	dc.l	sub_9DE6	;93 SelectGoalieMenu
+	dc.l	SelectGoalieMenu	;93 SelectGoalieMenu
 	String	'    Edit Lines    '
-	dc.l	sub_82DA	;93 LineEditor
+	dc.l	LineEditor	;93 LineEditor
 	String	'   Team Roster    '
-	dc.l	sub_89AC	;93 TeamRosterScreen
+	dc.l	TeamRosterScreen	;93 TeamRosterScreen
 	String	'  Playoff Stats   '
-	dc.l	sub_9428	;93 DisplayTeamStats
+	dc.l	DisplayTeamStats	;93 DisplayTeamStats
 	String	'   Other Scores   '
-	dc.l	sub_80D4	;93 ShowScores
+	dc.l	ShowScores	;93 ShowScores
 	String	'   Player Cards   '
 	dc.l	sub_FA07E	;94 only
 	String	'  Record Holders  '
@@ -545,23 +545,23 @@ IntermissionText	;no IDA label (93 name). Intermission menu for gsp 1-3 (penalty
 	String	'   Resume Game    '
 	dc.l	rtss2
 	String	'    Game Stats    '
-	dc.l	sub_FDC5A	;93 GameStatisticsScreen
+	dc.l	GameStatisticsScreen	;93 GameStatisticsScreen
 	String	'   Player Stats   '
-	dc.l	sub_945A	;93 PlayerStatsScreen
+	dc.l	PlayerStatsScreen	;93 PlayerStatsScreen
 	String	' Scoring Summary  '
-	dc.l	sub_8EB0	;93 ScoringSummaryScreen
+	dc.l	ScoringSummaryScreen	;93 ScoringSummaryScreen
 	String	' Penalty Summary  '
-	dc.l	sub_9142	;93 PenaltySummaryScreen
+	dc.l	PenaltySummaryScreen	;93 PenaltySummaryScreen
 	String	'   Team Roster    '
-	dc.l	sub_89AC	;93 TeamRosterScreen
+	dc.l	TeamRosterScreen	;93 TeamRosterScreen
 	String	'   Other Scores   '
-	dc.l	sub_80D4	;93 ShowScores
+	dc.l	ShowScores	;93 ShowScores
 	String	'   Crowd Meter    '
-	dc.l	sub_9A2A	;93 CrowdMeterScreen
+	dc.l	CrowdMeterScreen	;93 CrowdMeterScreen
 	String	'  Change Goalie   '
-	dc.l	sub_9DE6	;93 SelectGoalieMenu
+	dc.l	SelectGoalieMenu	;93 SelectGoalieMenu
 	String	'    Edit Lines    '
-	dc.l	sub_82DA	;93 LineEditor
+	dc.l	LineEditor	;93 LineEditor
 	String	'   Player Cards   '
 	dc.l	sub_FA07E	;94 only
 	String	'  Record Holders  '
@@ -578,19 +578,19 @@ ExitGameText	;no IDA label (93 name). Intermission menu for gsp 4 (penalty94_2 .
 	String	'    Exit Game     '
 	dc.l	rtss2
 	String	'    Game Stats    '
-	dc.l	sub_FDC5A	;93 GameStatisticsScreen
+	dc.l	GameStatisticsScreen	;93 GameStatisticsScreen
 	String	'   Player Stats   '
-	dc.l	sub_945A	;93 PlayerStatsScreen
+	dc.l	PlayerStatsScreen	;93 PlayerStatsScreen
 	String	' Scoring Summary  '
-	dc.l	sub_8EB0	;93 ScoringSummaryScreen
+	dc.l	ScoringSummaryScreen	;93 ScoringSummaryScreen
 	String	' Penalty Summary  '
-	dc.l	sub_9142	;93 PenaltySummaryScreen
+	dc.l	PenaltySummaryScreen	;93 PenaltySummaryScreen
 	String	'   Team Roster    '
-	dc.l	sub_89AC	;93 TeamRosterScreen
+	dc.l	TeamRosterScreen	;93 TeamRosterScreen
 	String	'   Other Scores   '
-	dc.l	sub_80D4	;93 ShowScores
+	dc.l	ShowScores	;93 ShowScores
 	String	'   Crowd Meter    '
-	dc.l	sub_9A2A	;93 CrowdMeterScreen
+	dc.l	CrowdMeterScreen	;93 CrowdMeterScreen
 	String	'   Player Cards   '
 	dc.l	sub_FA07E	;94 only
 	String	'  Record Holders  '
@@ -605,19 +605,19 @@ ExitGameTextPO	;no IDA label (93 name). Intermission menu for gsp 4 in the playo
 	String	'    Exit Game     '
 	dc.l	rtss2
 	String	'    Game Stats    '
-	dc.l	sub_FDC5A	;93 GameStatisticsScreen
+	dc.l	GameStatisticsScreen	;93 GameStatisticsScreen
 	String	'   Player Stats   '
-	dc.l	sub_945A	;93 PlayerStatsScreen
+	dc.l	PlayerStatsScreen	;93 PlayerStatsScreen
 	String	' Scoring Summary  '
-	dc.l	sub_8EB0	;93 ScoringSummaryScreen
+	dc.l	ScoringSummaryScreen	;93 ScoringSummaryScreen
 	String	' Penalty Summary  '
-	dc.l	sub_9142	;93 PenaltySummaryScreen
+	dc.l	PenaltySummaryScreen	;93 PenaltySummaryScreen
 	String	'   Team Roster    '
-	dc.l	sub_89AC	;93 TeamRosterScreen
+	dc.l	TeamRosterScreen	;93 TeamRosterScreen
 	String	'   Other Scores   '
-	dc.l	sub_80D4	;93 ShowScores
+	dc.l	ShowScores	;93 ShowScores
 	String	'   Crowd Meter    '
-	dc.l	sub_9A2A	;93 CrowdMeterScreen
+	dc.l	CrowdMeterScreen	;93 CrowdMeterScreen
 	String	'   Player Cards   '
 	dc.l	sub_FA07E	;94 only
 	String	'  Record Holders  '
@@ -634,9 +634,9 @@ AttributeScreenText	;IDA: unk_19F88 (93 name). Line editor exit menu (the line e
 	String	'Set Original lines'
 	dc.l	InitTeamSructure+$10	;the line copy loop of InitTeamSructure (hockey94_06), as 93
 	String	'  Save Team Line  '
-	dc.l	sub_8928	;93 EncodePlayerAttributes
+	dc.l	EncodePlayerAttributes	;93 EncodePlayerAttributes
 	String	'  Load Team Line  '
-	dc.l	sub_88C8	;93 DecodePlayerAttributes
+	dc.l	DecodePlayerAttributes	;93 DecodePlayerAttributes
 	String	$FF
 
 ExitAttribText	;IDA: unk_19FF8 (93 name). Line editor exit menu without Load Team Line ($8844)
@@ -647,6 +647,6 @@ ExitAttribText	;IDA: unk_19FF8 (93 name). Line editor exit menu without Load Tea
 	String	'Set Original lines'
 	dc.l	InitTeamSructure+$10	;the line copy loop of InitTeamSructure (hockey94_06), as 93
 	String	'  Save Team Line  '
-	dc.l	sub_8928	;93 EncodePlayerAttributes
+	dc.l	EncodePlayerAttributes	;93 EncodePlayerAttributes
 	String	$FF
 

@@ -1534,7 +1534,7 @@ HiScoreScreen	;IDA name. 94 only: vb2, the $F4378 bitmap and HiScoreImg, then wa
 .FEDBA
 	clr.l	(a0)+
 	dbf	d1,.FEDBA
-	jsr	(loc_115AA).l
+	jsr	(setVram_0).l
 	jsr	(printz).l
 	String	$BE,$E,3
 	movea.l	#$F4378,a2

@@ -38,7 +38,7 @@ PrintScores1	;IDA name (93 printscores1). Draw scoreboard. Vertical rink: period
 	bsr.w	printz
 	String	$BF,1,$18
 	move.w	(gsp).w,d0	;period name
-	movea.l	#unk_191E4,a1	;93 PerLabels
+	movea.l	#PerLabels,a1	;93 PerLabels
 	btst	#1,(word_FFC2FA).w	;94 only
 	beq.w	.12C62
 	move.w	#4,d0
@@ -103,7 +103,7 @@ PrintTeamLogoAndScore	;IDA: sub_12D30 (93 name). Draw the team logo map (sub_807
 	;then the score of team a2 in big font, centered 2 rows lower; 94 moves a 2 digit score one more left. Called twice from PrintScores1
 	move.w	(printx).w,-(sp)
 	subq.w	#5,(printx).w
-	jsr	(sub_8078).l	;93 PrintTeamData
+	jsr	(PrintTeamData).l	;93 PrintTeamData
 	move.w	(sp)+,(printx).w
 	addq.w	#2,(printy).w
 	move.w	$C(a2),d0	;tmscore
@@ -437,7 +437,7 @@ Intermission	;end of period junk (zamboni/stats). As 93: opens the pause menu sc
 .1314C
 	bset	#0,(sflags).w	;sfpz
 	movea.l	#SetupPauseScreen,a1
-	jsr	(sub_7E36).w	;93 InitMenuState
+	jsr	(InitMenuState).w	;93 InitMenuState
 	bsr.w	GetShifter
 	move.w	d1,(TickerNum).w
 .13164
@@ -473,8 +473,8 @@ Intermission	;end of period junk (zamboni/stats). As 93: opens the pause menu sc
 	st	(zamx).w
 	rts
 .sslist	;IDA: unk_131CC (93 .sslist). Menu item lists by period, then playoff period. The targets have no IDA labels
-	dc.l	unk_19A84,unk_19C04,unk_19C04,unk_19C04,unk_19D60
-	dc.l	unk_19B38,unk_19C04,unk_19C04,unk_19C04,unk_19E74
+	dc.l	StartGameText,IntermissionText,IntermissionText,IntermissionText,ExitGameText
+	dc.l	StartGameTextPO,IntermissionText,IntermissionText,IntermissionText,ExitGameTextPO
 InitScores	;initialize other games scores/period in playoffs. Called from StartGame
 	cmpi.w	#1,(gamelevel).w
 	bgt.w	rtss2
@@ -624,7 +624,7 @@ NewTicker3pt2	;IDA name (93 NewTicker3). Display ticker score for game d3 (a0 = 
 	bsr.w	PrintStringFromList
 	move.w	8(a0),d0	;gsper
 	subq.w	#1,d0
-	movea.l	#unk_191E4,a1	;93 PerLabels
+	movea.l	#PerLabels,a1	;93 PerLabels
 	bsr.w	Adda1Offset
 	move.w	(a1),d0	;period name centered on x+$17
 	lsr.w	#1,d0
@@ -766,7 +766,7 @@ StartHL2	;IDA: loc_13550 (93 name). Play hilite for game a0. Start skips it with
 	st	(puckcross2).w
 	st	(puckcross6).w
 	jsr	(AllSndOff).l	;93 p_turnoff
-	bsr.w	sub_16BAC	;93 setupice_highlight
+	bsr.w	setupice_highlight	;93 setupice_highlight
 	bsr.w	ClrHor
 	movea.l	#VDP_DATA,a0
 	move.w	#$9100,4(a0)	;window H position 0
@@ -844,7 +844,7 @@ StartHL2	;IDA: loc_13550 (93 name). Play hilite for game a0. Start skips it with
 	bsr.w	SetHor
 	bsr.w	setvideo
 	jsr	(SetupPauseScreen).w	;pause menu screen
-	jsr	(sub_7E46).w	;93 DrawMenuScreen
+	jsr	(DrawMenuScreen).w	;93 DrawMenuScreen
 	move.w	#$18,(palcount).w
 	move.w	#$79,-(sp)	;song $79 (93 $36)
 	bsr.w	song

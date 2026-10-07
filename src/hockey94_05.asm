@@ -742,7 +742,7 @@ SetPlList	;create PlList of players who we want on the ice now. a2 = team struct
 	dbf	d4,.1
 	rts
 .error
-	jsr	(sub_9F9A).l	;then try the players from d0 down
+	jsr	(GetPlayerCount).l	;then try the players from d0 down
 	move.w	d0,d3
 .158E4
 	move.w	d3,d0

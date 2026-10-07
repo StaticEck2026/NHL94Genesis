@@ -644,14 +644,14 @@ SetLCmode2	;IDA: sub_B92E (93 name; 93 IDA showfaceoff). a2 = team struct. Draw 
 	move.w	$16(a2),d0
 .B980
 	movea.w	#(mesarea-M68K_RAM),a1
-	move.l	#unk_44120,(a1)
+	move.l	#$44120,(a1)	;String length 4, 'A ' (93 showfaceoff #$44120). IDA unk_44120 is not an address
 	add.b	d4,2(a1)
 	bsr.w	print
 	move.w	d0,-(sp)
 	movea.l	#FaceOffsprites,a1
-	bsr.w	sub_13508
+	bsr.w	PrintStringFromList
 	move.w	(sp)+,d0
-	bsr.w	sub_12E66
+	bsr.w	linebar
 	subq.w	#5,(printx).w
 .B9A8
 	subq.w	#1,(printy).w
